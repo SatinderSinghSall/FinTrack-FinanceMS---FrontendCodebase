@@ -9,6 +9,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+
 import Input from "../../src/components/Input";
 import Button from "../../src/components/Button";
 import api from "../../src/services/api";
@@ -40,7 +42,7 @@ export default function EditExpenseScreen() {
           setCategory(expense.category);
         }
       } catch {
-        setError("Failed to load expense");
+        setError("Failed to load expense.");
       } finally {
         setInitialLoading(false);
       }
@@ -51,7 +53,7 @@ export default function EditExpenseScreen() {
 
   const handleUpdate = async () => {
     if (!title || !amount || !category) {
-      setError("All fields are required");
+      setError("Please fill all fields before updating.");
       return;
     }
 
@@ -67,7 +69,7 @@ export default function EditExpenseScreen() {
 
       router.back();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update expense");
+      setError(err.response?.data?.message || "Failed to update expense.");
     } finally {
       setLoading(false);
     }
@@ -76,7 +78,8 @@ export default function EditExpenseScreen() {
   if (initialLoading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-100 items-center justify-center">
-        <Text className="text-gray-500">Loading expense...</Text>
+        <Ionicons name="hourglass-outline" size={28} color="#9ca3af" />
+        <Text className="text-gray-500 mt-2">Loading expense...</Text>
       </SafeAreaView>
     );
   }
@@ -96,7 +99,6 @@ export default function EditExpenseScreen() {
             flexGrow: 1,
           }}
         >
-          {/* Width constraint */}
           <View
             style={{
               width: "100%",
@@ -104,37 +106,58 @@ export default function EditExpenseScreen() {
               alignSelf: "center",
             }}
           >
-            {/* Header */}
             <Text
               className="font-bold mb-2"
               style={{ fontSize: isLargeScreen ? 34 : 28 }}
             >
               Edit Expense
             </Text>
-            <Text className="text-gray-500 mb-6">Update your expense</Text>
 
-            {error && <Text className="text-red-500 mb-4">{error}</Text>}
+            <Text className="text-gray-500 mb-6">
+              Update your expense details
+            </Text>
 
-            <Input label="Title" value={title} onChangeText={setTitle} />
+            <View className="bg-white rounded-2xl p-5 shadow-sm">
+              {error && (
+                <View className="flex-row items-center bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                  <Ionicons
+                    name="alert-circle-outline"
+                    size={18}
+                    color="#dc2626"
+                  />
+                  <Text className="text-red-600 ml-2 text-sm flex-1">
+                    {error}
+                  </Text>
+                </View>
+              )}
 
-            <Input
-              label="Amount (₹)"
-              keyboardType="numeric"
-              value={amount}
-              onChangeText={setAmount}
-            />
+              <View className="mb-4">
+                <Input label="Title" value={title} onChangeText={setTitle} />
+              </View>
 
-            <Input
-              label="Category"
-              value={category}
-              onChangeText={setCategory}
-            />
+              <View className="mb-4">
+                <Input
+                  label="Amount (₹)"
+                  keyboardType="numeric"
+                  value={amount}
+                  onChangeText={setAmount}
+                />
+              </View>
 
-            <Button
-              title="Update Expense"
-              onPress={handleUpdate}
-              loading={loading}
-            />
+              <View className="mb-5">
+                <Input
+                  label="Category"
+                  value={category}
+                  onChangeText={setCategory}
+                />
+              </View>
+
+              <Button
+                title="Update Expense"
+                onPress={handleUpdate}
+                loading={loading}
+              />
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -9,6 +9,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+
 import Input from "../src/components/Input";
 import Button from "../src/components/Button";
 import api from "../src/services/api";
@@ -27,7 +29,7 @@ export default function AddExpenseScreen() {
 
   const handleSubmit = async () => {
     if (!title || !amount || !category) {
-      setError("All fields are required");
+      setError("Please fill in all fields before saving.");
       return;
     }
 
@@ -43,7 +45,7 @@ export default function AddExpenseScreen() {
 
       router.back();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to add expense");
+      setError(err.response?.data?.message || "Failed to add expense.");
     } finally {
       setLoading(false);
     }
@@ -64,7 +66,6 @@ export default function AddExpenseScreen() {
             flexGrow: 1,
           }}
         >
-          {/* Width constraint */}
           <View
             style={{
               width: "100%",
@@ -73,45 +74,94 @@ export default function AddExpenseScreen() {
             }}
           >
             {/* Header */}
+
             <Text
               className="font-bold mb-2"
               style={{ fontSize: isLargeScreen ? 34 : 28 }}
             >
               Add Expense
             </Text>
+
             <Text className="text-gray-500 mb-6">
               Log where your money went
             </Text>
 
-            {error && <Text className="text-red-500 mb-4">{error}</Text>}
+            {/* Form Card */}
 
-            <Input
-              label="Title"
-              placeholder="Groceries, Uber..."
-              value={title}
-              onChangeText={setTitle}
-            />
+            <View className="bg-white rounded-2xl p-5 shadow-sm">
+              {/* Error Alert */}
 
-            <Input
-              label="Amount (₹)"
-              placeholder="450"
-              keyboardType="numeric"
-              value={amount}
-              onChangeText={setAmount}
-            />
+              {error && (
+                <View className="flex-row items-center bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                  <Ionicons
+                    name="alert-circle-outline"
+                    size={18}
+                    color="#dc2626"
+                  />
 
-            <Input
-              label="Category"
-              placeholder="Food, Travel..."
-              value={category}
-              onChangeText={setCategory}
-            />
+                  <Text className="text-red-600 ml-2 text-sm flex-1">
+                    {error}
+                  </Text>
+                </View>
+              )}
 
-            <Button
-              title="Add Expense"
-              onPress={handleSubmit}
-              loading={loading}
-            />
+              {/* Title */}
+
+              <View className="mb-4">
+                <Input
+                  label="Title"
+                  placeholder="Groceries, Uber..."
+                  value={title}
+                  onChangeText={setTitle}
+                />
+              </View>
+
+              {/* Amount */}
+
+              <View className="mb-4">
+                <Input
+                  label="Amount (₹)"
+                  placeholder="450"
+                  keyboardType="numeric"
+                  value={amount}
+                  onChangeText={setAmount}
+                />
+              </View>
+
+              {/* Category */}
+
+              <View className="mb-5">
+                <Input
+                  label="Category"
+                  placeholder="Food, Travel..."
+                  value={category}
+                  onChangeText={setCategory}
+                />
+              </View>
+
+              {/* Button */}
+
+              <Button
+                title="Add Expense"
+                onPress={handleSubmit}
+                loading={loading}
+              />
+            </View>
+
+            {/* Helper Tip */}
+
+            <View className="flex-row items-start mt-5">
+              <Ionicons
+                name="information-circle-outline"
+                size={18}
+                color="#6b7280"
+              />
+
+              <Text className="text-gray-500 text-xs ml-2 flex-1">
+                Tip: Categorizing expenses helps you understand where your money
+                goes each month.
+              </Text>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

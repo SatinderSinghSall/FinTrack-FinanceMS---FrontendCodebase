@@ -9,13 +9,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+
 import Input from "../../src/components/Input";
 import Button from "../../src/components/Button";
 import api from "../../src/services/api";
 
 export default function EditBudgetScreen() {
   const router = useRouter();
-
   const params = useLocalSearchParams();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -32,14 +33,22 @@ export default function EditBudgetScreen() {
     const fetchBudget = async () => {
       try {
         const res = await api.get("/budgets");
-        const budget = res.data.find((b: any) => b._id === id);
+
+        console.log("Route ID:", id);
+        console.log("Budgets:", res.data);
+
+        const budget = res.data.find(
+          (b: any) => String(b._id || b.id) === String(id),
+        );
 
         if (budget) {
           setCategory(budget.category);
           setLimit(String(budget.limit));
+        } else {
+          setError("Budget not found");
         }
-      } catch {
-        setError("Failed to load budget");
+      } catch (err) {
+        setError("Failed to load budget.");
       } finally {
         setInitialLoading(false);
       }
@@ -50,7 +59,7 @@ export default function EditBudgetScreen() {
 
   const handleUpdate = async () => {
     if (!category || !limit) {
-      setError("All fields are required");
+      setError("Please fill all fields before updating.");
       return;
     }
 
@@ -65,7 +74,7 @@ export default function EditBudgetScreen() {
 
       router.back();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update budget");
+      setError(err.response?.data?.message || "Failed to update budget.");
     } finally {
       setLoading(false);
     }
@@ -74,13 +83,14 @@ export default function EditBudgetScreen() {
   if (initialLoading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-100 items-center justify-center">
-        <Text className="text-gray-500">Loading budget...</Text>
+        <Ionicons name="hourglass-outline" size={30} color="#9ca3af" />
+        <Text className="text-gray-500 mt-2">Loading budget...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-100 pt-2">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -94,7 +104,6 @@ export default function EditBudgetScreen() {
             flexGrow: 1,
           }}
         >
-          {/* Width constraint */}
           <View
             style={{
               width: "100%",
@@ -103,38 +112,68 @@ export default function EditBudgetScreen() {
             }}
           >
             {/* Header */}
+
             <Text
               className="font-bold mb-2"
               style={{ fontSize: isLargeScreen ? 34 : 28 }}
             >
               Edit Budget
             </Text>
+
             <Text className="text-gray-500 mb-6">
               Update your spending limit
             </Text>
 
-            {error && <Text className="text-red-500 mb-4">{error}</Text>}
+            {/* Form Card */}
 
-            <Input
-              label="Category"
-              value={category}
-              onChangeText={setCategory}
-              placeholder="Food, Rent, Travel"
-            />
+            <View className="bg-white rounded-2xl p-5 shadow-sm">
+              {/* Error Alert */}
 
-            <Input
-              label="Monthly Limit (₹)"
-              keyboardType="numeric"
-              value={limit}
-              onChangeText={setLimit}
-              placeholder="5000"
-            />
+              {error && (
+                <View className="flex-row items-center bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                  <Ionicons
+                    name="alert-circle-outline"
+                    size={18}
+                    color="#dc2626"
+                  />
 
-            <Button
-              title="Update Budget"
-              onPress={handleUpdate}
-              loading={loading}
-            />
+                  <Text className="text-red-600 ml-2 text-sm flex-1">
+                    {error}
+                  </Text>
+                </View>
+              )}
+
+              {/* Category */}
+
+              <View className="mb-4">
+                <Input
+                  label="Category"
+                  value={category}
+                  onChangeText={setCategory}
+                  placeholder="Food, Rent, Travel"
+                />
+              </View>
+
+              {/* Limit */}
+
+              <View className="mb-5">
+                <Input
+                  label="Monthly Limit (₹)"
+                  keyboardType="numeric"
+                  value={limit}
+                  onChangeText={setLimit}
+                  placeholder="5000"
+                />
+              </View>
+
+              {/* Button */}
+
+              <Button
+                title="Update Budget"
+                onPress={handleUpdate}
+                loading={loading}
+              />
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

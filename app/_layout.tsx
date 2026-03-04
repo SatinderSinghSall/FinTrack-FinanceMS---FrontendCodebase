@@ -4,8 +4,19 @@ import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAuthStore } from "../src/store/auth.store";
 
+import { useFonts } from "expo-font";
+import { Ionicons } from "@expo/vector-icons";
+
 export default function RootLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  const [fontsLoaded] = useFonts({
+    ...Ionicons.font,
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
