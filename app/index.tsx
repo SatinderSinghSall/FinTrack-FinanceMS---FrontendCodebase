@@ -20,7 +20,7 @@ export default function Index() {
       if (isAuthenticated) {
         router.replace("/(tabs)/dashboard");
       } else {
-        router.replace("/login");
+        router.replace("/landing");
       }
 
       setReady(true);

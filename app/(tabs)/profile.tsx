@@ -45,7 +45,7 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     const doLogout = () => {
       logout();
-      router.replace("/login");
+      router.replace("/landing");
     };
 
     if (Platform.OS === "web") {
