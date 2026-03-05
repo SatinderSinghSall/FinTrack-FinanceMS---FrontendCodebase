@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import api from "../services/api";
-import { saveToken, removeToken } from "../utils/tokenStorage";
+import { saveToken, removeToken, getToken } from "../utils/tokenStorage";
 
 interface User {
   id: string;
@@ -11,6 +11,7 @@ interface User {
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  restoreSession: () => Promise<void>;
   login: (email: string, password: string) => Promise<string | null>;
   register: (
     name: string,
@@ -24,12 +25,36 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
 
+  restoreSession: async () => {
+    const token = await getToken();
+
+    if (!token) return;
+
+    try {
+      const res = await api.get("/profile");
+
+      set({
+        user: res.data.user,
+        isAuthenticated: true,
+      });
+    } catch {
+      await removeToken();
+      set({ user: null, isAuthenticated: false });
+    }
+  },
+
   login: async (email, password) => {
     try {
       const res = await api.post("/auth/login", { email, password });
+
       await saveToken(res.data.token);
-      set({ user: res.data.user, isAuthenticated: true });
-      return null; // ✅ success
+
+      set({
+        user: res.data.user,
+        isAuthenticated: true,
+      });
+
+      return null;
     } catch (err: any) {
       return err.response?.data?.message || "Login failed";
     }
@@ -42,9 +67,15 @@ export const useAuthStore = create<AuthState>((set) => ({
         email,
         password,
       });
+
       await saveToken(res.data.token);
-      set({ user: res.data.user, isAuthenticated: true });
-      return null; // ✅ success
+
+      set({
+        user: res.data.user,
+        isAuthenticated: true,
+      });
+
+      return null;
     } catch (err: any) {
       return err.response?.data?.message || "Registration failed";
     }
