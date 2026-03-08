@@ -1,26 +1,49 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabsLayout() {
   const [fontsLoaded] = useFonts({
     ...Ionicons.font,
   });
 
-  if (!fontsLoaded) {
-    return null;
-  }
+  const insets = useSafeAreaInsets();
+
+  if (!fontsLoaded) return null;
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+
         tabBarActiveTintColor: "#2563eb",
         tabBarInactiveTintColor: "#9ca3af",
+
+        tabBarLabelStyle: {
+          fontSize: 11,
+          marginTop: -2,
+          fontWeight: "500",
+        },
+
+        tabBarItemStyle: {
+          paddingVertical: 4,
+        },
+
         tabBarStyle: {
-          height: 85,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom,
+          paddingTop: 6,
+
+          backgroundColor: "#ffffff",
+
+          borderTopWidth: 0.5,
+          borderTopColor: "#e5e7eb",
+
+          elevation: 10,
+          shadowColor: "#000",
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
         },
       }}
     >
@@ -29,7 +52,7 @@ export default function TabsLayout() {
         options={{
           title: "Dashboard",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
+            <Ionicons name="grid-outline" size={22} color={color} />
           ),
         }}
       />
@@ -38,8 +61,8 @@ export default function TabsLayout() {
         name="budgets"
         options={{
           title: "Budgets",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="wallet-outline" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="wallet-outline" size={22} color={color} />
           ),
         }}
       />
@@ -48,8 +71,8 @@ export default function TabsLayout() {
         name="expenses"
         options={{
           title: "Expenses",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cash-outline" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="cash-outline" size={22} color={color} />
           ),
         }}
       />
@@ -58,8 +81,8 @@ export default function TabsLayout() {
         name="analytics"
         options={{
           title: "Analytics",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart-outline" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="bar-chart-outline" size={22} color={color} />
           ),
         }}
       />
@@ -68,8 +91,8 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person-outline" size={22} color={color} />
           ),
         }}
       />

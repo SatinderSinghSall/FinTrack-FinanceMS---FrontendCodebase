@@ -1,5 +1,5 @@
 import { View, Text, Pressable } from "react-native";
-import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
 interface BudgetCardProps {
   id: string;
@@ -14,19 +14,26 @@ export default function BudgetCard({
   limit,
   spent,
 }: BudgetCardProps) {
-  const router = useRouter();
+  const percentage = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
 
-  const percentage = Math.min((spent / limit) * 100, 100);
   const isOver = spent > limit;
+  const remaining = limit - spent;
 
   return (
-    <Pressable
-      onPress={() => router.push(`/edit-budget/${id}`)}
-      className="bg-white rounded-2xl p-5 mb-4"
-    >
-      {/* Header */}
-      <View className="flex-row justify-between mb-2">
-        <Text className="text-lg font-semibold">{category}</Text>
+    <Pressable className="bg-white rounded-2xl p-5 mb-4 shadow-sm">
+      {/* HEADER */}
+
+      <View className="flex-row justify-between items-center mb-3">
+        <View className="flex-row items-center">
+          <View className="bg-blue-100 p-2 rounded-lg mr-3">
+            <Ionicons name="wallet-outline" size={18} color="#2563eb" />
+          </View>
+
+          <Text className="text-lg font-semibold text-gray-900">
+            {category}
+          </Text>
+        </View>
+
         <Text
           className={`font-semibold ${
             isOver ? "text-red-600" : "text-gray-900"
@@ -36,7 +43,8 @@ export default function BudgetCard({
         </Text>
       </View>
 
-      {/* Progress Bar */}
+      {/* PROGRESS */}
+
       <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
         <View
           style={{ width: `${percentage}%` }}
@@ -44,10 +52,17 @@ export default function BudgetCard({
         />
       </View>
 
-      {/* Footer */}
-      <Text className="text-gray-500 text-sm mt-2">
-        {isOver ? "Budget exceeded" : `₹${limit - spent} remaining`}
-      </Text>
+      {/* FOOTER */}
+
+      <View className="flex-row justify-between mt-2">
+        <Text
+          className={`text-sm ${isOver ? "text-red-600" : "text-gray-500"}`}
+        >
+          {isOver ? "Budget exceeded" : `₹${remaining} remaining`}
+        </Text>
+
+        <Text className="text-xs text-gray-400">{Math.round(percentage)}%</Text>
+      </View>
     </Pressable>
   );
 }

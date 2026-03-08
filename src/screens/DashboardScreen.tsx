@@ -5,42 +5,69 @@ import {
   RefreshControl,
   useWindowDimensions,
   TouchableOpacity,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
 import api from "../services/api";
 
 export default function DashboardScreen() {
+  const router = useRouter();
+
   const [summary, setSummary] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 5;
 
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768;
+
+  /* ---------- Fetch Data ---------- */
 
   const fetchSummary = async () => {
     const res = await api.get("/dashboard/summary");
     setSummary(res.data);
   };
 
+  const fetchProfile = async () => {
+    const res = await api.get("/profile");
+    setProfile(res.data);
+  };
+
+  const loadData = async () => {
+    await Promise.all([fetchSummary(), fetchProfile()]);
+  };
+
   useEffect(() => {
-    fetchSummary();
+    loadData();
   }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchSummary();
+    await loadData();
     setRefreshing(false);
   }, []);
 
-  if (!summary) {
+  if (!summary || !profile) {
     return (
       <SafeAreaView className="flex-1 bg-gray-100 items-center justify-center">
         <Text className="text-gray-500">Loading dashboard...</Text>
       </SafeAreaView>
     );
   }
+
+  const userName = profile.user.name;
+
+  /* ---------- Greeting ---------- */
+
+  const hour = new Date().getHours();
+
+  const greeting =
+    hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 
   /* ---------- Calculations ---------- */
 
@@ -60,21 +87,27 @@ export default function DashboardScreen() {
 
   const remainingBudget = summary.totalBudget - summary.totalExpenses;
 
-  /* ---------- UI ---------- */
+  /* ---------- Pagination ---------- */
+
+  const expenses = summary.recentExpenses || [];
+
+  const startIndex = (page - 1) * PAGE_SIZE;
+  const paginatedExpenses = expenses.slice(startIndex, startIndex + PAGE_SIZE);
+
+  const totalPages = Math.ceil(expenses.length / PAGE_SIZE);
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-100" edges={["top"]}>
+      <StatusBar barStyle="dark-content" />
+
       <ScrollView
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#2563eb"
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingBottom: 32,
+          paddingHorizontal: 20,
+          paddingTop: 28,
+          paddingBottom: 40,
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -85,20 +118,31 @@ export default function DashboardScreen() {
             alignSelf: "center",
           }}
         >
-          {/* Header */}
+          {/* ---------- HEADER ---------- */}
 
-          <Text
-            className="font-bold mb-1"
-            style={{ fontSize: isLargeScreen ? 34 : 28 }}
-          >
-            This Month
-          </Text>
+          <View className="flex-row justify-between items-center mb-6">
+            <View>
+              <Text className="text-gray-500 text-sm">{greeting}</Text>
 
-          <Text className="text-gray-500 mb-6">Your financial overview</Text>
+              <Text
+                className="font-bold text-gray-900"
+                style={{ fontSize: isLargeScreen ? 32 : 26 }}
+              >
+                {userName} 👋
+              </Text>
+            </View>
 
-          {/* Remaining Balance */}
+            <TouchableOpacity
+              onPress={() => router.push("/profile")}
+              className="bg-blue-100 p-3 rounded-full"
+            >
+              <Ionicons name="person-outline" size={22} color="#2563eb" />
+            </TouchableOpacity>
+          </View>
 
-          <View className="bg-blue-600 rounded-2xl p-6 mb-6">
+          {/* ---------- BALANCE CARD ---------- */}
+
+          <View className="bg-blue-600 rounded-3xl p-6 mb-6 shadow-lg">
             <Text className="text-white text-sm opacity-80">
               Remaining Balance
             </Text>
@@ -106,79 +150,83 @@ export default function DashboardScreen() {
             <Text className="text-white text-3xl font-bold mt-2">
               ₹{summary.remainingBalance}
             </Text>
+
+            {/* Quick Actions */}
+
+            <View className="flex-row mt-5">
+              <TouchableOpacity
+                onPress={() => router.push("/add-expense")}
+                className="bg-white/20 px-4 py-2 rounded-lg mr-3 flex-row items-center"
+              >
+                <Ionicons name="add" size={16} color="white" />
+                <Text className="text-white ml-1 font-medium">Expense</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => router.push("/add-budget")}
+                className="bg-white/20 px-4 py-2 rounded-lg flex-row items-center"
+              >
+                <Ionicons name="wallet-outline" size={16} color="white" />
+                <Text className="text-white ml-1 font-medium">Budget</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          {/* Stats Grid */}
+          {/* ---------- STAT CARDS ---------- */}
 
           <View className="flex-row flex-wrap justify-between mb-6">
-            {/* Total Budget */}
+            <StatCard
+              icon="wallet-outline"
+              color="#2563eb"
+              label="Total Budget"
+              value={`₹${summary.totalBudget}`}
+            />
 
-            <View className="bg-white rounded-xl p-4 w-[48%] mb-3">
-              <Ionicons name="wallet-outline" size={22} color="#2563eb" />
-              <Text className="text-gray-500 mt-2 text-sm">Total Budget</Text>
-              <Text className="text-lg font-semibold">
-                ₹{summary.totalBudget}
-              </Text>
-            </View>
+            <StatCard
+              icon="cash-outline"
+              color="#dc2626"
+              label="Total Expenses"
+              value={`₹${summary.totalExpenses}`}
+            />
 
-            {/* Total Expenses */}
+            <StatCard
+              icon="calendar-outline"
+              color="#9333ea"
+              label="Daily Average"
+              value={`₹${dailyAverage}`}
+            />
 
-            <View className="bg-white rounded-xl p-4 w-[48%] mb-3">
-              <Ionicons name="cash-outline" size={22} color="#dc2626" />
-              <Text className="text-gray-500 mt-2 text-sm">Total Expenses</Text>
-              <Text className="text-lg font-semibold">
-                ₹{summary.totalExpenses}
-              </Text>
-            </View>
-
-            {/* Daily Average */}
-
-            <View className="bg-white rounded-xl p-4 w-[48%] mb-3">
-              <Ionicons name="calendar-outline" size={22} color="#9333ea" />
-              <Text className="text-gray-500 mt-2 text-sm">Daily Average</Text>
-              <Text className="text-lg font-semibold">₹{dailyAverage}</Text>
-            </View>
-
-            {/* Remaining Budget */}
-
-            <View className="bg-white rounded-xl p-4 w-[48%] mb-3">
-              <Ionicons name="analytics-outline" size={22} color="#16a34a" />
-              <Text className="text-gray-500 mt-2 text-sm">
-                Budget Remaining
-              </Text>
-              <Text className="text-lg font-semibold">₹{remainingBudget}</Text>
-            </View>
+            <StatCard
+              icon="analytics-outline"
+              color="#16a34a"
+              label="Remaining"
+              value={`₹${remainingBudget}`}
+            />
           </View>
 
-          {/* Spending Insights */}
+          {/* ---------- SPENDING INSIGHT ---------- */}
 
-          <View className="bg-white rounded-2xl p-5 mb-6">
+          <View className="bg-white rounded-2xl p-5 mb-6 shadow-sm">
             <Text className="text-lg font-semibold mb-4">
               Spending Insights
             </Text>
 
-            {/* Progress */}
+            <View className="flex-row justify-between mb-1">
+              <Text className="text-gray-500 text-sm">Budget Used</Text>
 
-            <View className="mb-3">
-              <View className="flex-row justify-between mb-1">
-                <Text className="text-gray-500 text-sm">Budget Used</Text>
-
-                <Text className="text-gray-500 text-sm">
-                  {Math.round(spentPercentage)}%
-                </Text>
-              </View>
-
-              <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                <View
-                  style={{ width: `${spentPercentage}%` }}
-                  className={`h-full ${
-                    isOverBudget ? "bg-red-500" : "bg-green-500"
-                  }`}
-                />
-              </View>
+              <Text className="text-gray-500 text-sm">
+                {Math.round(spentPercentage)}%
+              </Text>
             </View>
 
-            {/* Status */}
+            <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
+              <View
+                style={{ width: `${spentPercentage}%` }}
+                className={`h-full ${
+                  isOverBudget ? "bg-red-500" : "bg-green-500"
+                }`}
+              />
+            </View>
 
             <View className="flex-row items-center mt-4">
               <Ionicons
@@ -199,59 +247,81 @@ export default function DashboardScreen() {
             </View>
           </View>
 
-          {/* Recent Expenses */}
+          {/* ---------- RECENT EXPENSES ---------- */}
 
-          <View className="bg-white rounded-2xl p-5">
+          <View className="bg-white rounded-2xl p-5 shadow-sm">
             <Text className="text-lg font-semibold mb-4">Recent Expenses</Text>
 
-            {(!summary.recentExpenses ||
-              summary.recentExpenses.length === 0) && (
-              <View className="items-center py-8">
-                <Ionicons name="receipt-outline" size={40} color="#9ca3af" />
-
-                <Text className="text-gray-600 mt-3 text-sm font-medium">
-                  No expenses yet
-                </Text>
-
-                <Text className="text-gray-400 text-xs mt-1 text-center px-6">
-                  Start tracking your spending by adding your first expense.
-                </Text>
-
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => router.push("/add-expense")}
-                  className="flex-row items-center bg-blue-600 px-5 py-3 rounded-lg mt-5"
-                >
-                  <Ionicons name="add-circle-outline" size={18} color="white" />
-
-                  <Text className="text-white font-semibold ml-2">
-                    Add Expense
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {summary.recentExpenses?.length > 0 &&
-              summary.recentExpenses.map((expense: any) => (
-                <View
-                  key={expense._id}
-                  className="flex-row justify-between items-center mb-3"
-                >
-                  <View className="flex-row items-center">
+            {paginatedExpenses.map((expense: any) => (
+              <View
+                key={expense._id}
+                className="flex-row justify-between items-center mb-4"
+              >
+                <View className="flex-row items-center">
+                  <View className="bg-gray-100 p-2 rounded-lg">
                     <Ionicons
                       name="receipt-outline"
                       size={18}
                       color="#6b7280"
                     />
-                    <Text className="ml-2 text-gray-700">{expense.title}</Text>
                   </View>
 
-                  <Text className="font-semibold">₹{expense.amount}</Text>
+                  <Text className="ml-3 text-gray-800">{expense.title}</Text>
                 </View>
-              ))}
+
+                <Text className="font-semibold text-gray-900">
+                  ₹{expense.amount}
+                </Text>
+              </View>
+            ))}
+
+            {/* Pagination Controls */}
+
+            {totalPages > 1 && (
+              <View className="flex-row justify-between mt-4">
+                <TouchableOpacity
+                  disabled={page === 1}
+                  onPress={() => setPage(page - 1)}
+                  className="bg-gray-100 px-4 py-2 rounded-lg"
+                >
+                  <Text className="text-gray-700">Previous</Text>
+                </TouchableOpacity>
+
+                <Text className="text-gray-500 self-center">
+                  Page {page} / {totalPages}
+                </Text>
+
+                <TouchableOpacity
+                  disabled={page === totalPages}
+                  onPress={() => setPage(page + 1)}
+                  className="bg-gray-100 px-4 py-2 rounded-lg"
+                >
+                  <Text className="text-gray-700">Next</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+/* ---------- Stat Card ---------- */
+
+function StatCard({ icon, color, label, value }: any) {
+  return (
+    <View className="bg-white rounded-xl p-4 w-[48%] mb-3 shadow-sm">
+      <View
+        className="p-2 rounded-lg self-start"
+        style={{ backgroundColor: `${color}15` }}
+      >
+        <Ionicons name={icon} size={20} color={color} />
+      </View>
+
+      <Text className="text-gray-500 text-sm mt-2">{label}</Text>
+
+      <Text className="text-lg font-semibold text-gray-900">{value}</Text>
+    </View>
   );
 }
