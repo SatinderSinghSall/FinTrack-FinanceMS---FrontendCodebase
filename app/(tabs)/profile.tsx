@@ -7,6 +7,7 @@ import {
   RefreshControl,
   useWindowDimensions,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,11 +18,13 @@ import { useAuthStore } from "../../src/store/auth.store";
 
 export default function ProfileScreen() {
   const logout = useAuthStore((s) => s.logout);
+
   const [profile, setProfile] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const { width } = useWindowDimensions();
-  const isLargeScreen = width >= 768;
+  const isTablet = width >= 768;
+  const isDesktop = width >= 1024;
 
   const fetchProfile = async () => {
     try {
@@ -49,11 +52,9 @@ export default function ProfileScreen() {
     };
 
     if (Platform.OS === "web") {
-      if (window.confirm("Are you sure you want to logout?")) {
-        doLogout();
-      }
+      if (window.confirm("Logout from your account?")) doLogout();
     } else {
-      Alert.alert("Logout", "Are you sure you want to logout?", [
+      Alert.alert("Logout", "Logout from your account?", [
         { text: "Cancel", style: "cancel" },
         { text: "Logout", style: "destructive", onPress: doLogout },
       ]);
@@ -63,100 +64,125 @@ export default function ProfileScreen() {
   if (!profile) {
     return (
       <SafeAreaView className="flex-1 bg-gray-100 items-center justify-center">
-        <Text className="text-gray-500">Loading profile...</Text>
+        <ActivityIndicator size="large" color="#2563eb" />
+        <Text className="text-gray-500 mt-3">Loading profile...</Text>
       </SafeAreaView>
     );
   }
 
   const { user, stats } = profile;
 
+  const initials =
+    user.name
+      ?.split(" ")
+      .map((n: string) => n[0])
+      .join("") ?? "U";
+
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
       <ScrollView
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#2563eb"
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingBottom: 32,
+          paddingHorizontal: 20,
+          paddingBottom: 40,
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Width constraint */}
         <View
           style={{
             width: "100%",
-            maxWidth: isLargeScreen ? 900 : "100%",
+            maxWidth: isDesktop ? 700 : isTablet ? 550 : "100%",
             alignSelf: "center",
           }}
         >
-          {/* Header */}
+          {/* HEADER */}
+
           <Text
             className="font-bold mb-1"
-            style={{ fontSize: isLargeScreen ? 34 : 28 }}
+            style={{ fontSize: isTablet ? 34 : 28 }}
           >
             Profile
           </Text>
+
           <Text className="text-gray-500 mb-6">
             Manage your account & preferences
           </Text>
 
-          {/* User Card */}
-          <View className="bg-white rounded-2xl p-5 mb-6 flex-row items-center border border-gray-100 shadow-sm">
-            <View className="bg-blue-100 p-4 rounded-full mr-4">
-              <Ionicons name="person-outline" size={28} color="#2563eb" />
+          {/* USER CARD */}
+
+          <View className="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-gray-100 flex-row items-center">
+            {/* Avatar */}
+
+            <View className="bg-blue-100 h-16 w-16 rounded-full items-center justify-center mr-4">
+              <Text className="text-blue-600 font-bold text-xl">
+                {initials}
+              </Text>
             </View>
 
+            {/* User Info */}
+
             <View className="flex-1">
-              <Text className="text-lg font-semibold">{user.name}</Text>
+              <Text className="text-lg font-semibold text-gray-900">
+                {user.name}
+              </Text>
+
               <Text className="text-gray-500 text-sm">{user.email}</Text>
+
               <Text className="text-gray-400 text-xs mt-1">
                 Joined {new Date(user.createdAt).toDateString()}
               </Text>
 
-              <Text className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full mt-2 self-start">
-                Active account
-              </Text>
+              <View className="bg-blue-50 px-2 py-1 rounded-full mt-2 self-start">
+                <Text className="text-xs text-blue-600 font-medium">
+                  Active account
+                </Text>
+              </View>
             </View>
           </View>
 
-          {/* Stats */}
-          <View className="flex-row justify-between mb-6">
-            <View className="bg-white rounded-xl p-4 flex-1 mr-3 border border-gray-100 shadow-sm">
-              <View className="bg-blue-50 p-2 rounded-lg self-start">
-                <Ionicons name="wallet-outline" size={20} color="#2563eb" />
-              </View>
-              <Text className="text-gray-500 text-sm mt-2">Budgets</Text>
-              <Text className="text-xl font-bold mt-1">
-                {stats.budgetsCount}
-              </Text>
-            </View>
+          {/* STATS */}
 
-            <View className="bg-white rounded-xl p-4 flex-1 ml-3 border border-gray-100 shadow-sm">
-              <View className="bg-red-50 p-2 rounded-lg self-start">
-                <Ionicons name="cash-outline" size={20} color="#dc2626" />
-              </View>
-              <Text className="text-gray-500 text-sm mt-2">Expenses</Text>
-              <Text className="text-xl font-bold mt-1">
-                {stats.expensesCount}
-              </Text>
-            </View>
+          <View className="flex-row mb-6">
+            <StatCard
+              icon="wallet-outline"
+              color="#2563eb"
+              label="Budgets"
+              value={stats.budgetsCount}
+              bg="bg-blue-50"
+              className="mr-3"
+            />
+
+            <StatCard
+              icon="cash-outline"
+              color="#dc2626"
+              label="Expenses"
+              value={stats.expensesCount}
+              bg="bg-red-50"
+            />
           </View>
 
-          {/* Settings */}
-          <View className="bg-white rounded-2xl mb-6 border border-gray-100 shadow-sm overflow-hidden">
+          {/* SETTINGS */}
+
+          <View className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
             <ProfileItem icon="notifications-outline" label="Notifications" />
+
             <Divider />
+
             <ProfileItem icon="lock-closed-outline" label="Change Password" />
+
             <Divider />
+
             <ProfileItem icon="help-circle-outline" label="Help & Support" />
+
+            <Divider />
+
+            <ProfileItem icon="document-text-outline" label="Privacy Policy" />
           </View>
 
-          {/* Logout */}
+          {/* LOGOUT */}
+
           <Pressable
             onPress={handleLogout}
             className="bg-red-600 py-4 rounded-xl flex-row items-center justify-center shadow-sm"
@@ -169,6 +195,26 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
+
+/* ---------------- STAT CARD ---------------- */
+
+function StatCard({ icon, color, label, value, bg, className }: any) {
+  return (
+    <View
+      className={`flex-1 bg-white rounded-xl p-4 shadow-sm border border-gray-100 ${className}`}
+    >
+      <View className={`${bg} p-2 rounded-lg self-start`}>
+        <Ionicons name={icon} size={20} color={color} />
+      </View>
+
+      <Text className="text-gray-500 text-sm mt-2">{label}</Text>
+
+      <Text className="text-xl font-bold mt-1">{value}</Text>
+    </View>
+  );
+}
+
+/* ---------------- PROFILE ITEM ---------------- */
 
 function ProfileItem({ icon, label }: any) {
   return (
@@ -186,6 +232,8 @@ function ProfileItem({ icon, label }: any) {
     </Pressable>
   );
 }
+
+/* ---------------- DIVIDER ---------------- */
 
 function Divider() {
   return <View className="h-[1px] bg-gray-100 ml-12" />;

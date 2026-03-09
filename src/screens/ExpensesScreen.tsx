@@ -21,6 +21,8 @@ export default function ExpensesScreen() {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -147,7 +149,6 @@ export default function ExpensesScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
       {/* DELETE MODAL */}
-
       <Modal transparent visible={confirmDelete} animationType="fade">
         <View className="flex-1 bg-black/50 justify-center items-center px-6">
           <View className="bg-white rounded-2xl p-6 w-full max-w-md">
@@ -172,6 +173,112 @@ export default function ExpensesScreen() {
                 <Text className="text-white font-semibold">Delete</Text>
               </Pressable>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Expense Details Modal */}
+      <Modal visible={showDetails} transparent animationType="slide">
+        <View className="flex-1 bg-black/40 justify-end">
+          <View className="bg-white rounded-t-3xl px-6 pt-4 pb-8">
+            {selectedExpense && (
+              <>
+                {/* Handle */}
+                <View className="w-14 h-1.5 bg-gray-300 rounded-full self-center mb-6" />
+
+                {/* Header */}
+
+                <View className="flex-row items-center mb-6">
+                  <View className="bg-red-100 p-3 rounded-xl mr-3">
+                    <Ionicons name="cash-outline" size={22} color="#dc2626" />
+                  </View>
+
+                  <View>
+                    <Text className="text-2xl font-bold text-gray-900">
+                      {selectedExpense.title}
+                    </Text>
+
+                    <Text className="text-gray-500">Expense Details</Text>
+                  </View>
+                </View>
+
+                {/* Amount */}
+
+                <View className="bg-gray-100 p-4 rounded-xl mb-3 flex-row justify-between">
+                  <Text className="text-gray-500">Amount</Text>
+                  <Text className="text-lg font-bold text-red-600">
+                    ₹{selectedExpense.amount}
+                  </Text>
+                </View>
+
+                {/* Category */}
+
+                <View className="bg-gray-100 p-4 rounded-xl mb-3 flex-row justify-between">
+                  <Text className="text-gray-500">Category</Text>
+                  <Text className="text-gray-800 font-semibold">
+                    {selectedExpense.category}
+                  </Text>
+                </View>
+
+                {/* Date */}
+
+                <View className="bg-gray-100 p-4 rounded-xl mb-3 flex-row justify-between">
+                  <Text className="text-gray-500">Date</Text>
+                  <Text className="text-gray-800">
+                    {new Date(selectedExpense.date).toLocaleDateString()}
+                  </Text>
+                </View>
+
+                {/* Notes */}
+
+                {selectedExpense.notes && (
+                  <View className="bg-gray-100 p-4 rounded-xl mb-6">
+                    <Text className="text-gray-500 mb-1">Notes</Text>
+                    <Text className="text-gray-700">
+                      {selectedExpense.notes}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Buttons */}
+
+                <View className="flex-row">
+                  <Pressable
+                    onPress={() => {
+                      setShowDetails(false);
+                      router.push(`/edit-expense/${selectedExpense._id}`);
+                    }}
+                    className="flex-1 bg-blue-600 py-3 rounded-xl mr-2 items-center flex-row justify-center"
+                  >
+                    <Ionicons name="create-outline" size={18} color="white" />
+                    <Text className="text-white font-semibold ml-2">Edit</Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      setShowDetails(false);
+                      setSelectedId(selectedExpense._id);
+                      setConfirmDelete(true);
+                    }}
+                    className="flex-1 bg-red-500 py-3 rounded-xl ml-2 items-center flex-row justify-center"
+                  >
+                    <Ionicons name="trash-outline" size={18} color="white" />
+                    <Text className="text-white font-semibold ml-2">
+                      Delete
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {/* Close */}
+
+                <Pressable
+                  onPress={() => setShowDetails(false)}
+                  className="mt-5 items-center"
+                >
+                  <Text className="text-gray-400 font-medium">Close</Text>
+                </Pressable>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -285,6 +392,10 @@ export default function ExpensesScreen() {
                 amount={e.amount}
                 category={e.category}
                 date={e.date}
+                onPress={() => {
+                  setSelectedExpense(e);
+                  setShowDetails(true);
+                }}
               />
             </Swipeable>
           ))}

@@ -6,6 +6,7 @@ import {
   useWindowDimensions,
   TouchableOpacity,
   StatusBar,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState, useCallback } from "react";
@@ -95,6 +96,7 @@ export default function DashboardScreen() {
   const paginatedExpenses = expenses.slice(startIndex, startIndex + PAGE_SIZE);
 
   const totalPages = Math.ceil(expenses.length / PAGE_SIZE);
+  const hasBudget = summary.totalBudget > 0;
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100" edges={["top"]}>
@@ -211,40 +213,70 @@ export default function DashboardScreen() {
               Spending Insights
             </Text>
 
-            <View className="flex-row justify-between mb-1">
-              <Text className="text-gray-500 text-sm">Budget Used</Text>
+            {!hasBudget ? (
+              /* ---------------- NO BUDGET STATE ---------------- */
 
-              <Text className="text-gray-500 text-sm">
-                {Math.round(spentPercentage)}%
-              </Text>
-            </View>
+              <View className="items-center py-4">
+                <View className="bg-gray-100 p-3 rounded-full mb-2">
+                  <Ionicons name="wallet-outline" size={22} color="#9ca3af" />
+                </View>
 
-            <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
-              <View
-                style={{ width: `${spentPercentage}%` }}
-                className={`h-full ${
-                  isOverBudget ? "bg-red-500" : "bg-green-500"
-                }`}
-              />
-            </View>
+                <Text className="text-gray-700 font-medium">No budget set</Text>
 
-            <View className="flex-row items-center mt-4">
-              <Ionicons
-                name={isOverBudget ? "alert-circle" : "checkmark-circle"}
-                size={18}
-                color={isOverBudget ? "#dc2626" : "#16a34a"}
-              />
+                <Text className="text-gray-500 text-sm text-center mt-1 mb-3">
+                  Add a budget to track your spending insights.
+                </Text>
 
-              <Text
-                className={`ml-2 text-sm ${
-                  isOverBudget ? "text-red-600" : "text-green-600"
-                }`}
-              >
-                {isOverBudget
-                  ? "You have exceeded your budget"
-                  : "Your spending is under control"}
-              </Text>
-            </View>
+                <Pressable
+                  onPress={() => router.push("/add-budget")}
+                  className="bg-blue-600 px-4 py-2 rounded-lg flex-row items-center"
+                >
+                  <Ionicons name="add-outline" size={18} color="#fff" />
+                  <Text className="text-white font-semibold ml-1">
+                    Add Budget
+                  </Text>
+                </Pressable>
+              </View>
+            ) : (
+              /* ---------------- NORMAL INSIGHTS ---------------- */
+
+              <>
+                <View className="flex-row justify-between mb-1">
+                  <Text className="text-gray-500 text-sm">Budget Used</Text>
+
+                  <Text className="text-gray-500 text-sm">
+                    {Math.round(spentPercentage)}%
+                  </Text>
+                </View>
+
+                <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <View
+                    style={{ width: `${spentPercentage}%` }}
+                    className={`h-full ${
+                      isOverBudget ? "bg-red-500" : "bg-green-500"
+                    }`}
+                  />
+                </View>
+
+                <View className="flex-row items-center mt-4">
+                  <Ionicons
+                    name={isOverBudget ? "alert-circle" : "checkmark-circle"}
+                    size={18}
+                    color={isOverBudget ? "#dc2626" : "#16a34a"}
+                  />
+
+                  <Text
+                    className={`ml-2 text-sm ${
+                      isOverBudget ? "text-red-600" : "text-green-600"
+                    }`}
+                  >
+                    {isOverBudget
+                      ? "You have exceeded your budget"
+                      : "Your spending is under control"}
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
 
           {/* ---------- RECENT EXPENSES ---------- */}
@@ -252,28 +284,54 @@ export default function DashboardScreen() {
           <View className="bg-white rounded-2xl p-5 shadow-sm">
             <Text className="text-lg font-semibold mb-4">Recent Expenses</Text>
 
-            {paginatedExpenses.map((expense: any) => (
-              <View
-                key={expense._id}
-                className="flex-row justify-between items-center mb-4"
-              >
-                <View className="flex-row items-center">
-                  <View className="bg-gray-100 p-2 rounded-lg">
-                    <Ionicons
-                      name="receipt-outline"
-                      size={18}
-                      color="#6b7280"
-                    />
-                  </View>
-
-                  <Text className="ml-3 text-gray-800">{expense.title}</Text>
+            {paginatedExpenses.length === 0 ? (
+              <View className="items-center py-8">
+                <View className="bg-gray-100 p-4 rounded-full mb-3">
+                  <Ionicons name="receipt-outline" size={28} color="#9ca3af" />
                 </View>
 
-                <Text className="font-semibold text-gray-900">
-                  ₹{expense.amount}
+                <Text className="text-gray-700 font-semibold mb-1">
+                  No expenses yet
                 </Text>
+
+                <Text className="text-gray-500 text-sm text-center mb-4">
+                  Start tracking your spending by adding your first expense.
+                </Text>
+
+                <Pressable
+                  onPress={() => router.push("/add-expense")}
+                  className="bg-blue-600 px-5 py-2.5 rounded-lg flex-row items-center"
+                >
+                  <Ionicons name="add-outline" size={18} color="#fff" />
+                  <Text className="text-white font-semibold ml-1">
+                    Add Expense
+                  </Text>
+                </Pressable>
               </View>
-            ))}
+            ) : (
+              paginatedExpenses.map((expense: any) => (
+                <View
+                  key={expense._id}
+                  className="flex-row justify-between items-center mb-4"
+                >
+                  <View className="flex-row items-center">
+                    <View className="bg-gray-100 p-2 rounded-lg">
+                      <Ionicons
+                        name="receipt-outline"
+                        size={18}
+                        color="#6b7280"
+                      />
+                    </View>
+
+                    <Text className="ml-3 text-gray-800">{expense.title}</Text>
+                  </View>
+
+                  <Text className="font-semibold text-gray-900">
+                    ₹{expense.amount}
+                  </Text>
+                </View>
+              ))
+            )}
 
             {/* Pagination Controls */}
 

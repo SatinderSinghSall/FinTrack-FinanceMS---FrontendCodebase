@@ -5,6 +5,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   useWindowDimensions,
+  ActivityIndicator,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
@@ -22,20 +24,22 @@ export default function EditBudgetScreen() {
 
   const [category, setCategory] = useState("");
   const [limit, setLimit] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const { width } = useWindowDimensions();
-  const isLargeScreen = width >= 768;
+
+  const isTablet = width >= 768;
+  const isDesktop = width >= 1024;
+
+  /* ---------------- FETCH BUDGET ---------------- */
 
   useEffect(() => {
     const fetchBudget = async () => {
       try {
         const res = await api.get("/budgets");
-
-        console.log("Route ID:", id);
-        console.log("Budgets:", res.data);
 
         const budget = res.data.find(
           (b: any) => String(b._id || b.id) === String(id),
@@ -47,7 +51,7 @@ export default function EditBudgetScreen() {
         } else {
           setError("Budget not found");
         }
-      } catch (err) {
+      } catch {
         setError("Failed to load budget.");
       } finally {
         setInitialLoading(false);
@@ -56,6 +60,8 @@ export default function EditBudgetScreen() {
 
     if (id) fetchBudget();
   }, [id]);
+
+  /* ---------------- UPDATE ---------------- */
 
   const handleUpdate = async () => {
     if (!category || !limit) {
@@ -80,57 +86,70 @@ export default function EditBudgetScreen() {
     }
   };
 
+  /* ---------------- INITIAL LOADING ---------------- */
+
   if (initialLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-100 items-center justify-center">
-        <Ionicons name="hourglass-outline" size={30} color="#9ca3af" />
-        <Text className="text-gray-500 mt-2">Loading budget...</Text>
+      <SafeAreaView className="flex-1 bg-gray-100 justify-center items-center">
+        <ActivityIndicator size="large" color="#2563eb" />
+        <Text className="text-gray-500 mt-3">Loading budget...</Text>
       </SafeAreaView>
     );
   }
 
+  /* ---------------- UI ---------------- */
+
   return (
-    <SafeAreaView className="flex-1 bg-gray-100 pt-2">
+    <SafeAreaView className="flex-1 bg-gray-100">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
         <ScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingHorizontal: 24,
-            paddingBottom: 32,
+            paddingHorizontal: 20,
+            paddingBottom: 40,
             flexGrow: 1,
           }}
         >
           <View
             style={{
               width: "100%",
-              maxWidth: isLargeScreen ? 420 : "100%",
+              maxWidth: isDesktop ? 500 : isTablet ? 420 : "100%",
               alignSelf: "center",
             }}
           >
-            {/* Header */}
+            {/* HEADER */}
 
-            <Text
-              className="font-bold mb-2"
-              style={{ fontSize: isLargeScreen ? 34 : 28 }}
-            >
-              Edit Budget
-            </Text>
+            <View className="mb-6">
+              <View className="flex-row items-center mb-2">
+                <Pressable onPress={() => router.back()} className="mr-3">
+                  <Ionicons name="arrow-back" size={22} color="#111" />
+                </Pressable>
 
-            <Text className="text-gray-500 mb-6">
-              Update your spending limit
-            </Text>
+                <Text
+                  className="font-bold"
+                  style={{ fontSize: isTablet ? 34 : 28 }}
+                >
+                  Edit Budget
+                </Text>
+              </View>
 
-            {/* Form Card */}
+              <Text className="text-gray-500">
+                Update your monthly spending limit
+              </Text>
+            </View>
 
-            <View className="bg-white rounded-2xl p-5 shadow-sm">
-              {/* Error Alert */}
+            {/* FORM CARD */}
+
+            <View className="bg-white rounded-2xl p-6 shadow-sm">
+              {/* ERROR */}
 
               {error && (
-                <View className="flex-row items-center bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <View className="flex-row items-center bg-red-50 border border-red-200 rounded-lg p-3 mb-5">
                   <Ionicons
                     name="alert-circle-outline"
                     size={18}
@@ -143,9 +162,9 @@ export default function EditBudgetScreen() {
                 </View>
               )}
 
-              {/* Category */}
+              {/* CATEGORY */}
 
-              <View className="mb-4">
+              <View className="mb-5">
                 <Input
                   label="Category"
                   value={category}
@@ -154,9 +173,9 @@ export default function EditBudgetScreen() {
                 />
               </View>
 
-              {/* Limit */}
+              {/* LIMIT */}
 
-              <View className="mb-5">
+              <View className="mb-6">
                 <Input
                   label="Monthly Limit (₹)"
                   keyboardType="numeric"
@@ -166,7 +185,7 @@ export default function EditBudgetScreen() {
                 />
               </View>
 
-              {/* Button */}
+              {/* UPDATE BUTTON */}
 
               <Button
                 title="Update Budget"
@@ -177,6 +196,17 @@ export default function EditBudgetScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* FULLSCREEN LOADING OVERLAY */}
+
+      {loading && (
+        <View className="absolute inset-0 bg-black/20 items-center justify-center">
+          <View className="bg-white px-6 py-5 rounded-xl items-center shadow-md">
+            <ActivityIndicator size="large" color="#2563eb" />
+            <Text className="text-gray-600 mt-2">Updating budget...</Text>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

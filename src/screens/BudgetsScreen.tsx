@@ -21,6 +21,8 @@ export default function BudgetsScreen() {
   const [budgets, setBudgets] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedBudget, setSelectedBudget] = useState<any | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -136,7 +138,6 @@ export default function BudgetsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
       {/* DELETE MODAL */}
-
       <Modal transparent visible={showConfirm} animationType="fade">
         <View className="flex-1 bg-black/50 justify-center items-center px-6">
           <View className="bg-white rounded-2xl p-6 w-full max-w-md">
@@ -161,6 +162,127 @@ export default function BudgetsScreen() {
                 <Text className="text-white font-semibold">Delete</Text>
               </Pressable>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Budget Details Modal */}
+      {/* Budget Details Modal */}
+      <Modal visible={showDetails} transparent animationType="slide">
+        <View className="flex-1 bg-black/40 justify-end">
+          <View className="bg-white rounded-t-3xl px-6 pt-4 pb-8">
+            {selectedBudget && (
+              <>
+                {/* HANDLE */}
+                <View className="w-14 h-1.5 bg-gray-300 rounded-full self-center mb-6" />
+
+                {/* HEADER */}
+                <View className="flex-row items-center mb-6">
+                  <View className="bg-blue-100 p-3 rounded-xl mr-3">
+                    <Ionicons name="wallet-outline" size={22} color="#2563eb" />
+                  </View>
+
+                  <View>
+                    <Text className="text-2xl font-bold text-gray-900">
+                      {selectedBudget.category}
+                    </Text>
+
+                    <Text className="text-gray-500">Budget Details</Text>
+                  </View>
+                </View>
+
+                {/* LIMIT */}
+                <View className="bg-gray-100 p-4 rounded-xl mb-3 flex-row justify-between">
+                  <Text className="text-gray-500">Monthly Limit</Text>
+                  <Text className="text-lg font-bold">
+                    ₹{selectedBudget.limit}
+                  </Text>
+                </View>
+
+                {/* SPENT */}
+                <View className="bg-gray-100 p-4 rounded-xl mb-3 flex-row justify-between">
+                  <Text className="text-gray-500">Spent</Text>
+                  <Text className="text-lg font-bold text-red-500">
+                    ₹{selectedBudget.spent || 0}
+                  </Text>
+                </View>
+
+                {/* REMAINING */}
+                <View className="bg-gray-100 p-4 rounded-xl mb-4 flex-row justify-between">
+                  <Text className="text-gray-500">Remaining</Text>
+                  <Text className="text-lg font-bold text-green-600">
+                    ₹{selectedBudget.limit - (selectedBudget.spent || 0)}
+                  </Text>
+                </View>
+
+                {/* PROGRESS BAR */}
+                <View className="mb-5">
+                  <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                    <View
+                      style={{
+                        width: `${Math.min(
+                          ((selectedBudget.spent || 0) / selectedBudget.limit) *
+                            100,
+                          100,
+                        )}%`,
+                      }}
+                      className="h-full bg-blue-600"
+                    />
+                  </View>
+
+                  <Text className="text-gray-400 text-xs mt-1 text-right">
+                    {Math.round(
+                      ((selectedBudget.spent || 0) / selectedBudget.limit) *
+                        100,
+                    )}
+                    % used
+                  </Text>
+                </View>
+
+                {/* MONTH */}
+                <View className="bg-gray-100 p-4 rounded-xl mb-6 flex-row justify-between">
+                  <Text className="text-gray-500">Month</Text>
+                  <Text className="text-gray-800 font-semibold">
+                    {selectedBudget.month}
+                  </Text>
+                </View>
+
+                {/* ACTION BUTTONS */}
+                <View className="flex-row">
+                  <Pressable
+                    onPress={() => {
+                      setShowDetails(false);
+                      router.push(`/edit-budget/${selectedBudget._id}`);
+                    }}
+                    className="flex-1 bg-blue-600 py-3 rounded-xl mr-2 items-center flex-row justify-center"
+                  >
+                    <Ionicons name="create-outline" size={18} color="white" />
+                    <Text className="text-white font-semibold ml-2">Edit</Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      setShowDetails(false);
+                      confirmDelete(selectedBudget._id);
+                    }}
+                    className="flex-1 bg-red-500 py-3 rounded-xl ml-2 items-center flex-row justify-center"
+                  >
+                    <Ionicons name="trash-outline" size={18} color="white" />
+                    <Text className="text-white font-semibold ml-2">
+                      Delete
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {/* CLOSE BUTTON */}
+                <Pressable
+                  onPress={() => setShowDetails(false)}
+                  className="mt-5 items-center"
+                >
+                  <Text className="text-gray-400 font-medium">Close</Text>
+                </Pressable>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -261,9 +383,14 @@ export default function BudgetsScreen() {
                 overshootRight={false}
               >
                 <BudgetCard
+                  id={b._id}
                   category={b.category}
                   limit={b.limit}
                   spent={b.spent || 0}
+                  onPress={() => {
+                    setSelectedBudget(b);
+                    setShowDetails(true);
+                  }}
                 />
               </Swipeable>
             ))

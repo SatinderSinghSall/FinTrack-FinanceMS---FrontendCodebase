@@ -6,6 +6,7 @@ interface BudgetCardProps {
   category: string;
   limit: number;
   spent: number;
+  onPress?: () => void;
 }
 
 export default function BudgetCard({
@@ -13,6 +14,7 @@ export default function BudgetCard({
   category,
   limit,
   spent,
+  onPress,
 }: BudgetCardProps) {
   const percentage = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
 
@@ -20,7 +22,10 @@ export default function BudgetCard({
   const remaining = limit - spent;
 
   return (
-    <Pressable className="bg-white rounded-2xl p-5 mb-4 shadow-sm">
+    <Pressable
+      onPress={onPress}
+      className="bg-white rounded-2xl p-5 mb-4 shadow-sm"
+    >
       {/* HEADER */}
 
       <View className="flex-row justify-between items-center mb-3">

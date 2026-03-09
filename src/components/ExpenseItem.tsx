@@ -1,4 +1,4 @@
-import { View, Text } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 interface ExpenseItemProps {
@@ -6,6 +6,7 @@ interface ExpenseItemProps {
   amount: number;
   category: string;
   date: string;
+  onPress?: () => void;
 }
 
 export default function ExpenseItem({
@@ -13,9 +14,10 @@ export default function ExpenseItem({
   amount,
   category,
   date,
+  onPress,
 }: ExpenseItemProps) {
   return (
-    <View className="bg-white rounded-2xl p-4 mb-4">
+    <Pressable onPress={onPress} className="bg-white rounded-2xl p-4 mb-4">
       {/* Top Row */}
       <View className="flex-row justify-between items-center">
         <View className="flex-row items-center">
@@ -35,6 +37,6 @@ export default function ExpenseItem({
           {new Date(date).toLocaleDateString()}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
