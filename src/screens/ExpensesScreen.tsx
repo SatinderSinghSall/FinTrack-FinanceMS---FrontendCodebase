@@ -16,6 +16,7 @@ import { Swipeable } from "react-native-gesture-handler";
 import { useRouter } from "expo-router";
 import api from "../services/api";
 import ExpenseItem from "../components/ExpenseItem";
+import Toast from "react-native-toast-message";
 
 export default function ExpensesScreen() {
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -68,9 +69,22 @@ export default function ExpensesScreen() {
 
     try {
       await api.delete(`/expenses/${selectedId}`);
+
+      Toast.show({
+        type: "success",
+        text1: "Expense deleted",
+        text2: "The expense was removed successfully",
+        position: "top",
+      });
+
       fetchExpenses();
-    } catch {
-      alert("Failed to delete expense");
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Delete failed",
+        text2: "Unable to delete this expense",
+        position: "top",
+      });
     } finally {
       setConfirmDelete(false);
       setSelectedId(null);
@@ -381,24 +395,48 @@ export default function ExpensesScreen() {
 
           {/* EXPENSE LIST */}
 
-          {paginatedExpenses.map((e) => (
-            <Swipeable
-              key={e._id}
-              renderLeftActions={() => renderLeftActions(e._id)}
-              renderRightActions={() => renderRightActions(e._id)}
-            >
-              <ExpenseItem
-                title={e.title}
-                amount={e.amount}
-                category={e.category}
-                date={e.date}
-                onPress={() => {
-                  setSelectedExpense(e);
-                  setShowDetails(true);
-                }}
-              />
-            </Swipeable>
-          ))}
+          {paginatedExpenses.length === 0 ? (
+            <View className="bg-white rounded-xl p-8 items-center">
+              <Ionicons name="cash-outline" size={40} color="#9ca3af" />
+
+              <Text className="text-gray-500 mt-3 text-center font-medium">
+                No expenses yet
+              </Text>
+
+              <Text className="text-gray-400 text-xs mt-1 text-center">
+                Start tracking your spending by adding your first expense.
+              </Text>
+
+              <Pressable
+                onPress={() => router.push("/add-expense")}
+                className="mt-4 bg-red-600 px-5 py-2 rounded-lg flex-row items-center"
+              >
+                <Ionicons name="add-circle-outline" size={16} color="white" />
+                <Text className="text-white ml-2 font-semibold">
+                  Add Expense
+                </Text>
+              </Pressable>
+            </View>
+          ) : (
+            paginatedExpenses.map((e) => (
+              <Swipeable
+                key={e._id}
+                renderLeftActions={() => renderLeftActions(e._id)}
+                renderRightActions={() => renderRightActions(e._id)}
+              >
+                <ExpenseItem
+                  title={e.title}
+                  amount={e.amount}
+                  category={e.category}
+                  date={e.date}
+                  onPress={() => {
+                    setSelectedExpense(e);
+                    setShowDetails(true);
+                  }}
+                />
+              </Swipeable>
+            ))
+          )}
 
           {/* PAGINATION */}
 

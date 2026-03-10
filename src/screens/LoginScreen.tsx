@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Button from "../components/Button";
 import { useAuthStore } from "../store/auth.store";
 import { useRouter } from "expo-router";
+import Toast from "react-native-toast-message";
 
 export default function LoginScreen() {
   const login = useAuthStore((s) => s.login);
@@ -35,6 +36,13 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     if (!email || !password) {
       setError("Please enter your email and password");
+
+      Toast.show({
+        type: "error",
+        text1: "Login Failed",
+        text2: "Please enter your email and password",
+      });
+
       return;
     }
 
@@ -46,7 +54,19 @@ export default function LoginScreen() {
     if (errorMessage) {
       setError(errorMessage);
       setLoading(false);
+
+      Toast.show({
+        type: "error",
+        text1: "Login Failed",
+        text2: errorMessage,
+      });
     } else {
+      Toast.show({
+        type: "success",
+        text1: "Login Successful",
+        text2: "Welcome back!",
+      });
+
       router.replace("/(tabs)/dashboard");
     }
   };

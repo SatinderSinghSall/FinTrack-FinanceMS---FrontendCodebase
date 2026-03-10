@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Input from "../../src/components/Input";
 import Button from "../../src/components/Button";
 import api from "../../src/services/api";
+import Toast from "react-native-toast-message";
 
 export default function EditBudgetScreen() {
   const router = useRouter();
@@ -66,6 +67,14 @@ export default function EditBudgetScreen() {
   const handleUpdate = async () => {
     if (!category || !limit) {
       setError("Please fill all fields before updating.");
+
+      Toast.show({
+        type: "error",
+        text1: "Missing fields",
+        text2: "Please fill all fields before updating.",
+        position: "top",
+      });
+
       return;
     }
 
@@ -78,9 +87,27 @@ export default function EditBudgetScreen() {
         limit: Number(limit),
       });
 
-      router.back();
+      Toast.show({
+        type: "success",
+        text1: "Budget updated",
+        text2: `${category} budget updated successfully`,
+        position: "top",
+      });
+
+      setTimeout(() => {
+        router.back();
+      }, 700);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update budget.");
+      const message = err.response?.data?.message || "Failed to update budget.";
+
+      setError(message);
+
+      Toast.show({
+        type: "error",
+        text1: "Update failed",
+        text2: message,
+        position: "top",
+      });
     } finally {
       setLoading(false);
     }

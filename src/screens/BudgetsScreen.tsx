@@ -16,6 +16,7 @@ import { Swipeable } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../services/api";
 import BudgetCard from "../components/BudgetCard";
+import Toast from "react-native-toast-message";
 
 export default function BudgetsScreen() {
   const [budgets, setBudgets] = useState<any[]>([]);
@@ -72,9 +73,22 @@ export default function BudgetsScreen() {
 
     try {
       await api.delete(`/budgets/${selectedId}`);
+
+      Toast.show({
+        type: "success",
+        text1: "Budget deleted",
+        text2: "The budget was removed successfully",
+        position: "top",
+      });
+
       fetchBudgets();
-    } catch {
-      alert("Failed to delete budget");
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Delete failed",
+        text2: "Unable to delete this budget",
+        position: "top",
+      });
     } finally {
       setShowConfirm(false);
       setSelectedId(null);
@@ -166,7 +180,6 @@ export default function BudgetsScreen() {
         </View>
       </Modal>
 
-      {/* Budget Details Modal */}
       {/* Budget Details Modal */}
       <Modal visible={showDetails} transparent animationType="slide">
         <View className="flex-1 bg-black/40 justify-end">
@@ -367,11 +380,26 @@ export default function BudgetsScreen() {
           {/* BUDGET LIST */}
 
           {paginatedBudgets.length === 0 ? (
-            <View className="bg-white rounded-xl p-6 items-center">
-              <Ionicons name="wallet-outline" size={40} color="#9ca3af" />
-              <Text className="text-gray-500 mt-3 text-center">
-                No budgets found
+            <View className="bg-white rounded-xl p-8 items-center">
+              <Ionicons name="wallet-outline" size={42} color="#9ca3af" />
+
+              <Text className="text-gray-600 mt-3 font-medium text-center">
+                No budgets yet
               </Text>
+
+              <Text className="text-gray-400 text-xs mt-1 text-center">
+                Create a budget to control your monthly spending.
+              </Text>
+
+              <Pressable
+                onPress={() => router.push("/add-budget")}
+                className="mt-4 bg-blue-600 px-5 py-2 rounded-lg flex-row items-center"
+              >
+                <Ionicons name="add-circle-outline" size={16} color="white" />
+                <Text className="text-white ml-2 font-semibold">
+                  Add Budget
+                </Text>
+              </Pressable>
             </View>
           ) : (
             paginatedBudgets.map((b) => (

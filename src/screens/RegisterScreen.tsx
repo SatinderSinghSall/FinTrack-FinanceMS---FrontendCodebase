@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Button from "../components/Button";
 import { useAuthStore } from "../store/auth.store";
 import { useRouter } from "expo-router";
+import Toast from "react-native-toast-message";
 
 export default function RegisterScreen() {
   const register = useAuthStore((s) => s.register);
@@ -37,6 +38,13 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     if (!name || !email || !password) {
       setError("All fields are required");
+
+      Toast.show({
+        type: "error",
+        text1: "Registration Failed",
+        text2: "All fields are required",
+      });
+
       return;
     }
 
@@ -48,7 +56,19 @@ export default function RegisterScreen() {
     if (errorMessage) {
       setError(errorMessage);
       setLoading(false);
+
+      Toast.show({
+        type: "error",
+        text1: "Registration Failed",
+        text2: errorMessage,
+      });
     } else {
+      Toast.show({
+        type: "success",
+        text1: "Account Created",
+        text2: "Your account was created successfully",
+      });
+
       router.replace("/(tabs)/dashboard");
     }
   };

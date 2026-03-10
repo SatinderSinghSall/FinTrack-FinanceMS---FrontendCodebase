@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import api from "../../src/services/api";
 import { useAuthStore } from "../../src/store/auth.store";
+import Toast from "react-native-toast-message";
 
 export default function ProfileScreen() {
   const logout = useAuthStore((s) => s.logout);
@@ -48,7 +49,17 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     const doLogout = () => {
       logout();
-      router.replace("/landing");
+
+      Toast.show({
+        type: "success",
+        text1: "Logged out",
+        text2: "You have been successfully logged out",
+        position: "top",
+      });
+
+      setTimeout(() => {
+        router.replace("/landing");
+      }, 500);
     };
 
     if (Platform.OS === "web") {

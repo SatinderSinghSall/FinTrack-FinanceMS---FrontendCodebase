@@ -6,6 +6,7 @@ import { useAuthStore } from "../src/store/auth.store";
 
 import { useFonts } from "expo-font";
 import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
 
 export default function RootLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -20,17 +21,22 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }}>
-        {!isAuthenticated ? (
-          <>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="login" />
-            <Stack.Screen name="register" />
-          </>
-        ) : (
-          <Stack.Screen name="(tabs)" />
-        )}
-      </Stack>
+      <>
+        <Stack screenOptions={{ headerShown: false }}>
+          {!isAuthenticated ? (
+            <>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="login" />
+              <Stack.Screen name="register" />
+            </>
+          ) : (
+            <Stack.Screen name="(tabs)" />
+          )}
+        </Stack>
+
+        {/* Toast Provider */}
+        <Toast />
+      </>
     </GestureHandlerRootView>
   );
 }

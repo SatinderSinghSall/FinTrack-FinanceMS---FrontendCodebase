@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Input from "../../src/components/Input";
 import Button from "../../src/components/Button";
 import api from "../../src/services/api";
+import Toast from "react-native-toast-message";
 
 export default function EditExpenseScreen() {
   const router = useRouter();
@@ -65,7 +66,16 @@ export default function EditExpenseScreen() {
 
   const handleUpdate = async () => {
     if (!title || !amount || !category) {
-      setError("Please fill all fields before updating.");
+      const message = "Please fill all fields before updating.";
+      setError(message);
+
+      Toast.show({
+        type: "error",
+        text1: "Missing fields",
+        text2: message,
+        position: "top",
+      });
+
       return;
     }
 
@@ -79,9 +89,28 @@ export default function EditExpenseScreen() {
         category,
       });
 
-      router.back();
+      Toast.show({
+        type: "success",
+        text1: "Expense updated",
+        text2: `${title} updated successfully`,
+        position: "top",
+      });
+
+      setTimeout(() => {
+        router.back();
+      }, 700);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update expense.");
+      const message =
+        err.response?.data?.message || "Failed to update expense.";
+
+      setError(message);
+
+      Toast.show({
+        type: "error",
+        text1: "Update failed",
+        text2: message,
+        position: "top",
+      });
     } finally {
       setLoading(false);
     }
