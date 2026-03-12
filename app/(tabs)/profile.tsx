@@ -16,6 +16,7 @@ import { router } from "expo-router";
 import api from "../../src/services/api";
 import { useAuthStore } from "../../src/store/auth.store";
 import Toast from "react-native-toast-message";
+import Constants from "expo-constants";
 
 export default function ProfileScreen() {
   const logout = useAuthStore((s) => s.logout);
@@ -26,6 +27,12 @@ export default function ProfileScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
   const isDesktop = width >= 1024;
+
+  const appVersion = Constants.expoConfig?.version ?? "1.0.0";
+  const buildNumber =
+    Constants.expoConfig?.ios?.buildNumber ||
+    Constants.expoConfig?.android?.versionCode ||
+    "1";
 
   const fetchProfile = async () => {
     try {
@@ -190,6 +197,16 @@ export default function ProfileScreen() {
             <Divider />
 
             <ProfileItem icon="document-text-outline" label="Privacy Policy" />
+          </View>
+
+          {/* VERSION INFO */}
+
+          <View className="items-center mt-8 mb-2">
+            <View className="h-[1px] bg-gray-200 w-full mb-4 opacity-60" />
+
+            <Text className="text-gray-400 text-xs tracking-wide">
+              Version {appVersion} • Build {buildNumber}
+            </Text>
           </View>
 
           {/* LOGOUT */}

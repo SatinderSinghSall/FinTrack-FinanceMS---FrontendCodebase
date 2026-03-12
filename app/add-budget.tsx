@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   useWindowDimensions,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
@@ -179,6 +180,17 @@ export default function AddBudgetScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* FULLSCREEN LOADING OVERLAY */}
+
+      {loading && (
+        <View className="absolute inset-0 bg-black/20 items-center justify-center">
+          <View className="bg-white px-6 py-5 rounded-xl items-center shadow-md">
+            <ActivityIndicator size="large" color="#2563eb" />
+            <Text className="text-gray-600 mt-2">Creating budget...</Text>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
