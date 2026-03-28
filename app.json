@@ -2,7 +2,7 @@
   "expo": {
     "name": "FinTrack App",
     "slug": "fintrack-App",
-    "version": "1.7.0",
+    "version": "1.8.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mobileapp",
@@ -14,10 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "10"
+      "buildNumber": "11"
     },
     "android": {
-      "versionCode": 10,
+      "versionCode": 11,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
