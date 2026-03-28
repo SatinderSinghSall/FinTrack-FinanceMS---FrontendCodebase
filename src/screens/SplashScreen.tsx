@@ -13,14 +13,19 @@ export default function SplashScreen() {
 
   return (
     <LinearGradient
-      colors={["#0F172A", "#1E293B"]}
+      colors={["#020617", "#0F172A", "#1E293B"]}
       style={{
         flex: 1,
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "space-between",
+        paddingVertical: 80,
         paddingHorizontal: 24,
       }}
     >
+      {/* TOP EMPTY SPACE */}
+      <View />
+
+      {/* CENTER CONTENT */}
       <View
         style={{
           width: "100%",
@@ -28,51 +33,83 @@ export default function SplashScreen() {
           alignItems: "center",
         }}
       >
-        {/* App Logo */}
+        {/* LOGO WITH GLOW */}
         <View
           style={{
-            width: isLargeScreen ? 110 : 90,
-            height: isLargeScreen ? 110 : 90,
-            borderRadius: 24,
-            backgroundColor: "#334155",
+            width: isLargeScreen ? 120 : 100,
+            height: isLargeScreen ? 120 : 100,
+            borderRadius: 30,
+            backgroundColor: "#1E293B",
             alignItems: "center",
             justifyContent: "center",
-            marginBottom: 20,
+
+            // Premium glow
+            shadowColor: "#38BDF8",
+            shadowOpacity: 0.25,
+            shadowRadius: 20,
+            elevation: 12,
+
+            marginBottom: 24,
           }}
         >
           <Ionicons
             name="wallet-outline"
-            size={isLargeScreen ? 52 : 42}
-            color="white"
+            size={isLargeScreen ? 58 : 46}
+            color="#38BDF8"
           />
         </View>
 
-        {/* App Name */}
+        {/* APP NAME */}
         <Text
           style={{
             color: "white",
-            fontWeight: "800",
-            fontSize: isLargeScreen ? 40 : 32,
+            fontWeight: "900",
+            fontSize: isLargeScreen ? 42 : 34,
             letterSpacing: -1,
           }}
         >
           FinTrack
         </Text>
 
+        {/* TAGLINE */}
         <Text
           style={{
-            color: "#CBD5F5",
-            marginTop: 8,
-            marginBottom: 30,
+            color: "#94A3B8",
+            marginTop: 10,
+            marginBottom: 36,
             fontSize: 16,
             textAlign: "center",
           }}
         >
-          Smart finance tracking
+          Smart • Simple • Powerful Finance Tracking
         </Text>
 
-        {/* Loader */}
+        {/* LOADER */}
         <ActivityIndicator size="large" color="#38BDF8" />
+      </View>
+
+      {/* FOOTER (DEVELOPER CREDIT) */}
+      <View style={{ alignItems: "center" }}>
+        <Text
+          style={{
+            color: "#64748B",
+            fontSize: 12,
+            letterSpacing: 1,
+          }}
+        >
+          DEVELOPED BY
+        </Text>
+
+        <Text
+          style={{
+            color: "#E2E8F0",
+            fontSize: 14,
+            fontWeight: "600",
+            marginTop: 4,
+          }}
+        >
+          Satinder Singh Sall
+        </Text>
       </View>
     </LinearGradient>
   );

@@ -36,3 +36,11 @@ export default function Index() {
 
   return <View />;
 }
+
+// For Testing ONLY: Un
+
+// import CustomSplash from "../src/screens/SplashScreen";
+
+// export default function Index() {
+//   return <CustomSplash />;
+// }
