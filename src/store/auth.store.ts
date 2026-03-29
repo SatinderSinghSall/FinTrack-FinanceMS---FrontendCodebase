@@ -33,11 +33,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const res = await api.get("/profile");
 
+      if (!res.data?.user) {
+        await removeToken();
+        set({ user: null, isAuthenticated: false });
+        return;
+      }
+
       set({
         user: res.data.user,
         isAuthenticated: true,
       });
-    } catch {
+    } catch (err) {
       await removeToken();
       set({ user: null, isAuthenticated: false });
     }
