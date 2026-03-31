@@ -21,7 +21,8 @@ export default function DashboardScreen() {
   const [profile, setProfile] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [page, setPage] = useState(1);
+  const [expensePage, setExpensePage] = useState(1);
+  const [incomePage, setIncomePage] = useState(1);
   const PAGE_SIZE = 5;
 
   const { width } = useWindowDimensions();
@@ -30,8 +31,25 @@ export default function DashboardScreen() {
   /* ---------- Fetch Data ---------- */
 
   const fetchSummary = async () => {
-    const res = await api.get("/dashboard/summary");
-    setSummary(res.data);
+    const [dashboardRes, incomeRes] = await Promise.all([
+      api.get("/dashboard/summary"),
+      api.get("/income"),
+    ]);
+
+    const dashboard = dashboardRes.data;
+    const incomeList = incomeRes.data.data || [];
+
+    const totalIncome = incomeList.reduce(
+      (sum: number, i: any) => sum + i.amount,
+      0,
+    );
+
+    setSummary({
+      ...dashboard,
+      totalIncome,
+      income: incomeList,
+      remainingBalance: totalIncome - dashboard.totalExpenses,
+    });
   };
 
   const fetchProfile = async () => {
@@ -61,7 +79,7 @@ export default function DashboardScreen() {
     );
   }
 
-  const userName = profile.user.name;
+  const userName = profile?.user?.name || "User";
 
   /* ---------- Greeting ---------- */
 
@@ -86,17 +104,31 @@ export default function DashboardScreen() {
       ? Math.round(summary.totalExpenses / daysPassed)
       : 0;
 
-  const remainingBudget = summary.totalBudget - summary.totalExpenses;
+  const remainingBalance = (summary.totalIncome || 0) - summary.totalExpenses;
 
   /* ---------- Pagination ---------- */
 
   const expenses = summary.recentExpenses || [];
 
-  const startIndex = (page - 1) * PAGE_SIZE;
-  const paginatedExpenses = expenses.slice(startIndex, startIndex + PAGE_SIZE);
+  const expenseStart = (expensePage - 1) * PAGE_SIZE;
 
-  const totalPages = Math.ceil(expenses.length / PAGE_SIZE);
+  const paginatedExpenses = expenses.slice(
+    expenseStart,
+    expenseStart + PAGE_SIZE,
+  );
+
+  const totalExpensePages = Math.ceil(expenses.length / PAGE_SIZE);
   const hasBudget = summary.totalBudget > 0;
+
+  const incomeList = summary.income || [];
+  const incomeStart = (incomePage - 1) * PAGE_SIZE;
+
+  const paginatedIncome = incomeList.slice(
+    incomeStart,
+    incomeStart + PAGE_SIZE,
+  );
+
+  const totalIncomePages = Math.ceil(incomeList.length / PAGE_SIZE);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100" edges={["top"]}>
@@ -155,21 +187,32 @@ export default function DashboardScreen() {
 
             {/* Quick Actions */}
 
-            <View className="flex-row mt-5">
+            <View className="flex-row mt-5 justify-between">
+              {/* Income */}
               <TouchableOpacity
-                onPress={() => router.push("/add-expense")}
-                className="bg-white/20 px-4 py-2 rounded-lg mr-3 flex-row items-center"
+                onPress={() => router.push("/add-income")}
+                className="flex-1 bg-white/20 py-3 rounded-xl flex-row items-center justify-center mr-2"
               >
-                <Ionicons name="add" size={16} color="white" />
-                <Text className="text-white ml-1 font-medium">Expense</Text>
+                <Ionicons name="cash-outline" size={18} color="white" />
+                <Text className="text-white ml-2 font-semibold">Income</Text>
               </TouchableOpacity>
 
+              {/* Expense */}
+              <TouchableOpacity
+                onPress={() => router.push("/add-expense")}
+                className="flex-1 bg-white/20 py-3 rounded-xl flex-row items-center justify-center mx-1"
+              >
+                <Ionicons name="receipt-outline" size={18} color="white" />
+                <Text className="text-white ml-2 font-semibold">Expense</Text>
+              </TouchableOpacity>
+
+              {/* Budget */}
               <TouchableOpacity
                 onPress={() => router.push("/add-budget")}
-                className="bg-white/20 px-4 py-2 rounded-lg flex-row items-center"
+                className="flex-1 bg-white/20 py-3 rounded-xl flex-row items-center justify-center ml-2"
               >
-                <Ionicons name="wallet-outline" size={16} color="white" />
-                <Text className="text-white ml-1 font-medium">Budget</Text>
+                <Ionicons name="wallet-outline" size={18} color="white" />
+                <Text className="text-white ml-2 font-semibold">Budget</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -186,6 +229,13 @@ export default function DashboardScreen() {
 
             <StatCard
               icon="cash-outline"
+              color="#16a34a"
+              label="Total Income"
+              value={`₹${summary.totalIncome || 0}`}
+            />
+
+            <StatCard
+              icon="receipt-outline"
               color="#dc2626"
               label="Total Expenses"
               value={`₹${summary.totalExpenses}`}
@@ -202,7 +252,7 @@ export default function DashboardScreen() {
               icon="analytics-outline"
               color="#16a34a"
               label="Remaining"
-              value={`₹${remainingBudget}`}
+              value={`₹${remainingBalance}`}
             />
           </View>
 
@@ -300,7 +350,7 @@ export default function DashboardScreen() {
 
                 <Pressable
                   onPress={() => router.push("/add-expense")}
-                  className="bg-blue-600 px-5 py-2.5 rounded-lg flex-row items-center"
+                  className="bg-red-600 px-5 py-2.5 rounded-lg flex-row items-center"
                 >
                   <Ionicons name="add-outline" size={18} color="#fff" />
                   <Text className="text-white font-semibold ml-1">
@@ -335,23 +385,97 @@ export default function DashboardScreen() {
 
             {/* Pagination Controls */}
 
-            {totalPages > 1 && (
+            {totalExpensePages > 1 && (
               <View className="flex-row justify-between mt-4">
                 <TouchableOpacity
-                  disabled={page === 1}
-                  onPress={() => setPage(page - 1)}
+                  disabled={expensePage === 1}
+                  onPress={() => setExpensePage(expensePage - 1)}
                   className="bg-gray-100 px-4 py-2 rounded-lg"
                 >
                   <Text className="text-gray-700">Previous</Text>
                 </TouchableOpacity>
 
                 <Text className="text-gray-500 self-center">
-                  Page {page} / {totalPages}
+                  Page {expensePage} / {totalExpensePages}
                 </Text>
 
                 <TouchableOpacity
-                  disabled={page === totalPages}
-                  onPress={() => setPage(page + 1)}
+                  disabled={expensePage === totalExpensePages}
+                  onPress={() => setExpensePage(expensePage + 1)}
+                  className="bg-gray-100 px-4 py-2 rounded-lg"
+                >
+                  <Text className="text-gray-700">Next</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          {/* ---------- RECENT INCOMES ---------- */}
+          <View className="bg-white rounded-2xl p-5 shadow-sm mt-6">
+            <Text className="text-lg font-semibold mb-4">Recent Income</Text>
+
+            {paginatedIncome.length === 0 ? (
+              <View className="items-center py-8">
+                <View className="bg-gray-100 p-4 rounded-full mb-3">
+                  <Ionicons name="cash-outline" size={28} color="#9ca3af" />
+                </View>
+
+                <Text className="text-gray-700 font-semibold mb-1">
+                  No income yet
+                </Text>
+
+                <Text className="text-gray-500 text-sm text-center mb-4">
+                  Start tracking your earnings by adding your first income.
+                </Text>
+
+                <Pressable
+                  onPress={() => router.push("/add-income")}
+                  className="bg-green-600 px-5 py-2.5 rounded-lg flex-row items-center"
+                >
+                  <Ionicons name="add-outline" size={18} color="#fff" />
+                  <Text className="text-white font-semibold ml-1">
+                    Add Income
+                  </Text>
+                </Pressable>
+              </View>
+            ) : (
+              paginatedIncome.map((income: any) => (
+                <View
+                  key={income._id}
+                  className="flex-row justify-between items-center mb-4"
+                >
+                  <View className="flex-row items-center">
+                    <View className="bg-gray-100 p-2 rounded-lg">
+                      <Ionicons name="cash-outline" size={18} color="#16a34a" />
+                    </View>
+
+                    <Text className="ml-3 text-gray-800">{income.source}</Text>
+                  </View>
+
+                  <Text className="font-semibold text-green-600">
+                    +₹{income.amount}
+                  </Text>
+                </View>
+              ))
+            )}
+
+            {totalIncomePages > 1 && (
+              <View className="flex-row justify-between mt-4">
+                <TouchableOpacity
+                  disabled={incomePage === 1}
+                  onPress={() => setIncomePage(incomePage - 1)}
+                  className="bg-gray-100 px-4 py-2 rounded-lg"
+                >
+                  <Text className="text-gray-700">Previous</Text>
+                </TouchableOpacity>
+
+                <Text className="text-gray-500 self-center">
+                  Page {incomePage} / {totalIncomePages}
+                </Text>
+
+                <TouchableOpacity
+                  disabled={incomePage === totalIncomePages}
+                  onPress={() => setIncomePage(incomePage + 1)}
                   className="bg-gray-100 px-4 py-2 rounded-lg"
                 >
                   <Text className="text-gray-700">Next</Text>

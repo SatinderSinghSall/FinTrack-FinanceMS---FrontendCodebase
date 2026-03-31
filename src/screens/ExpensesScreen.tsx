@@ -397,7 +397,7 @@ export default function ExpensesScreen() {
 
           {paginatedExpenses.length === 0 ? (
             <View className="bg-white rounded-xl p-8 items-center">
-              <Ionicons name="cash-outline" size={40} color="#9ca3af" />
+              <Ionicons name="receipt-outline" size={40} color="#9ca3af" />
 
               <Text className="text-gray-500 mt-3 text-center font-medium">
                 No expenses yet

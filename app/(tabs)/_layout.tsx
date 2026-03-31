@@ -47,36 +47,40 @@ export default function TabsLayout() {
         },
       }}
     >
+      {/* DASHBOARD */}
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: "Dashboard",
-          tabBarIcon: ({ color, size }) => (
+          title: "Home",
+          tabBarIcon: ({ color }) => (
             <Ionicons name="grid-outline" size={22} color={color} />
           ),
         }}
       />
 
+      {/* BUDGET */}
       <Tabs.Screen
         name="budgets"
         options={{
-          title: "Budgets",
+          title: "Budget",
           tabBarIcon: ({ color }) => (
             <Ionicons name="wallet-outline" size={22} color={color} />
           ),
         }}
       />
 
+      {/* 🔥 NEW TRANSACTIONS TAB */}
       <Tabs.Screen
-        name="expenses"
+        name="transactions"
         options={{
-          title: "Expenses",
+          title: "Transactions",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="cash-outline" size={22} color={color} />
+            <Ionicons name="swap-horizontal-outline" size={22} color={color} />
           ),
         }}
       />
 
+      {/* ANALYTICS */}
       <Tabs.Screen
         name="analytics"
         options={{
@@ -87,6 +91,7 @@ export default function TabsLayout() {
         }}
       />
 
+      {/* PROFILE */}
       <Tabs.Screen
         name="profile"
         options={{
@@ -96,6 +101,10 @@ export default function TabsLayout() {
           ),
         }}
       />
+
+      {/* HIDDEN SCREENS */}
+      <Tabs.Screen name="expenses" options={{ href: null }} />
+      <Tabs.Screen name="income" options={{ href: null }} />
     </Tabs>
   );
 }

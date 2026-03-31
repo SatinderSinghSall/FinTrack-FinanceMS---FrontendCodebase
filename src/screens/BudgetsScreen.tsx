@@ -368,13 +368,13 @@ export default function BudgetsScreen() {
               <Text className="text-white font-semibold ml-2">Add Budget</Text>
             </Pressable>
 
-            <Pressable
+            {/* <Pressable
               onPress={() => router.push("/add-expense")}
               className="flex-1 ml-2 bg-gray-900 py-3 rounded-xl flex-row items-center justify-center"
             >
               <Ionicons name="cash-outline" size={18} color="#fff" />
               <Text className="text-white font-semibold ml-2">Add Expense</Text>
-            </Pressable>
+            </Pressable> */}
           </View>
 
           {/* BUDGET LIST */}

@@ -116,7 +116,6 @@ export default function ProfileScreen() {
           }}
         >
           {/* HEADER */}
-
           <Text
             className="font-bold mb-1"
             style={{ fontSize: isTablet ? 34 : 28 }}
@@ -129,17 +128,12 @@ export default function ProfileScreen() {
           </Text>
 
           {/* USER CARD */}
-
           <View className="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-gray-100 flex-row items-center">
-            {/* Avatar */}
-
             <View className="bg-blue-100 h-16 w-16 rounded-full items-center justify-center mr-4">
               <Text className="text-blue-600 font-bold text-xl">
                 {initials}
               </Text>
             </View>
-
-            {/* User Info */}
 
             <View className="flex-1">
               <Text className="text-lg font-semibold text-gray-900">
@@ -160,16 +154,15 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* STATS */}
-
-          <View className="flex-row mb-6">
+          {/* STATS (FIXED RESPONSIVE GRID) */}
+          <View className="flex-row flex-wrap justify-between mb-6">
             <StatCard
               icon="wallet-outline"
               color="#2563eb"
               label="Budgets"
               value={stats.budgetsCount}
               bg="bg-blue-50"
-              className="mr-3"
+              isTablet={isTablet}
             />
 
             <StatCard
@@ -178,39 +171,75 @@ export default function ProfileScreen() {
               label="Expenses"
               value={stats.expensesCount}
               bg="bg-red-50"
+              isTablet={isTablet}
+            />
+
+            <StatCard
+              icon="cash-outline"
+              color="#16a34a"
+              label="Income"
+              value={stats.incomeCount || 0}
+              bg="bg-green-50"
+              isTablet={isTablet}
             />
           </View>
 
-          {/* SETTINGS */}
+          {/* 🔥 QUICK ACTIONS */}
+          <View className="mb-6">
+            <Text className="text-gray-700 font-semibold mb-3">
+              Quick Actions
+            </Text>
 
+            <View className="flex-row justify-between">
+              {/* INCOME */}
+              <Pressable
+                onPress={() => router.push("/income")}
+                className="flex-1 bg-green-500 py-3 rounded-xl mr-2 flex-row items-center justify-center shadow-sm"
+              >
+                <Ionicons name="cash-outline" size={18} color="#fff" />
+                <Text className="text-white font-semibold ml-2">Income</Text>
+              </Pressable>
+
+              {/* EXPENSE */}
+              <Pressable
+                onPress={() => router.push("/expenses")}
+                className="flex-1 bg-red-500 py-3 rounded-xl mx-1 flex-row items-center justify-center shadow-sm"
+              >
+                <Ionicons name="receipt-outline" size={18} color="#fff" />
+                <Text className="text-white font-semibold ml-2">Expense</Text>
+              </Pressable>
+
+              {/* BUDGET */}
+              <Pressable
+                onPress={() => router.push("/add-budget")}
+                className="flex-1 bg-blue-600 py-3 rounded-xl ml-2 flex-row items-center justify-center shadow-sm"
+              >
+                <Ionicons name="wallet-outline" size={18} color="#fff" />
+                <Text className="text-white font-semibold ml-2">Budget</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* SETTINGS */}
           <View className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
             <ProfileItem icon="notifications-outline" label="Notifications" />
-
             <Divider />
-
             <ProfileItem icon="lock-closed-outline" label="Change Password" />
-
             <Divider />
-
             <ProfileItem icon="help-circle-outline" label="Help & Support" />
-
             <Divider />
-
             <ProfileItem icon="document-text-outline" label="Privacy Policy" />
           </View>
 
-          {/* VERSION INFO */}
-
+          {/* VERSION */}
           <View className="items-center mt-8 mb-2">
             <View className="h-[1px] bg-gray-200 w-full mb-4 opacity-60" />
-
             <Text className="text-gray-400 text-xs tracking-wide">
               Version {appVersion} • Build {buildNumber}
             </Text>
           </View>
 
           {/* LOGOUT */}
-
           <Pressable
             onPress={handleLogout}
             className="bg-red-600 py-4 rounded-xl flex-row items-center justify-center shadow-sm"
@@ -224,12 +253,15 @@ export default function ProfileScreen() {
   );
 }
 
-/* ---------------- STAT CARD ---------------- */
+/* ---------------- STAT CARD (FIXED) ---------------- */
 
-function StatCard({ icon, color, label, value, bg, className }: any) {
+function StatCard({ icon, color, label, value, bg, isTablet }: any) {
   return (
     <View
-      className={`flex-1 bg-white rounded-xl p-4 shadow-sm border border-gray-100 ${className}`}
+      className="bg-white rounded-xl p-4 shadow-md border border-gray-100 mb-3"
+      style={{
+        width: isTablet ? "32%" : "48%",
+      }}
     >
       <View className={`${bg} p-2 rounded-lg self-start`}>
         <Ionicons name={icon} size={20} color={color} />
