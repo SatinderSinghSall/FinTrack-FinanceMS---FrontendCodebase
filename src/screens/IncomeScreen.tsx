@@ -15,8 +15,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Swipeable } from "react-native-gesture-handler";
 import { useRouter } from "expo-router";
 import api from "../services/api";
-import ExpenseItem from "../components/ExpenseItem";
 import Toast from "react-native-toast-message";
+import IncomeItem from "../components/IncomeItem";
 
 export default function IncomeScreen() {
   const [income, setIncome] = useState<any[]>([]);
@@ -291,7 +291,7 @@ export default function IncomeScreen() {
                 renderLeftActions={() => renderLeftActions(i._id)}
                 renderRightActions={() => renderRightActions(i._id)}
               >
-                <ExpenseItem
+                <IncomeItem
                   title={i.source}
                   amount={i.amount}
                   category="Income"

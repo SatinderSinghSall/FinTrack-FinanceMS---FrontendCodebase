@@ -58,18 +58,7 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* BUDGET */}
-      <Tabs.Screen
-        name="budgets"
-        options={{
-          title: "Budget",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="wallet-outline" size={22} color={color} />
-          ),
-        }}
-      />
-
-      {/* 🔥 NEW TRANSACTIONS TAB */}
+      {/* TRANSACTIONS */}
       <Tabs.Screen
         name="transactions"
         options={{
@@ -105,6 +94,7 @@ export default function TabsLayout() {
       {/* HIDDEN SCREENS */}
       <Tabs.Screen name="expenses" options={{ href: null }} />
       <Tabs.Screen name="income" options={{ href: null }} />
+      <Tabs.Screen name="budgets" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -20,6 +20,7 @@ export default function DashboardScreen() {
   const [summary, setSummary] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const [expensePage, setExpensePage] = useState(1);
   const [incomePage, setIncomePage] = useState(1);
@@ -43,6 +44,19 @@ export default function DashboardScreen() {
       (sum: number, i: any) => sum + i.amount,
       0,
     );
+
+    // 🔔 Calculate notifications count
+    const now = new Date();
+
+    const expenseCount = (dashboard.recentExpenses || []).filter((e: any) => {
+      return new Date(e.date) > new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    }).length;
+
+    const incomeCount = incomeList.filter((i: any) => {
+      return new Date(i.date) > new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    }).length;
+
+    setNotificationCount(expenseCount + incomeCount + 1);
 
     setSummary({
       ...dashboard,
@@ -162,16 +176,42 @@ export default function DashboardScreen() {
                 className="font-bold text-gray-900"
                 style={{ fontSize: isLargeScreen ? 32 : 26 }}
               >
-                {userName} 👋
+                {userName}
               </Text>
             </View>
 
-            <TouchableOpacity
-              onPress={() => router.push("/profile")}
-              className="bg-blue-100 p-3 rounded-full"
-            >
-              <Ionicons name="person-outline" size={22} color="#2563eb" />
-            </TouchableOpacity>
+            <View className="flex-row items-center gap-3">
+              {/* 🔔 NOTIFICATION ICON */}
+              <Pressable
+                onPress={() => router.push("/notifications")}
+                className="relative"
+              >
+                <View className="bg-gray-200 p-3 rounded-full">
+                  <Ionicons
+                    name="notifications-outline"
+                    size={20}
+                    color="#111"
+                  />
+                </View>
+
+                {/* 🔴 BADGE */}
+                {notificationCount > 0 && (
+                  <View className="absolute -top-1 -right-1 bg-red-500 rounded-full min-w-[18px] h-[18px] items-center justify-center px-1">
+                    <Text className="text-white text-[10px] font-bold">
+                      {notificationCount > 9 ? "9+" : notificationCount}
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+
+              {/* 👤 PROFILE */}
+              <Pressable
+                onPress={() => router.push("/profile")}
+                className="bg-blue-100 p-3 rounded-full"
+              >
+                <Ionicons name="person-outline" size={22} color="#2563eb" />
+              </Pressable>
+            </View>
           </View>
 
           {/* ---------- BALANCE CARD ---------- */}

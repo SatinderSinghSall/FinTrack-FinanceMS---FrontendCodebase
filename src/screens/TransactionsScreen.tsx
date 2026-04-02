@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   TextInput,
   RefreshControl,
+  Pressable,
 } from "react-native";
 import { useEffect, useState, useMemo } from "react";
 import api from "../services/api";
@@ -155,6 +156,14 @@ export default function TransactionsScreen() {
             </Text>
           </View>
         </View>
+
+        <Pressable
+          onPress={() => router.push("/budgets")}
+          className="w-full mt-4 bg-blue-600 py-3 rounded-xl flex-row items-center justify-center"
+        >
+          <Ionicons name="add-circle-outline" size={18} color="#fff" />
+          <Text className="text-white font-semibold ml-2">Add Budget</Text>
+        </Pressable>
       </View>
 
       {/* 📄 LIST */}

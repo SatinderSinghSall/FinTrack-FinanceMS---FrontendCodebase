@@ -222,7 +222,17 @@ export default function ProfileScreen() {
 
           {/* SETTINGS */}
           <View className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-            <ProfileItem icon="notifications-outline" label="Notifications" />
+            <ProfileItem
+              icon="notifications-outline"
+              label="Notifications"
+              onPress={() => router.push("/notifications")}
+            />
+            <Divider />
+            <ProfileItem
+              icon="settings-outline"
+              label="Settings"
+              onPress={() => router.push("/settings")}
+            />
             <Divider />
             <ProfileItem icon="lock-closed-outline" label="Change Password" />
             <Divider />
@@ -276,9 +286,10 @@ function StatCard({ icon, color, label, value, bg, isTablet }: any) {
 
 /* ---------------- PROFILE ITEM ---------------- */
 
-function ProfileItem({ icon, label }: any) {
+function ProfileItem({ icon, label, onPress }: any) {
   return (
     <Pressable
+      onPress={onPress}
       android_ripple={{ color: "#e5e7eb" }}
       className="flex-row items-center px-4 py-4"
     >
