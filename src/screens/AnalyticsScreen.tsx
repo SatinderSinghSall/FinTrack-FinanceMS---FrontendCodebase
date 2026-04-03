@@ -11,9 +11,12 @@ import { useEffect, useState, useMemo } from "react";
 import api from "../services/api";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AppHeader from "../components/AppHeader";
+import { useNavigation } from "@react-navigation/native";
 
 export default function AnalyticsScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
 
   const [expenses, setExpenses] = useState<any[]>([]);
   const [income, setIncome] = useState<any[]>([]);
@@ -95,6 +98,12 @@ export default function AnalyticsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
+      {/* 🔥 HEADER */}
+      <AppHeader
+        title="Analytics"
+        showMenu
+        onMenuPress={() => navigation.openDrawer()}
+      />
       <ScrollView
         className="px-4 pt-3"
         showsVerticalScrollIndicator={false}

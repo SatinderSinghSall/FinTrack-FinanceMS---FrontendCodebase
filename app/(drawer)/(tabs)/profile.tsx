@@ -13,13 +13,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
-import api from "../../src/services/api";
-import { useAuthStore } from "../../src/store/auth.store";
+import api from "../../../src/services/api";
+import { useAuthStore } from "../../../src/store/auth.store";
 import Toast from "react-native-toast-message";
 import Constants from "expo-constants";
+import { useNavigation } from "@react-navigation/native";
+import AppHeader from "@/src/components/AppHeader";
 
 export default function ProfileScreen() {
   const logout = useAuthStore((s) => s.logout);
+  const navigation = useNavigation();
 
   const [profile, setProfile] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -97,7 +100,13 @@ export default function ProfileScreen() {
       .join("") ?? "U";
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100">
+    <SafeAreaView className="flex-1 bg-slate-50">
+      {/* 🔥 HEADER */}
+      <AppHeader
+        title="Profile"
+        showMenu
+        onMenuPress={() => navigation.openDrawer()}
+      />
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

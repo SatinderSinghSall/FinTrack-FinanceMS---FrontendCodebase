@@ -12,6 +12,8 @@ import api from "../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import AppHeader from "../components/AppHeader";
+import { useNavigation } from "@react-navigation/native";
 
 export default function TransactionsScreen() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -20,6 +22,7 @@ export default function TransactionsScreen() {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const router = useRouter();
+  const navigation = useNavigation();
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -95,6 +98,12 @@ export default function TransactionsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
+      {/* 🔥 PREMIUM HEADER */}
+      <AppHeader
+        title="Transactions"
+        showMenu
+        onMenuPress={() => navigation.openDrawer()}
+      />
       {/* 🔷 HEADER */}
       <View className="bg-blue-600 px-5 pt-4 pb-6 rounded-b-3xl">
         <Text className="text-white text-sm">Total Balance</Text>

@@ -12,7 +12,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import api from "../services/api";
+import AppHeader from "../components/AppHeader";
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -21,6 +23,7 @@ export default function DashboardScreen() {
   const [profile, setProfile] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const navigation = useNavigation();
 
   const [expensePage, setExpensePage] = useState(1);
   const [incomePage, setIncomePage] = useState(1);
@@ -148,14 +151,51 @@ export default function DashboardScreen() {
     <SafeAreaView className="flex-1 bg-gray-100" edges={["top"]}>
       <StatusBar barStyle="dark-content" />
 
+      {/* ✅ FIXED HEADER */}
+      <AppHeader
+        title={userName}
+        showMenu
+        onMenuPress={() => navigation.openDrawer()}
+        rightContent={
+          <View className="flex-row items-center gap-2">
+            {/* Notification */}
+            <Pressable
+              onPress={() => router.push("/notifications")}
+              className="relative"
+            >
+              <View className="bg-gray-200 p-2 rounded-full">
+                <Ionicons name="notifications-outline" size={18} />
+              </View>
+
+              {notificationCount > 0 && (
+                <View className="absolute -top-1 -right-1 bg-red-500 rounded-full min-w-[16px] h-[16px] items-center justify-center px-1">
+                  <Text className="text-white text-[9px] font-bold">
+                    {notificationCount > 9 ? "9+" : notificationCount}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+
+            {/* Profile */}
+            <Pressable
+              onPress={() => router.push("/profile")}
+              className="bg-blue-100 p-2 rounded-full"
+            >
+              <Ionicons name="person-outline" size={18} color="#2563eb" />
+            </Pressable>
+          </View>
+        }
+      />
+
+      {/* ✅ SCROLL CONTENT */}
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingTop: 28,
-          paddingBottom: 40,
+          paddingTop: 16,
+          paddingBottom: 100, // 👈 breathing space
         }}
         showsVerticalScrollIndicator={false}
       >

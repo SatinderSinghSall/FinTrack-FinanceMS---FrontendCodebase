@@ -47,7 +47,7 @@ export default function RootLayout() {
               <Stack.Screen name="register" />
             </>
           ) : (
-            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(drawer)" />
           )}
         </Stack>
 
