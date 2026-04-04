@@ -86,6 +86,22 @@ export default function CustomDrawer(props: any) {
             />
 
             <DrawerItem
+              label="Expense"
+              icon="cash-outline"
+              route="(tabs)/expenses"
+              active={pathname.includes("budgets")}
+              {...props}
+            />
+
+            <DrawerItem
+              label="Income"
+              icon="receipt-outline"
+              route="(tabs)/income"
+              active={pathname.includes("budgets")}
+              {...props}
+            />
+
+            <DrawerItem
               label="Budgets"
               icon="wallet-outline"
               route="(tabs)/budgets"

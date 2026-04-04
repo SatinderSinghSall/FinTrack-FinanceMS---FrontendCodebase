@@ -22,7 +22,7 @@ export default function IncomeItem({
       <View className="flex-row justify-between items-center">
         <View className="flex-row items-center">
           <View className="bg-green-100 p-2 rounded-full mr-3">
-            <Ionicons name="cash-outline" size={16} color="#16a34a" />
+            <Ionicons name="receipt-outline" size={16} color="#16a34a" />
           </View>
           <Text className="font-semibold text-base">{title}</Text>
         </View>

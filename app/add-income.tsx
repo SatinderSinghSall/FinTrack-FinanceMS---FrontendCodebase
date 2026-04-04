@@ -6,6 +6,7 @@ import {
   Platform,
   useWindowDimensions,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
@@ -83,6 +84,30 @@ export default function AddIncomeScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
+      {/* 🔝 TOP HEADER */}
+      <View className="flex-row items-center justify-between px-6 py-3 bg-white border-b border-gray-100">
+        {/* Back Button (modern container) */}
+        <Pressable
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace("/(tabs)");
+          }}
+          className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center"
+        >
+          <Ionicons name="arrow-back" size={20} color="#111827" />
+        </Pressable>
+
+        {/* Title */}
+        <Text className="text-base font-semibold text-gray-900 tracking-tight">
+          Add your Income
+        </Text>
+
+        {/* Right Action (future ready) */}
+        <Pressable className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center">
+          <Ionicons name="options-outline" size={20} color="#111827" />
+        </Pressable>
+      </View>
+
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}

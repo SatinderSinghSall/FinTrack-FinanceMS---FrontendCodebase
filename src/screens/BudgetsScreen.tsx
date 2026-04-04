@@ -151,6 +151,30 @@ export default function BudgetsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
+      {/* 🔝 TOP HEADER */}
+      <View className="flex-row items-center justify-between px-6 py-3 bg-white border-b border-gray-100">
+        {/* Back Button (modern container) */}
+        <Pressable
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace("/(tabs)");
+          }}
+          className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center"
+        >
+          <Ionicons name="arrow-back" size={20} color="#111827" />
+        </Pressable>
+
+        {/* Title */}
+        <Text className="text-base font-semibold text-gray-900 tracking-tight">
+          Budgets
+        </Text>
+
+        {/* Right Action (future ready) */}
+        <Pressable className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center">
+          <Ionicons name="options-outline" size={20} color="#111827" />
+        </Pressable>
+      </View>
+
       {/* DELETE MODAL */}
       <Modal transparent visible={showConfirm} animationType="fade">
         <View className="flex-1 bg-black/50 justify-center items-center px-6">
