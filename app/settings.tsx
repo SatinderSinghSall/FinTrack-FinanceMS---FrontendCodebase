@@ -22,7 +22,7 @@ export default function SettingsScreen() {
 
   const handleDelete = () => {
     setShowDeleteModal(false);
-    Linking.openURL("https://satindersinghsall.github.io/fintrack-privacy/");
+    Linking.openURL("https://fintrack-policy.vercel.app");
   };
 
   return (
