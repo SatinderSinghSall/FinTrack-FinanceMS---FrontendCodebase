@@ -15,7 +15,7 @@ export default function CustomDrawer(props: any) {
   const userName = user?.name || "User";
   const email = user?.email || "No email";
 
-  /* 🔥 LOGOUT */
+  /* LOGOUT */
   const handleLogout = () => {
     const doLogout = () => {
       logout();
@@ -46,33 +46,36 @@ export default function CustomDrawer(props: any) {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ flexGrow: 1 }}
     >
-      {/* 🔥 MAIN WRAPPER */}
-      <View className="flex-1 justify-between bg-white">
-        {/* 🔝 TOP SECTION */}
+      <View className="flex-1 justify-between bg-gray-50">
+        {/* TOP SECTION */}
         <View>
-          {/* 💎 HEADER */}
-          <View className="px-5 pt-12 pb-6 bg-blue-600 rounded-b-3xl">
-            {/* Avatar + Name */}
-            <View className="flex-row items-center mb-3">
-              <View className="bg-white/20 w-14 h-14 rounded-full items-center justify-center mr-3">
+          {/* HEADER */}
+          <View className="px-6 pt-16 pb-10 bg-blue-600 rounded-b-[40px]">
+            <View className="flex-row items-center">
+              {/* Avatar */}
+              <View className="w-14 h-14 rounded-full bg-white/20 items-center justify-center mr-4">
                 <Ionicons name="person" size={26} color="#fff" />
               </View>
 
-              <Text className="text-white font-semibold text-base">
-                {userName}
-              </Text>
-            </View>
+              {/* User Info */}
+              <View className="flex-1">
+                <Text className="text-white text-lg font-semibold">
+                  {userName}
+                </Text>
 
-            {/* ✅ EMAIL (FULL WIDTH NO CUT EVER) */}
-            <Text className="text-white/90 text-xs">{email}</Text>
+                <Text numberOfLines={1} className="text-white/80 text-sm mt-1">
+                  {email}
+                </Text>
+              </View>
+            </View>
           </View>
 
-          {/* 🔥 MENU */}
-          <View className="px-3 mt-6 space-y-2">
+          {/* MENU */}
+          <View className="px-4 mt-7">
             <DrawerItem
               label="Dashboard"
               icon="home-outline"
-              route="(tabs)"
+              route="(tabs)/dashboard"
               active={pathname === "/"}
               {...props}
             />
@@ -89,7 +92,7 @@ export default function CustomDrawer(props: any) {
               label="Expense"
               icon="cash-outline"
               route="(tabs)/expenses"
-              active={pathname.includes("budgets")}
+              active={pathname.includes("expenses")}
               {...props}
             />
 
@@ -97,7 +100,7 @@ export default function CustomDrawer(props: any) {
               label="Income"
               icon="receipt-outline"
               route="(tabs)/income"
-              active={pathname.includes("budgets")}
+              active={pathname.includes("income")}
               {...props}
             />
 
@@ -127,19 +130,22 @@ export default function CustomDrawer(props: any) {
           </View>
         </View>
 
-        {/* 🔻 FOOTER */}
-        <View className="px-5 pb-6">
+        {/* FOOTER */}
+        <View className="px-5 pb-7">
           <Text className="text-xs text-gray-400 text-center mb-4">
             Version {Constants.expoConfig?.version}
           </Text>
 
-          {/* 🔥 LOGOUT BUTTON */}
+          {/* LOGOUT */}
           <TouchableOpacity
             onPress={handleLogout}
-            className="bg-red-500 py-4 rounded-2xl flex-row items-center justify-center"
+            className="bg-red-500 py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
           >
             <Ionicons name="log-out-outline" size={18} color="#fff" />
-            <Text className="text-white font-semibold ml-2">Logout</Text>
+
+            <Text className="text-white font-semibold ml-2 text-sm">
+              Logout
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -147,7 +153,7 @@ export default function CustomDrawer(props: any) {
   );
 }
 
-/* ---------- PREMIUM ITEM ---------- */
+/* PREMIUM MENU ITEM */
 
 function DrawerItem({ label, icon, route, active, ...props }: any) {
   return (
@@ -156,15 +162,32 @@ function DrawerItem({ label, icon, route, active, ...props }: any) {
         router.push(`/${route}`);
         props.navigation.closeDrawer();
       }}
-      className={`flex-row items-center px-4 py-3 rounded-2xl ${
+      className={`flex-row items-center px-4 py-3 rounded-2xl mb-2 ${
         active ? "bg-blue-50" : "active:bg-gray-100"
       }`}
     >
-      <Ionicons name={icon} size={20} color={active ? "#2563eb" : "#374151"} />
+      {/* ACTIVE INDICATOR */}
+      {active && (
+        <View className="absolute left-0 h-6 w-1 bg-blue-600 rounded-r-full" />
+      )}
 
+      {/* ICON CONTAINER */}
+      <View
+        className={`w-9 h-9 rounded-xl items-center justify-center ${
+          active ? "bg-blue-100" : "bg-gray-100"
+        }`}
+      >
+        <Ionicons
+          name={icon}
+          size={18}
+          color={active ? "#2563eb" : "#6b7280"}
+        />
+      </View>
+
+      {/* LABEL */}
       <Text
-        className={`ml-3 text-sm font-medium ${
-          active ? "text-blue-600" : "text-gray-800"
+        className={`ml-3 text-sm font-semibold ${
+          active ? "text-blue-600" : "text-gray-700"
         }`}
       >
         {label}
