@@ -7,9 +7,13 @@ export default function DrawerLayout() {
       screenOptions={{
         headerShown: false,
         drawerType: "slide",
-        overlayColor: "rgba(0,0,0,0.3)",
+        overlayColor: "rgba(0,0,0,0.1)",
         drawerStyle: {
-          width: 280,
+          width: 300,
+          backgroundColor: "#ffffff",
+        },
+        sceneContainerStyle: {
+          backgroundColor: "#ffffff",
         },
       }}
       drawerContent={(props) => <CustomDrawer {...props} />}

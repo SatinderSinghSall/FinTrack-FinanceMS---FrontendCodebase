@@ -21,7 +21,6 @@ export default function RootLayout() {
     ...Ionicons.font,
   });
 
-  // ✅ Hooks must always run
   useEffect(() => {
     const run = async () => {
       const res = await checkAppUpdate();
@@ -31,7 +30,6 @@ export default function RootLayout() {
     run();
   }, []);
 
-  // ✅ Now it's safe
   if (!fontsLoaded) {
     return null;
   }

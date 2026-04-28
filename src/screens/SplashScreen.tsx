@@ -12,89 +12,105 @@ export default function SplashScreen() {
   const isLargeScreen = width >= 768;
 
   return (
-    <LinearGradient
-      colors={["#020617", "#0F172A", "#1E293B"]}
-      style={{
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingVertical: 80,
-        paddingHorizontal: 24,
-      }}
-    >
-      {/* TOP EMPTY SPACE */}
-      <View />
+    <View style={{ flex: 1, backgroundColor: "#020617" }}>
+      <LinearGradient
+        colors={["#020617", "#0B1220", "#111827"]}
+        style={{
+          position: "absolute",
+          width: "100%",
+          height: "100%",
+        }}
+      />
 
-      {/* CENTER CONTENT */}
+      <LinearGradient
+        colors={["rgba(56,189,248,0.12)", "transparent"]}
+        style={{
+          position: "absolute",
+          top: "25%",
+          alignSelf: "center",
+          width: 300,
+          height: 300,
+          borderRadius: 200,
+        }}
+      />
+
       <View
         style={{
-          width: "100%",
-          maxWidth: 420,
+          flex: 1,
+          justifyContent: "center",
           alignItems: "center",
+          paddingHorizontal: 28,
         }}
       >
-        {/* LOGO WITH GLOW */}
         <View
           style={{
-            width: isLargeScreen ? 120 : 100,
-            height: isLargeScreen ? 120 : 100,
-            borderRadius: 30,
-            backgroundColor: "#1E293B",
+            width: isLargeScreen ? 100 : 84,
+            height: isLargeScreen ? 100 : 84,
+            borderRadius: 26,
+            backgroundColor: "rgba(15,23,42,0.9)",
             alignItems: "center",
             justifyContent: "center",
 
-            // Premium glow
-            shadowColor: "#38BDF8",
-            shadowOpacity: 0.25,
-            shadowRadius: 20,
-            elevation: 12,
+            borderWidth: 1,
+            borderColor: "rgba(255,255,255,0.06)",
 
-            marginBottom: 24,
+            shadowColor: "#000",
+            shadowOpacity: 0.5,
+            shadowRadius: 30,
+            elevation: 10,
+
+            marginBottom: 26,
           }}
         >
           <Ionicons
             name="wallet-outline"
-            size={isLargeScreen ? 58 : 46}
+            size={isLargeScreen ? 50 : 40}
             color="#38BDF8"
           />
         </View>
 
-        {/* APP NAME */}
         <Text
           style={{
-            color: "white",
-            fontWeight: "900",
-            fontSize: isLargeScreen ? 42 : 34,
-            letterSpacing: -1,
+            color: "#F8FAFC",
+            fontSize: isLargeScreen ? 40 : 32,
+            fontWeight: "800",
+            letterSpacing: -0.4,
           }}
         >
           FinTrack
         </Text>
 
-        {/* TAGLINE */}
         <Text
           style={{
             color: "#94A3B8",
-            marginTop: 10,
-            marginBottom: 36,
-            fontSize: 16,
+            marginTop: 14,
+            fontSize: 15,
             textAlign: "center",
+            maxWidth: 240,
+            lineHeight: 22,
           }}
         >
-          Smart • Simple • Powerful Finance Tracking
+          Smart finance tracking, simplified.
         </Text>
 
-        {/* LOADER */}
-        <ActivityIndicator size="large" color="#38BDF8" />
+        <View style={{ marginTop: 44 }}>
+          <ActivityIndicator size="large" color="#38BDF8" />
+        </View>
       </View>
 
-      {/* FOOTER (DEVELOPER CREDIT) */}
-      <View style={{ alignItems: "center" }}>
+      <View
+        style={{
+          position: "absolute",
+          bottom: 48,
+          alignSelf: "center",
+          alignItems: "center",
+        }}
+      >
         <Text
           style={{
-            color: "#64748B",
-            fontSize: 12,
-            letterSpacing: 1,
+            color: "#475569",
+            fontSize: 11,
+            letterSpacing: 2,
           }}
         >
           DEVELOPED BY
@@ -103,14 +119,14 @@ export default function SplashScreen() {
         <Text
           style={{
             color: "#E2E8F0",
-            fontSize: 14,
-            fontWeight: "600",
-            marginTop: 4,
+            fontSize: 17,
+            fontWeight: "700",
+            marginTop: 6,
           }}
         >
           Satinder Singh Sall
         </Text>
       </View>
-    </LinearGradient>
+    </View>
   );
 }

@@ -33,7 +33,7 @@ export default function Input({
         autoComplete="off"
         selectionColor="#2563eb"
         cursorColor="#2563eb"
-        style={{ color: "#111827" }} // ✅ THIS IS THE FIX
+        style={{ color: "#111827" }}
         className="bg-white border border-gray-300 rounded-xl px-4 py-3"
       />
     </View>

@@ -23,75 +23,71 @@ export default function TabsLayout() {
         tabBarLabelStyle: {
           fontSize: 11,
           marginTop: -2,
-          fontWeight: "500",
+          fontWeight: "600",
         },
 
         tabBarItemStyle: {
-          paddingVertical: 4,
+          paddingVertical: 6,
         },
 
         tabBarStyle: {
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom,
-          paddingTop: 6,
+          height: 64 + insets.bottom,
+          paddingBottom: insets.bottom + 6,
+          paddingTop: 8,
 
           backgroundColor: "#ffffff",
 
-          borderTopWidth: 0.5,
-          borderTopColor: "#e5e7eb",
+          borderTopWidth: 1,
+          borderTopColor: "#f1f5f9",
 
-          elevation: 10,
+          elevation: 0,
+
           shadowColor: "#000",
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
+          shadowOpacity: 0.04,
+          shadowRadius: 10,
         },
       }}
     >
-      {/* DASHBOARD */}
       <Tabs.Screen
         name="dashboard"
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="grid-outline" size={22} color={color} />
+            <Ionicons name="grid-outline" size={24} color={color} />
           ),
         }}
       />
 
-      {/* TRANSACTIONS */}
       <Tabs.Screen
         name="transactions"
         options={{
           title: "Transactions",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="swap-horizontal-outline" size={22} color={color} />
+            <Ionicons name="swap-horizontal-outline" size={24} color={color} />
           ),
         }}
       />
 
-      {/* ANALYTICS */}
       <Tabs.Screen
         name="analytics"
         options={{
           title: "Analytics",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="bar-chart-outline" size={22} color={color} />
+            <Ionicons name="bar-chart-outline" size={24} color={color} />
           ),
         }}
       />
 
-      {/* PROFILE */}
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="person-outline" size={22} color={color} />
+            <Ionicons name="person-outline" size={24} color={color} />
           ),
         }}
       />
 
-      {/* HIDDEN SCREENS */}
       <Tabs.Screen name="expenses" options={{ href: null }} />
       <Tabs.Screen name="income" options={{ href: null }} />
       <Tabs.Screen name="budgets" options={{ href: null }} />

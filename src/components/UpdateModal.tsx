@@ -7,6 +7,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
 type Props = {
   visible: boolean;
@@ -28,62 +29,141 @@ export default function UpdateModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade">
-      <View className="flex-1 bg-black/60 items-center justify-center px-6">
+      <View className="flex-1 bg-black/50 items-center justify-center px-6">
         <View
-          className="bg-white rounded-[28px] px-6 py-7"
           style={{
             width: "100%",
             maxWidth: isDesktop ? 420 : isTablet ? 380 : "100%",
+            borderRadius: 28,
+            overflow: "hidden",
+
             shadowColor: "#000",
-            shadowOpacity: 0.15,
-            shadowRadius: 20,
-            elevation: 10,
+            shadowOpacity: 0.25,
+            shadowRadius: 30,
+            elevation: 20,
           }}
         >
-          {/* ICON */}
-          <View className="items-center mb-5">
-            <View className="bg-blue-100 p-4 rounded-full">
-              <Ionicons
-                name="cloud-download-outline"
-                size={30}
-                color="#2563eb"
-              />
-            </View>
-          </View>
-
-          {/* TITLE */}
-          <Text className="text-[20px] font-semibold text-center text-gray-900 mb-2">
-            Update Available
-          </Text>
-
-          {/* DESCRIPTION */}
-          <Text className="text-gray-500 text-center text-[14px] leading-5 mb-6 px-2">
-            A new version of FinTrack is available with performance improvements
-            and new features.
-          </Text>
-
-          {/* PRIMARY BUTTON */}
-          <Pressable
-            onPress={() => Linking.openURL(storeUrl)}
-            className="bg-blue-600 py-3.5 rounded-xl items-center flex-row justify-center active:opacity-80"
+          {/* GLASS / GRADIENT CARD */}
+          <LinearGradient
+            colors={["#ffffff", "#f8fafc"]}
+            style={{
+              paddingHorizontal: 24,
+              paddingVertical: 28,
+              borderRadius: 28,
+            }}
           >
-            <Ionicons name="download-outline" size={18} color="#fff" />
-            <Text className="text-white font-semibold text-[15px] ml-2">
-              Update Now
-            </Text>
-          </Pressable>
+            {/* ICON */}
+            <View className="items-center mb-6">
+              <View
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 999,
+                  alignItems: "center",
+                  justifyContent: "center",
 
-          {/* SECONDARY BUTTON */}
-          {!force && (
-            <Pressable
-              onPress={onClose}
-              className="mt-4 items-center active:opacity-60"
+                  backgroundColor: "rgba(37,99,235,0.08)",
+                }}
+              >
+                <View
+                  style={{
+                    width: 54,
+                    height: 54,
+                    borderRadius: 999,
+                    alignItems: "center",
+                    justifyContent: "center",
+
+                    backgroundColor: "#2563eb",
+                  }}
+                >
+                  <Ionicons
+                    name="cloud-download-outline"
+                    size={26}
+                    color="#fff"
+                  />
+                </View>
+              </View>
+            </View>
+
+            {/* TITLE */}
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: "700",
+                textAlign: "center",
+                color: "#0f172a",
+                marginBottom: 6,
+              }}
             >
-              <Text className="text-gray-400 text-[13px] font-medium">
-                Maybe Later
-              </Text>
+              Update Available
+            </Text>
+
+            {/* DESCRIPTION */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: "#64748b",
+                textAlign: "center",
+                lineHeight: 20,
+                marginBottom: 24,
+                paddingHorizontal: 8,
+              }}
+            >
+              A new version of FinTrack is available with improvements and new
+              features.
+            </Text>
+
+            {/* CTA BUTTON */}
+            <Pressable
+              onPress={() => Linking.openURL(storeUrl)}
+              style={({ pressed }) => ({
+                opacity: pressed ? 0.9 : 1,
+              })}
+            >
+              <LinearGradient
+                colors={["#2563eb", "#3b82f6"]}
+                style={{
+                  paddingVertical: 14,
+                  borderRadius: 14,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+
+                  shadowColor: "#2563eb",
+                  shadowOpacity: 0.3,
+                  shadowRadius: 12,
+                  elevation: 5,
+                }}
+              >
+                <Ionicons name="download-outline" size={18} color="#fff" />
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontWeight: "600",
+                    fontSize: 15,
+                    marginLeft: 8,
+                  }}
+                >
+                  Update Now
+                </Text>
+              </LinearGradient>
             </Pressable>
-          )}
+
+            {/* SECONDARY */}
+            {!force && (
+              <Pressable onPress={onClose} className="mt-5 items-center">
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: "#94a3b8",
+                    fontWeight: "500",
+                  }}
+                >
+                  Maybe later
+                </Text>
+              </Pressable>
+            )}
+          </LinearGradient>
         </View>
       </View>
     </Modal>
