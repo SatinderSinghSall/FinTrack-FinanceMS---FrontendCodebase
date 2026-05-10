@@ -119,6 +119,71 @@ export default function CustomDrawer(props: any) {
             active={pathname.includes("settings")}
             {...props}
           />
+
+          <TouchableOpacity
+            activeOpacity={0.92}
+            onPress={() => props.navigation.navigate("developer")}
+            className={`mt-4 rounded-[22px] border overflow-hidden ${
+              pathname.includes("developer")
+                ? "bg-[#F8FAFF] border-[#DCE4FF]"
+                : "bg-white border-[#ECECEC]"
+            }`}
+            style={{
+              shadowColor: "#000",
+              shadowOffset: {
+                width: 0,
+                height: 4,
+              },
+              shadowOpacity: 0.04,
+              shadowRadius: 12,
+              elevation: 2,
+            }}
+          >
+            {/* LEFT ACCENT */}
+            <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#6366F1]" />
+
+            <View className="px-4 py-[15px]">
+              {/* TOP ROW */}
+              <View className="flex-row items-start">
+                {/* ICON */}
+                <View className="w-11 h-11 rounded-[14px] bg-[#EEF2FF] items-center justify-center">
+                  <Ionicons name="sparkles-outline" size={19} color="#4F46E5" />
+                </View>
+
+                {/* TEXT CONTENT */}
+                <View className="flex-1 ml-3 pr-2">
+                  <Text
+                    numberOfLines={1}
+                    className="text-[14px] font-semibold tracking-[-0.2px] text-[#111827]"
+                  >
+                    Meet the Developer
+                  </Text>
+
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    className="text-[11px] leading-[16px] text-[#6B7280] mt-[3px]"
+                  >
+                    Skills, AI/ML, projects & tech stack
+                  </Text>
+                </View>
+
+                {/* RIGHT ICON */}
+                <View className="ml-2 mt-[2px]">
+                  <Ionicons name="chevron-forward" size={17} color="#9CA3AF" />
+                </View>
+              </View>
+
+              {/* EXPLORE BADGE */}
+              <View className="mt-3 ml-[56px]">
+                <View className="self-start px-3 py-[5px] rounded-full bg-[#EEF2FF] border border-[#DCE4FF]">
+                  <Text className="text-[9px] font-bold tracking-[0.5px] text-[#4F46E5]">
+                    EXPLORE PORTFOLIO
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* FOOTER */}
