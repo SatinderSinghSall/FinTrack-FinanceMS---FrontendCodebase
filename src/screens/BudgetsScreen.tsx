@@ -9,9 +9,9 @@ import {
   ActivityIndicator,
   TextInput,
 } from "react-native";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Swipeable } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../services/api";
@@ -51,9 +51,11 @@ export default function BudgetsScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchBudgets();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchBudgets();
+    }, []),
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);

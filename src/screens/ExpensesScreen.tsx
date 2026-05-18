@@ -10,10 +10,10 @@ import {
   TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Swipeable } from "react-native-gesture-handler";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import api from "../services/api";
 import ExpenseItem from "../components/ExpenseItem";
 import Toast from "react-native-toast-message";
@@ -52,9 +52,11 @@ export default function ExpensesScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchExpenses();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchExpenses();
+    }, []),
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
