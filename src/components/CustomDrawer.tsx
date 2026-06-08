@@ -105,6 +105,14 @@ export default function CustomDrawer(props: any) {
           />
 
           <DrawerItem
+            label="Savings"
+            icon="leaf-outline"
+            route="(tabs)/savings"
+            active={pathname.includes("savings")}
+            {...props}
+          />
+
+          <DrawerItem
             label="Analytics"
             icon="bar-chart-outline"
             route="(tabs)/analytics"

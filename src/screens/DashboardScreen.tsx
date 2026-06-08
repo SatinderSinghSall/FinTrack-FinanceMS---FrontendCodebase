@@ -32,16 +32,20 @@ export default function DashboardScreen() {
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768;
 
+  const [savings, setSavings] = useState<any[]>([]);
+
   /* ---------- Fetch Data ---------- */
 
   const fetchSummary = async () => {
-    const [dashboardRes, incomeRes] = await Promise.all([
+    const [dashboardRes, incomeRes, savingsRes] = await Promise.all([
       api.get("/dashboard/summary"),
       api.get("/income"),
+      api.get("/savings"),
     ]);
 
     const dashboard = dashboardRes.data;
     const incomeList = incomeRes.data.data || [];
+    const savingsList = savingsRes.data || [];
 
     const totalIncome = incomeList.reduce(
       (sum: number, i: any) => sum + i.amount,
@@ -60,6 +64,7 @@ export default function DashboardScreen() {
     }).length;
 
     setNotificationCount(expenseCount + incomeCount + 1);
+    setSavings(savingsList);
 
     setSummary({
       ...dashboard,
@@ -122,6 +127,11 @@ export default function DashboardScreen() {
       : 0;
 
   const remainingBalance = (summary.totalIncome || 0) - summary.totalExpenses;
+
+  const totalSavings = savings.reduce(
+    (sum: number, s: any) => sum + s.amount,
+    0,
+  );
 
   /* ---------- Pagination ---------- */
 
@@ -260,39 +270,54 @@ export default function DashboardScreen() {
             <Text className="text-white text-sm opacity-80">
               Remaining Balance
             </Text>
-
             <Text className="text-white text-3xl font-bold mt-2">
               ₹{summary.remainingBalance}
             </Text>
 
             {/* Quick Actions */}
-
-            <View className="flex-row mt-5 justify-between">
+            <View className="flex-row flex-wrap justify-between mt-5 gap-y-3">
               {/* Income */}
+
               <TouchableOpacity
                 onPress={() => router.push("/add-income")}
-                className="flex-1 bg-white/20 py-3 rounded-xl flex-row items-center justify-center mr-2"
+                className="w-[48.5%] bg-white/20 py-3 rounded-xl flex-row items-center justify-center"
               >
                 <Ionicons name="cash-outline" size={18} color="white" />
+
                 <Text className="text-white ml-2 font-semibold">Income</Text>
               </TouchableOpacity>
 
               {/* Expense */}
+
               <TouchableOpacity
                 onPress={() => router.push("/add-expense")}
-                className="flex-1 bg-white/20 py-3 rounded-xl flex-row items-center justify-center mx-1"
+                className="w-[48.5%] bg-white/20 py-3 rounded-xl flex-row items-center justify-center"
               >
                 <Ionicons name="receipt-outline" size={18} color="white" />
+
                 <Text className="text-white ml-2 font-semibold">Expense</Text>
               </TouchableOpacity>
 
               {/* Budget */}
+
               <TouchableOpacity
                 onPress={() => router.push("/add-budget")}
-                className="flex-1 bg-white/20 py-3 rounded-xl flex-row items-center justify-center ml-2"
+                className="w-[48.5%] bg-white/20 py-3 rounded-xl flex-row items-center justify-center"
               >
                 <Ionicons name="wallet-outline" size={18} color="white" />
+
                 <Text className="text-white ml-2 font-semibold">Budget</Text>
+              </TouchableOpacity>
+
+              {/* Savings */}
+
+              <TouchableOpacity
+                onPress={() => router.push("/add-saving")}
+                className="w-[48.5%] bg-white/20 py-3 rounded-xl flex-row items-center justify-center"
+              >
+                <Ionicons name="leaf-outline" size={18} color="white" />
+
+                <Text className="text-white ml-2 font-semibold">Savings</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -333,6 +358,13 @@ export default function DashboardScreen() {
               color="#16a34a"
               label="Remaining"
               value={`₹${remainingBalance}`}
+            />
+
+            <StatCard
+              icon="leaf-outline"
+              color="#059669"
+              label="Savings"
+              value={`₹${totalSavings}`}
             />
           </View>
 
@@ -561,6 +593,57 @@ export default function DashboardScreen() {
                   <Text className="text-gray-700">Next</Text>
                 </TouchableOpacity>
               </View>
+            )}
+          </View>
+
+          {/* ---------- RECENT SAVINGS ---------- */}
+          <View className="bg-white rounded-2xl p-5 shadow-sm mt-6">
+            <Text className="text-lg font-semibold mb-4">Recent Savings</Text>
+
+            {savings.length === 0 ? (
+              <View className="items-center py-8">
+                <View className="bg-emerald-50 p-4 rounded-full mb-3">
+                  <Ionicons name="leaf-outline" size={28} color="#059669" />
+                </View>
+
+                <Text className="text-gray-700 font-semibold mb-1">
+                  No savings yet
+                </Text>
+
+                <Text className="text-gray-500 text-sm text-center mb-4">
+                  Start building your financial future by adding savings.
+                </Text>
+
+                <Pressable
+                  onPress={() => router.push("/add-saving")}
+                  className="bg-emerald-600 px-5 py-2.5 rounded-lg flex-row items-center"
+                >
+                  <Ionicons name="add-outline" size={18} color="#fff" />
+
+                  <Text className="text-white font-semibold ml-1">
+                    Add Saving
+                  </Text>
+                </Pressable>
+              </View>
+            ) : (
+              savings.slice(0, 5).map((saving: any) => (
+                <View
+                  key={saving._id}
+                  className="flex-row justify-between items-center mb-4"
+                >
+                  <View className="flex-row items-center">
+                    <View className="bg-emerald-50 p-2 rounded-lg">
+                      <Ionicons name="leaf-outline" size={18} color="#059669" />
+                    </View>
+
+                    <Text className="ml-3 text-gray-800">{saving.goal}</Text>
+                  </View>
+
+                  <Text className="font-semibold text-emerald-600">
+                    ₹{saving.amount}
+                  </Text>
+                </View>
+              ))
             )}
           </View>
         </View>

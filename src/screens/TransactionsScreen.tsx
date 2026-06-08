@@ -166,12 +166,24 @@ export default function TransactionsScreen() {
           </View>
         </View>
 
+        {/* 💳 BUDGET BUTTON */}
         <Pressable
           onPress={() => router.push("/budgets")}
           className="w-full mt-4 bg-blue-600 py-3 rounded-xl flex-row items-center justify-center"
         >
-          <Ionicons name="add-circle-outline" size={18} color="#fff" />
+          <Ionicons name="wallet-outline" size={18} color="#fff" />
+
           <Text className="text-white font-semibold ml-2">Add Budget</Text>
+        </Pressable>
+
+        {/* 💚 SAVINGS BUTTON */}
+        <Pressable
+          onPress={() => router.push("/savings")}
+          className="w-full mt-3 bg-emerald-600 py-3 rounded-xl flex-row items-center justify-center"
+        >
+          <Ionicons name="leaf-outline" size={18} color="#fff" />
+
+          <Text className="text-white font-semibold ml-2">Add Savings</Text>
         </Pressable>
       </View>
 

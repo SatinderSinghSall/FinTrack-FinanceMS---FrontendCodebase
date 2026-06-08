@@ -163,68 +163,100 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* STATS (FIXED RESPONSIVE GRID) */}
-          <View className="flex-row flex-wrap justify-between mb-6">
-            <StatCard
-              icon="wallet-outline"
-              color="#2563eb"
-              label="Budgets"
-              value={stats.budgetsCount}
-              bg="bg-blue-50"
-              isTablet={isTablet}
-            />
+          {/* 🔥 STATS */}
+          <View className="mb-6">
+            <Text className="text-gray-800 font-semibold text-base mb-4">
+              Overview
+            </Text>
 
-            <StatCard
-              icon="cash-outline"
-              color="#dc2626"
-              label="Expenses"
-              value={stats.expensesCount}
-              bg="bg-red-50"
-              isTablet={isTablet}
-            />
+            <View className="flex-row flex-wrap justify-between gap-y-3">
+              <StatCard
+                icon="wallet-outline"
+                color="#2563eb"
+                label="Budgets"
+                value={stats.budgetsCount}
+                bg="bg-blue-50"
+                isTablet={isTablet}
+              />
 
-            <StatCard
-              icon="cash-outline"
-              color="#16a34a"
-              label="Income"
-              value={stats.incomeCount || 0}
-              bg="bg-green-50"
-              isTablet={isTablet}
-            />
+              <StatCard
+                icon="receipt-outline"
+                color="#dc2626"
+                label="Expenses"
+                value={stats.expensesCount}
+                bg="bg-red-50"
+                isTablet={isTablet}
+              />
+
+              <StatCard
+                icon="cash-outline"
+                color="#16a34a"
+                label="Income"
+                value={stats.incomeCount || 0}
+                bg="bg-green-50"
+                isTablet={isTablet}
+              />
+
+              <StatCard
+                icon="leaf-outline"
+                color="#059669"
+                label="Savings"
+                value={stats.savingsCount || 0}
+                bg="bg-emerald-50"
+                isTablet={isTablet}
+              />
+            </View>
           </View>
 
           {/* 🔥 QUICK ACTIONS */}
           <View className="mb-6">
-            <Text className="text-gray-700 font-semibold mb-3">
+            <Text className="text-gray-800 font-semibold text-base mb-4">
               Quick Actions
             </Text>
 
-            <View className="flex-row justify-between">
-              {/* INCOME */}
+            <View className="flex-row flex-wrap justify-between gap-y-3">
+              {/* 💰 INCOME */}
+
               <Pressable
                 onPress={() => router.push("/income")}
-                className="flex-1 bg-green-500 py-3 rounded-xl mr-2 flex-row items-center justify-center shadow-sm"
+                className="w-[48.5%] bg-green-500 py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
               >
                 <Ionicons name="cash-outline" size={18} color="#fff" />
+
                 <Text className="text-white font-semibold ml-2">Income</Text>
               </Pressable>
 
-              {/* EXPENSE */}
+              {/* 💸 EXPENSE */}
+
               <Pressable
                 onPress={() => router.push("/expenses")}
-                className="flex-1 bg-red-500 py-3 rounded-xl mx-1 flex-row items-center justify-center shadow-sm"
+                className="w-[48.5%] bg-red-500 py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
               >
                 <Ionicons name="receipt-outline" size={18} color="#fff" />
+
                 <Text className="text-white font-semibold ml-2">Expense</Text>
               </Pressable>
 
-              {/* BUDGET */}
+              {/* 💳 BUDGET */}
+
               <Pressable
-                onPress={() => router.push("/add-budget")}
-                className="flex-1 bg-blue-600 py-3 rounded-xl ml-2 flex-row items-center justify-center shadow-sm"
+                onPress={() => router.push("/budgets")}
+                className="w-[48.5%] bg-blue-600 py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
               >
                 <Ionicons name="wallet-outline" size={18} color="#fff" />
+
                 <Text className="text-white font-semibold ml-2">Budget</Text>
+              </Pressable>
+
+              {/* 💚 SAVINGS */}
+
+              <Pressable
+                onPress={() => router.push("/savings")}
+                className="w-[48.5%] bg-emerald-600 py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
+              >
+                <Ionicons name="leaf-outline" size={18} color="#fff" />
+
+                <Text className="text-white font-semibold ml-2">Savings</Text>
               </Pressable>
             </View>
           </View>

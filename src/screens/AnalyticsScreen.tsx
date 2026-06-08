@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
+
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState, useMemo } from "react";
 import api from "../services/api";
@@ -21,6 +22,7 @@ export default function AnalyticsScreen() {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [income, setIncome] = useState<any[]>([]);
   const [budgets, setBudgets] = useState<any[]>([]);
+  const [savings, setSavings] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -29,17 +31,21 @@ export default function AnalyticsScreen() {
     fetchData();
   }, []);
 
+  /* ---------------- FETCH ---------------- */
+
   const fetchData = async () => {
     try {
-      const [expRes, incRes, budRes] = await Promise.all([
+      const [expRes, incRes, budRes, savRes] = await Promise.all([
         api.get("/expenses"),
         api.get("/income"),
         api.get("/budgets"),
+        api.get("/savings"),
       ]);
 
       setExpenses(expRes.data || []);
       setIncome(incRes.data?.data || []);
       setBudgets(budRes.data || []);
+      setSavings(savRes.data || []);
     } catch (err) {
       console.log("Analytics error:", err);
     } finally {
@@ -49,11 +55,14 @@ export default function AnalyticsScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
+
     await fetchData();
+
     setRefreshing(false);
   };
 
-  // 💰 CALCULATIONS
+  /* ---------------- CALCULATIONS ---------------- */
+
   const totalIncome = useMemo(
     () => income.reduce((acc, i) => acc + i.amount, 0),
     [income],
@@ -65,8 +74,13 @@ export default function AnalyticsScreen() {
   );
 
   const totalBudget = useMemo(
-    () => budgets.reduce((acc, b) => acc + b.amount, 0),
+    () => budgets.reduce((acc, b) => acc + b.limit, 0),
     [budgets],
+  );
+
+  const totalSavings = useMemo(
+    () => savings.reduce((acc, s) => acc + s.amount, 0),
+    [savings],
   );
 
   const balance = totalIncome - totalExpense;
@@ -74,23 +88,34 @@ export default function AnalyticsScreen() {
   const budgetPercent =
     totalBudget === 0 ? 0 : (totalExpense / totalBudget) * 100;
 
+  const savingsRate =
+    totalIncome === 0 ? 0 : (totalSavings / totalIncome) * 100;
+
+  /* ---------------- CATEGORY STATS ---------------- */
+
   const categoryStats = useMemo(() => {
     const map: any = {};
+
     expenses.forEach((e) => {
       map[e.category] = (map[e.category] || 0) + e.amount;
     });
 
     return Object.entries(map)
-      .map(([category, amount]) => ({ category, amount }))
+      .map(([category, amount]) => ({
+        category,
+        amount,
+      }))
       .sort((a: any, b: any) => b.amount - a.amount)
       .slice(0, 4);
   }, [expenses]);
 
-  // ⏳ LOADING SCREEN
+  /* ---------------- LOADING ---------------- */
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-slate-50">
         <ActivityIndicator size="large" color="#2563eb" />
+
         <Text className="text-gray-500 mt-2">Loading analytics...</Text>
       </SafeAreaView>
     );
@@ -99,15 +124,19 @@ export default function AnalyticsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
       {/* 🔥 HEADER */}
+
       <AppHeader
         title="Analytics"
         showMenu
         onMenuPress={() => navigation.openDrawer()}
       />
+
       <ScrollView
         className="px-4 pt-3"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{
+          paddingBottom: 40,
+        }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -120,26 +149,53 @@ export default function AnalyticsScreen() {
         {/* 🔷 BALANCE CARD */}
         <View className="bg-blue-600 rounded-3xl p-6 mb-5">
           <Text className="text-white/80 text-sm">Total Balance</Text>
+
           <Text className="text-white text-3xl font-bold mt-1">₹{balance}</Text>
 
-          <View className="flex-row justify-between mt-5">
-            <View>
+          {/* STATS */}
+
+          <View className="flex-row flex-wrap justify-between mt-5">
+            {/* INCOME */}
+
+            <View className="w-[48%] mb-3">
               <Text className="text-white/60 text-xs">Income</Text>
-              <Text className="text-white font-semibold">₹{totalIncome}</Text>
+
+              <Text className="text-white font-semibold text-base">
+                ₹{totalIncome}
+              </Text>
             </View>
 
-            <View>
+            {/* EXPENSE */}
+
+            <View className="w-[48%] mb-3">
               <Text className="text-white/60 text-xs">Expense</Text>
-              <Text className="text-white font-semibold">₹{totalExpense}</Text>
+
+              <Text className="text-white font-semibold text-base">
+                ₹{totalExpense}
+              </Text>
             </View>
 
-            <View>
+            {/* BUDGET */}
+
+            <View className="w-[48%]">
               <Text className="text-white/60 text-xs">Budget</Text>
-              <Text className="text-white font-semibold">₹{totalBudget}</Text>
+
+              <Text className="text-white font-semibold text-base">
+                ₹{totalBudget}
+              </Text>
+            </View>
+
+            {/* SAVINGS */}
+
+            <View className="w-[48%]">
+              <Text className="text-white/60 text-xs">Savings</Text>
+
+              <Text className="text-white font-semibold text-base">
+                ₹{totalSavings}
+              </Text>
             </View>
           </View>
         </View>
-
         {/* 📊 CASH FLOW */}
         <View className="bg-white rounded-2xl p-4 mb-5 shadow-sm">
           <Text className="font-semibold mb-3">Cash Flow</Text>
@@ -153,6 +209,7 @@ export default function AnalyticsScreen() {
               }}
               className="bg-green-500"
             />
+
             <View
               style={{
                 width: `${
@@ -165,17 +222,19 @@ export default function AnalyticsScreen() {
 
           <View className="flex-row justify-between mt-2">
             <Text className="text-green-600 text-xs">Income</Text>
+
             <Text className="text-red-500 text-xs">Expense</Text>
           </View>
         </View>
-
-        {/* 💰 BUDGET */}
+        {/* 💰 BUDGET USAGE */}
         {totalBudget === 0 ? (
           <View className="bg-white rounded-2xl p-5 mb-5 items-center">
             <Ionicons name="wallet-outline" size={28} color="#9ca3af" />
+
             <Text className="mt-3 text-gray-700 font-semibold">
               No budget set
             </Text>
+
             <Text className="text-gray-500 text-sm text-center mt-1 mb-3">
               Set a budget to track your spending
             </Text>
@@ -193,7 +252,9 @@ export default function AnalyticsScreen() {
 
             <View className="bg-gray-200 h-3 rounded-full overflow-hidden">
               <View
-                style={{ width: `${Math.min(budgetPercent, 100)}%` }}
+                style={{
+                  width: `${Math.min(budgetPercent, 100)}%`,
+                }}
                 className={`h-3 ${
                   budgetPercent > 80 ? "bg-red-500" : "bg-green-500"
                 }`}
@@ -204,12 +265,60 @@ export default function AnalyticsScreen() {
               <Text className="text-gray-500 text-xs">
                 ₹{totalExpense} spent
               </Text>
+
               <Text className="text-gray-500 text-xs">₹{totalBudget}</Text>
             </View>
           </View>
         )}
 
-        {/* 📊 CATEGORY */}
+        {/* 💚 SAVINGS */}
+        {totalSavings === 0 ? (
+          <View className="bg-white rounded-2xl p-5 mb-5 items-center shadow-sm">
+            <Ionicons name="leaf-outline" size={30} color="#9ca3af" />
+            <Text className="mt-3 text-gray-700 font-semibold">
+              No savings added
+            </Text>
+            <Text className="text-gray-500 text-sm text-center mt-1 mb-4">
+              Start building your savings goals and grow your financial future
+            </Text>
+            <Pressable
+              onPress={() => router.push("/add-saving")}
+              className="bg-emerald-600 px-5 py-2 rounded-lg flex-row items-center"
+            >
+              <Ionicons name="add-circle-outline" size={16} color="#fff" />
+              <Text className="text-white font-semibold ml-2">Add Saving</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View className="bg-white rounded-2xl p-4 mb-5 shadow-sm">
+            <Text className="font-semibold mb-3"> Savings Rate </Text>
+            <View className="bg-gray-200 h-3 rounded-full overflow-hidden">
+              <View
+                style={{ width: `${Math.min(savingsRate, 100)}%` }}
+                className="bg-emerald-500 h-3"
+              />
+            </View>
+            <View className="flex-row justify-between mt-2">
+              <Text className="text-emerald-600 text-xs">
+                {savingsRate.toFixed(1)}% saved
+              </Text>
+              <Text className="text-gray-500 text-xs">₹{totalSavings}</Text>
+            </View>
+            {/* EXTRA INFO */}
+            <View className="mt-4 flex-row items-center">
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={16}
+                color="#059669"
+              />
+              <Text className="text-emerald-700 text-xs ml-2 flex-1">
+                Consistent savings habits improve long-term financial stability.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* 📊 TOP SPENDING */}
         <View className="bg-white rounded-2xl p-4 mb-5 shadow-sm">
           <Text className="font-semibold mb-3">Top Spending</Text>
 
@@ -222,12 +331,12 @@ export default function AnalyticsScreen() {
                 className="flex-row justify-between items-center mb-3"
               >
                 <Text className="text-gray-700">{item.category}</Text>
+
                 <Text className="font-semibold">₹{item.amount}</Text>
               </View>
             ))
           )}
         </View>
-
         {/* 🧠 INSIGHTS */}
         <View className="bg-white rounded-2xl p-4 shadow-sm">
           <Text className="font-semibold mb-2">Insights</Text>
@@ -244,9 +353,13 @@ export default function AnalyticsScreen() {
             <Text className="text-orange-500 text-sm">
               ⚠️ Spending is higher than income
             </Text>
+          ) : savingsRate >= 20 ? (
+            <Text className="text-emerald-600 text-sm">
+              ✅ Excellent savings habits
+            </Text>
           ) : (
             <Text className="text-green-600 text-sm">
-              ✅ You are financially healthy
+              ✅ Your finances look healthy
             </Text>
           )}
         </View>
