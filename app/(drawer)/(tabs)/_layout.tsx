@@ -92,6 +92,16 @@ export default function TabsLayout() {
       <Tabs.Screen name="income" options={{ href: null }} />
       <Tabs.Screen name="budgets" options={{ href: null }} />
       <Tabs.Screen name="savings" options={{ href: null }} />
+
+      <Tabs.Screen name="subscriptions/index" options={{ href: null }} />
+      <Tabs.Screen name="index" options={{ href: null }} />
+      <Tabs.Screen name="subscriptions/[id]" options={{ href: null }} />
+      <Tabs.Screen
+        name="subscriptions/add-subscription"
+        options={{ href: null }}
+      />
+      <Tabs.Screen name="subscriptions/analytics" options={{ href: null }} />
+      <Tabs.Screen name="subscriptions/edit/[id]" options={{ href: null }} />
     </Tabs>
   );
 }

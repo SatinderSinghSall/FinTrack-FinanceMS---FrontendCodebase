@@ -206,120 +206,267 @@ export default function BudgetsScreen() {
         </View>
       </Modal>
 
-      {/* Budget Details Modal */}
-      <Modal visible={showDetails} transparent animationType="slide">
-        <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-white rounded-t-3xl px-6 pt-4 pb-8">
+      {/* PREMIUM BUDGET DETAILS MODAL */}
+      <Modal visible={showDetails} transparent animationType="fade">
+        <View className="flex-1 bg-black/55 justify-end">
+          <View className="bg-zinc-100 rounded-t-[34px] overflow-hidden">
             {selectedBudget && (
               <>
+                {/* TOP GLOW */}
+                <View className="absolute top-0 left-0 right-0 h-24 bg-blue-500/10" />
+
                 {/* HANDLE */}
-                <View className="w-14 h-1.5 bg-gray-300 rounded-full self-center mb-6" />
+                <View className="items-center pt-4">
+                  <View className="w-14 h-1.5 rounded-full bg-zinc-300" />
+                </View>
 
-                {/* HEADER */}
-                <View className="flex-row items-center mb-6">
-                  <View className="bg-blue-100 p-3 rounded-xl mr-3">
-                    <Ionicons name="wallet-outline" size={22} color="#2563eb" />
-                  </View>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{
+                    paddingHorizontal: 22,
+                    paddingTop: 16,
+                    paddingBottom: 26,
+                  }}
+                >
+                  {/* HERO */}
+                  <View className="items-center">
+                    {/* ICON */}
+                    <View
+                      className="
+                  w-20 h-20 rounded-full
+                  bg-blue-600
+                  items-center justify-center
+                  shadow-xl
+                "
+                    >
+                      <Ionicons name="wallet-outline" size={34} color="white" />
+                    </View>
 
-                  <View>
-                    <Text className="text-2xl font-bold text-gray-900">
+                    {/* LIMIT */}
+                    <Text className="text-zinc-900 text-[34px] font-black mt-5">
+                      ₹{selectedBudget.limit}
+                    </Text>
+
+                    {/* CATEGORY */}
+                    <Text className="text-zinc-500 text-base mt-1">
                       {selectedBudget.category}
                     </Text>
 
-                    <Text className="text-gray-500">Budget Details</Text>
+                    {/* BADGE */}
+                    <View className="bg-blue-100 px-5 py-2 rounded-full mt-4">
+                      <Text className="text-blue-700 font-bold">
+                        Monthly Budget
+                      </Text>
+                    </View>
                   </View>
-                </View>
 
-                {/* LIMIT */}
-                <View className="bg-gray-100 p-4 rounded-xl mb-3 flex-row justify-between">
-                  <Text className="text-gray-500">Monthly Limit</Text>
-                  <Text className="text-lg font-bold">
-                    ₹{selectedBudget.limit}
-                  </Text>
-                </View>
+                  {/* ANALYTICS CARD */}
+                  <View
+                    className="
+                bg-white
+                rounded-[26px]
+                p-5
+                mt-6
+                border border-zinc-200
+              "
+                  >
+                    <Text className="text-zinc-900 text-xl font-black mb-5">
+                      Budget Analytics
+                    </Text>
 
-                {/* SPENT */}
-                <View className="bg-gray-100 p-4 rounded-xl mb-3 flex-row justify-between">
-                  <Text className="text-gray-500">Spent</Text>
-                  <Text className="text-lg font-bold text-red-500">
-                    ₹{selectedBudget.spent || 0}
-                  </Text>
-                </View>
+                    {/* SPENT */}
+                    <View className="flex-row items-center mb-4">
+                      <View className="bg-red-100 w-11 h-11 rounded-2xl items-center justify-center">
+                        <Ionicons
+                          name="trending-down-outline"
+                          size={20}
+                          color="#dc2626"
+                        />
+                      </View>
 
-                {/* REMAINING */}
-                <View className="bg-gray-100 p-4 rounded-xl mb-4 flex-row justify-between">
-                  <Text className="text-gray-500">Remaining</Text>
-                  <Text className="text-lg font-bold text-green-600">
-                    ₹{selectedBudget.limit - (selectedBudget.spent || 0)}
-                  </Text>
-                </View>
+                      <View className="ml-4 flex-1">
+                        <Text className="text-zinc-500 text-sm">Spent</Text>
 
-                {/* PROGRESS BAR */}
-                <View className="mb-5">
-                  <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                    <View
-                      style={{
-                        width: `${Math.min(
-                          ((selectedBudget.spent || 0) / selectedBudget.limit) *
-                            100,
-                          100,
-                        )}%`,
+                        <Text className="text-red-600 text-lg font-black mt-1">
+                          ₹{selectedBudget.spent || 0}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* REMAINING */}
+                    <View className="flex-row items-center mb-4">
+                      <View className="bg-emerald-100 w-11 h-11 rounded-2xl items-center justify-center">
+                        <Ionicons
+                          name="sparkles-outline"
+                          size={20}
+                          color="#059669"
+                        />
+                      </View>
+
+                      <View className="ml-4 flex-1">
+                        <Text className="text-zinc-500 text-sm">Remaining</Text>
+
+                        <Text className="text-emerald-600 text-lg font-black mt-1">
+                          ₹{selectedBudget.limit - (selectedBudget.spent || 0)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* MONTH */}
+                    <View className="flex-row items-center mb-6">
+                      <View className="bg-orange-100 w-11 h-11 rounded-2xl items-center justify-center">
+                        <Ionicons
+                          name="calendar-outline"
+                          size={20}
+                          color="#ea580c"
+                        />
+                      </View>
+
+                      <View className="ml-4 flex-1">
+                        <Text className="text-zinc-500 text-sm">Month</Text>
+
+                        <Text className="text-zinc-900 text-base font-black mt-1">
+                          {selectedBudget.month}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* PROGRESS */}
+                    <View>
+                      <View className="flex-row justify-between mb-3">
+                        <Text className="text-zinc-500 font-medium">
+                          Budget Usage
+                        </Text>
+
+                        <Text className="text-zinc-900 font-black">
+                          {Math.round(
+                            ((selectedBudget.spent || 0) /
+                              selectedBudget.limit) *
+                              100,
+                          )}
+                          %
+                        </Text>
+                      </View>
+
+                      <View className="bg-zinc-200 h-3 rounded-full overflow-hidden">
+                        <View
+                          style={{
+                            width: `${Math.min(
+                              ((selectedBudget.spent || 0) /
+                                selectedBudget.limit) *
+                                100,
+                              100,
+                            )}%`,
+                          }}
+                          className={`
+                      h-full rounded-full
+                      ${
+                        (selectedBudget.spent || 0) / selectedBudget.limit > 0.8
+                          ? "bg-red-500"
+                          : "bg-blue-600"
+                      }
+                    `}
+                        />
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* INSIGHT CARD */}
+                  <View
+                    className="
+                bg-white
+                rounded-[26px]
+                p-5
+                mt-4
+                border border-zinc-200
+              "
+                  >
+                    <View className="flex-row items-start">
+                      <View className="bg-indigo-100 w-12 h-12 rounded-2xl items-center justify-center mr-4">
+                        <Ionicons
+                          name="analytics-outline"
+                          size={24}
+                          color="#4f46e5"
+                        />
+                      </View>
+
+                      <View className="flex-1">
+                        <Text className="text-zinc-900 text-lg font-black">
+                          Spending Insight
+                        </Text>
+
+                        <Text className="text-zinc-600 leading-6 mt-2">
+                          {selectedBudget.spent > selectedBudget.limit
+                            ? "You have exceeded this month's budget limit."
+                            : "You are currently within your planned monthly budget."}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* ACTION BUTTONS */}
+                  <View className="flex-row mt-7">
+                    {/* EDIT */}
+                    <Pressable
+                      onPress={() => {
+                        setShowDetails(false);
+
+                        router.push(`/edit-budget/${selectedBudget._id}`);
                       }}
-                      className="h-full bg-blue-600"
-                    />
+                      className="
+                  flex-1
+                  bg-blue-600
+                  rounded-[22px]
+                  py-3.5
+                  mr-2
+                  flex-row
+                  items-center
+                  justify-center
+                "
+                    >
+                      <Ionicons name="create-outline" size={18} color="white" />
+
+                      <Text className="text-white font-black text-base ml-2">
+                        Edit
+                      </Text>
+                    </Pressable>
+
+                    {/* DELETE */}
+                    <Pressable
+                      onPress={() => {
+                        setShowDetails(false);
+
+                        confirmDelete(selectedBudget._id);
+                      }}
+                      className="
+                  flex-1
+                  bg-red-500
+                  rounded-[22px]
+                  py-3.5
+                  ml-2
+                  flex-row
+                  items-center
+                  justify-center
+                "
+                    >
+                      <Ionicons name="trash-outline" size={18} color="white" />
+
+                      <Text className="text-white font-black text-base ml-2">
+                        Delete
+                      </Text>
+                    </Pressable>
                   </View>
 
-                  <Text className="text-gray-400 text-xs mt-1 text-right">
-                    {Math.round(
-                      ((selectedBudget.spent || 0) / selectedBudget.limit) *
-                        100,
-                    )}
-                    % used
-                  </Text>
-                </View>
-
-                {/* MONTH */}
-                <View className="bg-gray-100 p-4 rounded-xl mb-6 flex-row justify-between">
-                  <Text className="text-gray-500">Month</Text>
-                  <Text className="text-gray-800 font-semibold">
-                    {selectedBudget.month}
-                  </Text>
-                </View>
-
-                {/* ACTION BUTTONS */}
-                <View className="flex-row">
+                  {/* CLOSE */}
                   <Pressable
-                    onPress={() => {
-                      setShowDetails(false);
-                      router.push(`/edit-budget/${selectedBudget._id}`);
-                    }}
-                    className="flex-1 bg-blue-600 py-3 rounded-xl mr-2 items-center flex-row justify-center"
+                    onPress={() => setShowDetails(false)}
+                    className="items-center mt-6"
                   >
-                    <Ionicons name="create-outline" size={18} color="white" />
-                    <Text className="text-white font-semibold ml-2">Edit</Text>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => {
-                      setShowDetails(false);
-                      confirmDelete(selectedBudget._id);
-                    }}
-                    className="flex-1 bg-red-500 py-3 rounded-xl ml-2 items-center flex-row justify-center"
-                  >
-                    <Ionicons name="trash-outline" size={18} color="white" />
-                    <Text className="text-white font-semibold ml-2">
-                      Delete
+                    <Text className="text-zinc-400 font-semibold text-base">
+                      Close
                     </Text>
                   </Pressable>
-                </View>
-
-                {/* CLOSE BUTTON */}
-                <Pressable
-                  onPress={() => setShowDetails(false)}
-                  className="mt-5 items-center"
-                >
-                  <Text className="text-gray-400 font-medium">Close</Text>
-                </Pressable>
+                </ScrollView>
               </>
             )}
           </View>

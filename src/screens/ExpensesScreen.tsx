@@ -217,106 +217,228 @@ export default function ExpensesScreen() {
         </View>
       </Modal>
 
-      {/* Expense Details Modal */}
-      <Modal visible={showDetails} transparent animationType="slide">
-        <View className="flex-1 bg-black/40 justify-end">
-          <View className="bg-white rounded-t-3xl px-6 pt-4 pb-8">
+      {/* PREMIUM EXPENSE DETAILS MODAL */}
+      <Modal visible={showDetails} transparent animationType="fade">
+        <View className="flex-1 bg-black/55 justify-end">
+          <View className="bg-zinc-100 rounded-t-[38px] overflow-hidden">
             {selectedExpense && (
               <>
-                {/* Handle */}
-                <View className="w-14 h-1.5 bg-gray-300 rounded-full self-center mb-6" />
+                {/* TOP ACCENT */}
+                <View className="absolute top-0 left-0 right-0 h-28 bg-red-500/10" />
 
-                {/* Header */}
+                {/* HANDLE */}
+                <View className="items-center pt-4">
+                  <View className="w-14 h-1.5 rounded-full bg-zinc-300" />
+                </View>
 
-                <View className="flex-row items-center mb-6">
-                  <View className="bg-red-100 p-3 rounded-xl mr-3">
-                    <Ionicons name="cash-outline" size={22} color="#dc2626" />
-                  </View>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{
+                    paddingHorizontal: 22,
+                    paddingTop: 20,
+                    paddingBottom: 36,
+                  }}
+                >
+                  {/* HERO */}
+                  <View className="items-center">
+                    {/* ICON */}
+                    <View
+                      className="
+                  w-24 h-24 rounded-full
+                  bg-red-500
+                  items-center justify-center
+                  shadow-xl
+                "
+                    >
+                      <Ionicons name="card-outline" size={42} color="white" />
+                    </View>
 
-                  <View>
-                    <Text className="text-2xl font-bold text-gray-900">
+                    {/* AMOUNT */}
+                    <Text className="text-zinc-900 text-[42px] font-black mt-6">
+                      ₹{selectedExpense.amount}
+                    </Text>
+
+                    {/* TITLE */}
+                    <Text className="text-zinc-500 text-lg mt-1">
                       {selectedExpense.title}
                     </Text>
 
-                    <Text className="text-gray-500">Expense Details</Text>
+                    {/* BADGE */}
+                    <View className="bg-red-100 px-5 py-2 rounded-full mt-4">
+                      <Text className="text-red-700 font-bold">
+                        Expense Recorded
+                      </Text>
+                    </View>
                   </View>
-                </View>
 
-                {/* Amount */}
-
-                <View className="bg-gray-100 p-4 rounded-xl mb-3 flex-row justify-between">
-                  <Text className="text-gray-500">Amount</Text>
-                  <Text className="text-lg font-bold text-red-600">
-                    ₹{selectedExpense.amount}
-                  </Text>
-                </View>
-
-                {/* Category */}
-
-                <View className="bg-gray-100 p-4 rounded-xl mb-3 flex-row justify-between">
-                  <Text className="text-gray-500">Category</Text>
-                  <Text className="text-gray-800 font-semibold">
-                    {selectedExpense.category}
-                  </Text>
-                </View>
-
-                {/* Date */}
-
-                <View className="bg-gray-100 p-4 rounded-xl mb-3 flex-row justify-between">
-                  <Text className="text-gray-500">Date</Text>
-                  <Text className="text-gray-800">
-                    {new Date(selectedExpense.date).toLocaleDateString()}
-                  </Text>
-                </View>
-
-                {/* Notes */}
-
-                {selectedExpense.notes && (
-                  <View className="bg-gray-100 p-4 rounded-xl mb-6">
-                    <Text className="text-gray-500 mb-1">Notes</Text>
-                    <Text className="text-gray-700">
-                      {selectedExpense.notes}
+                  {/* DETAILS CARD */}
+                  <View
+                    className="
+                bg-white
+                rounded-[30px]
+                p-6
+                mt-8
+                border border-zinc-200
+              "
+                  >
+                    <Text className="text-zinc-900 text-2xl font-black mb-6">
+                      Expense Details
                     </Text>
+
+                    {/* CATEGORY */}
+                    <View className="flex-row items-center mb-5">
+                      <View className="bg-red-100 w-12 h-12 rounded-2xl items-center justify-center">
+                        <Ionicons
+                          name="grid-outline"
+                          size={22}
+                          color="#dc2626"
+                        />
+                      </View>
+
+                      <View className="ml-4 flex-1">
+                        <Text className="text-zinc-500 text-sm">Category</Text>
+
+                        <Text className="text-zinc-900 text-lg font-black mt-1">
+                          {selectedExpense.category}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* DATE */}
+                    <View className="flex-row items-center mb-5">
+                      <View className="bg-blue-100 w-12 h-12 rounded-2xl items-center justify-center">
+                        <Ionicons
+                          name="calendar-outline"
+                          size={22}
+                          color="#2563eb"
+                        />
+                      </View>
+
+                      <View className="ml-4 flex-1">
+                        <Text className="text-zinc-500 text-sm">Date</Text>
+
+                        <Text className="text-zinc-900 text-lg font-black mt-1">
+                          {new Date(selectedExpense.date).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* AMOUNT */}
+                    <View className="flex-row items-center">
+                      <View className="bg-orange-100 w-12 h-12 rounded-2xl items-center justify-center">
+                        <Ionicons
+                          name="cash-outline"
+                          size={22}
+                          color="#ea580c"
+                        />
+                      </View>
+
+                      <View className="ml-4 flex-1">
+                        <Text className="text-zinc-500 text-sm">Amount</Text>
+
+                        <Text className="text-red-600 text-xl font-black mt-1">
+                          ₹{selectedExpense.amount}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                )}
 
-                {/* Buttons */}
+                  {/* NOTES */}
+                  {selectedExpense.notes ? (
+                    <View
+                      className="
+                  bg-white
+                  rounded-[30px]
+                  p-6
+                  mt-5
+                  border border-zinc-200
+                "
+                    >
+                      <View className="flex-row items-center mb-4">
+                        <View className="bg-orange-100 w-12 h-12 rounded-2xl items-center justify-center">
+                          <Ionicons
+                            name="document-text-outline"
+                            size={22}
+                            color="#ea580c"
+                          />
+                        </View>
 
-                <View className="flex-row">
+                        <Text className="text-zinc-900 text-xl font-black ml-4">
+                          Notes
+                        </Text>
+                      </View>
+
+                      <Text className="text-zinc-600 leading-7 text-base">
+                        {selectedExpense.notes}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  {/* ACTION BUTTONS */}
+                  <View className="flex-row mt-8">
+                    {/* EDIT */}
+                    <Pressable
+                      onPress={() => {
+                        setShowDetails(false);
+
+                        router.push(`/edit-expense/${selectedExpense._id}`);
+                      }}
+                      className="
+                  flex-1
+                  bg-blue-600
+                  rounded-[24px]
+                  py-4
+                  mr-2
+                  flex-row
+                  items-center
+                  justify-center
+                "
+                    >
+                      <Ionicons name="create-outline" size={20} color="white" />
+
+                      <Text className="text-white font-black text-base ml-2">
+                        Edit
+                      </Text>
+                    </Pressable>
+
+                    {/* DELETE */}
+                    <Pressable
+                      onPress={() => {
+                        setShowDetails(false);
+
+                        setSelectedId(selectedExpense._id);
+
+                        setConfirmDelete(true);
+                      }}
+                      className="
+                  flex-1
+                  bg-red-500
+                  rounded-[24px]
+                  py-4
+                  ml-2
+                  flex-row
+                  items-center
+                  justify-center
+                "
+                    >
+                      <Ionicons name="trash-outline" size={20} color="white" />
+
+                      <Text className="text-white font-black text-base ml-2">
+                        Delete
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {/* CLOSE */}
                   <Pressable
-                    onPress={() => {
-                      setShowDetails(false);
-                      router.push(`/edit-expense/${selectedExpense._id}`);
-                    }}
-                    className="flex-1 bg-blue-600 py-3 rounded-xl mr-2 items-center flex-row justify-center"
+                    onPress={() => setShowDetails(false)}
+                    className="items-center mt-7"
                   >
-                    <Ionicons name="create-outline" size={18} color="white" />
-                    <Text className="text-white font-semibold ml-2">Edit</Text>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => {
-                      setShowDetails(false);
-                      setSelectedId(selectedExpense._id);
-                      setConfirmDelete(true);
-                    }}
-                    className="flex-1 bg-red-500 py-3 rounded-xl ml-2 items-center flex-row justify-center"
-                  >
-                    <Ionicons name="trash-outline" size={18} color="white" />
-                    <Text className="text-white font-semibold ml-2">
-                      Delete
+                    <Text className="text-zinc-400 font-semibold text-base">
+                      Close
                     </Text>
                   </Pressable>
-                </View>
-
-                {/* Close */}
-
-                <Pressable
-                  onPress={() => setShowDetails(false)}
-                  className="mt-5 items-center"
-                >
-                  <Text className="text-gray-400 font-medium">Close</Text>
-                </Pressable>
+                </ScrollView>
               </>
             )}
           </View>

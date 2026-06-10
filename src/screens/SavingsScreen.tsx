@@ -224,6 +224,239 @@ export default function SavingsScreen() {
         </View>
       </Modal>
 
+      {/* PREMIUM SAVING DETAILS MODAL */}
+      <Modal visible={showDetails} transparent animationType="fade">
+        <View className="flex-1 bg-black/55 justify-end">
+          <View className="bg-emerald-50 rounded-t-[34px] overflow-hidden">
+            {selectedSaving && (
+              <>
+                {/* TOP GLOW */}
+                <View className="absolute top-0 left-0 right-0 h-24 bg-emerald-500/10" />
+
+                {/* HANDLE */}
+                <View className="items-center pt-4">
+                  <View className="w-14 h-1.5 rounded-full bg-zinc-300" />
+                </View>
+
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{
+                    paddingHorizontal: 22,
+                    paddingTop: 16,
+                    paddingBottom: 26,
+                  }}
+                >
+                  {/* HERO */}
+                  <View className="items-center">
+                    {/* ICON */}
+                    <View
+                      className="
+                  w-20 h-20 rounded-full
+                  bg-emerald-600
+                  items-center justify-center
+                  shadow-xl
+                "
+                    >
+                      <Ionicons name="wallet-outline" size={34} color="white" />
+                    </View>
+
+                    {/* AMOUNT */}
+                    <Text className="text-zinc-900 text-[34px] font-black mt-5">
+                      ₹{selectedSaving.amount}
+                    </Text>
+
+                    {/* GOAL */}
+                    <Text className="text-zinc-500 text-base mt-1">
+                      {selectedSaving.goal}
+                    </Text>
+
+                    {/* BADGE */}
+                    <View className="bg-emerald-100 px-5 py-2 rounded-full mt-4">
+                      <Text className="text-emerald-700 font-bold">
+                        Savings Goal
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* DETAILS CARD */}
+                  <View
+                    className="
+                bg-white
+                rounded-[26px]
+                p-5
+                mt-6
+                border border-emerald-100
+              "
+                  >
+                    <Text className="text-zinc-900 text-xl font-black mb-5">
+                      Savings Details
+                    </Text>
+
+                    {/* GOAL */}
+                    <View className="flex-row items-center mb-4">
+                      <View className="bg-emerald-100 w-11 h-11 rounded-2xl items-center justify-center">
+                        <Ionicons
+                          name="flag-outline"
+                          size={20}
+                          color="#059669"
+                        />
+                      </View>
+
+                      <View className="ml-4 flex-1">
+                        <Text className="text-zinc-500 text-sm">Goal</Text>
+
+                        <Text className="text-zinc-900 text-lg font-black mt-1">
+                          {selectedSaving.goal}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* AMOUNT */}
+                    <View className="flex-row items-center mb-4">
+                      <View className="bg-blue-100 w-11 h-11 rounded-2xl items-center justify-center">
+                        <Ionicons
+                          name="cash-outline"
+                          size={20}
+                          color="#2563eb"
+                        />
+                      </View>
+
+                      <View className="ml-4 flex-1">
+                        <Text className="text-zinc-500 text-sm">
+                          Amount Saved
+                        </Text>
+
+                        <Text className="text-emerald-600 text-lg font-black mt-1">
+                          ₹{selectedSaving.amount}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* DATE */}
+                    <View className="flex-row items-center">
+                      <View className="bg-orange-100 w-11 h-11 rounded-2xl items-center justify-center">
+                        <Ionicons
+                          name="calendar-outline"
+                          size={20}
+                          color="#ea580c"
+                        />
+                      </View>
+
+                      <View className="ml-4 flex-1">
+                        <Text className="text-zinc-500 text-sm">Created</Text>
+
+                        <Text className="text-zinc-900 text-base font-black mt-1">
+                          {new Date(
+                            selectedSaving.createdAt,
+                          ).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* INSIGHT CARD */}
+                  <View
+                    className="
+                bg-white
+                rounded-[26px]
+                p-5
+                mt-4
+                border border-emerald-100
+              "
+                  >
+                    <View className="flex-row items-start">
+                      <View className="bg-emerald-100 w-12 h-12 rounded-2xl items-center justify-center mr-4">
+                        <Ionicons
+                          name="trending-up-outline"
+                          size={24}
+                          color="#059669"
+                        />
+                      </View>
+
+                      <View className="flex-1">
+                        <Text className="text-zinc-900 text-lg font-black">
+                          Savings Insight
+                        </Text>
+
+                        <Text className="text-zinc-600 leading-6 mt-2">
+                          Great progress. Consistent savings habits help build
+                          long-term financial security and future investments.
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* ACTION BUTTONS */}
+                  <View className="flex-row mt-7">
+                    {/* EDIT */}
+                    <Pressable
+                      onPress={() => {
+                        setShowDetails(false);
+
+                        router.push(`/edit-saving/${selectedSaving._id}`);
+                      }}
+                      className="
+                  flex-1
+                  bg-emerald-600
+                  rounded-[22px]
+                  py-3.5
+                  mr-2
+                  flex-row
+                  items-center
+                  justify-center
+                "
+                    >
+                      <Ionicons name="create-outline" size={18} color="white" />
+
+                      <Text className="text-white font-black text-base ml-2">
+                        Edit
+                      </Text>
+                    </Pressable>
+
+                    {/* DELETE */}
+                    <Pressable
+                      onPress={() => {
+                        setShowDetails(false);
+
+                        setSelectedId(selectedSaving._id);
+
+                        setConfirmDelete(true);
+                      }}
+                      className="
+                  flex-1
+                  bg-red-500
+                  rounded-[22px]
+                  py-3.5
+                  ml-2
+                  flex-row
+                  items-center
+                  justify-center
+                "
+                    >
+                      <Ionicons name="trash-outline" size={18} color="white" />
+
+                      <Text className="text-white font-black text-base ml-2">
+                        Delete
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {/* CLOSE */}
+                  <Pressable
+                    onPress={() => setShowDetails(false)}
+                    className="items-center mt-6"
+                  >
+                    <Text className="text-zinc-400 font-semibold text-base">
+                      Close
+                    </Text>
+                  </Pressable>
+                </ScrollView>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
       {/* MAIN UI */}
 
       <ScrollView
