@@ -1,8 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useCallback, useRef } from "react";
 
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  ActivityIndicator,
+} from "react-native";
 
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 import { Ionicons } from "@expo/vector-icons";
 
@@ -10,20 +17,55 @@ import { getSubscriptions } from "@/src/services/subscriptionApi";
 
 export default function AnalyticsScreen() {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const scrollRef = useRef<ScrollView>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchSubscriptions = async () => {
     try {
+      setLoading(true);
+
       const data = await getSubscriptions();
 
       setSubscriptions(data);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchSubscriptions();
-  }, []);
+  const onRefresh = async () => {
+    try {
+      setRefreshing(true);
+
+      await fetchSubscriptions();
+
+      scrollRef.current?.scrollTo({
+        y: 0,
+        animated: true,
+      });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      const refresh = async () => {
+        await fetchSubscriptions();
+
+        scrollRef.current?.scrollTo({
+          y: 0,
+          animated: false,
+        });
+      };
+
+      refresh();
+    }, []),
+  );
 
   /* =========================
      ANALYTICS
@@ -81,10 +123,43 @@ export default function AnalyticsScreen() {
 
   const isEmpty = subscriptions.length === 0;
 
+  if (loading) {
+    return (
+      <View className="flex-1 bg-zinc-100 items-center justify-center px-6">
+        {/* ICON */}
+        <View className="bg-indigo-100 w-24 h-24 rounded-full items-center justify-center mb-8">
+          <Ionicons name="analytics" size={42} color="#4F46E5" />
+        </View>
+
+        {/* LOADER */}
+        <ActivityIndicator size="large" color="#4F46E5" />
+
+        {/* TEXT */}
+        <Text className="text-zinc-900 text-2xl font-black mt-8">
+          Loading Analytics
+        </Text>
+
+        <Text className="text-zinc-500 text-center mt-3 leading-7">
+          Preparing subscription insights, yearly projections and spending
+          analytics...
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 bg-zinc-100">
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#4F46E5"
+            colors={["#4F46E5"]}
+          />
+        }
         contentContainerStyle={{
           paddingBottom: 120,
         }}

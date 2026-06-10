@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
-import { router } from "expo-router";
+import { useState, useCallback, useRef } from "react";
+import { router, useFocusEffect } from "expo-router";
 import api from "../../../src/services/api";
 import { useAuthStore } from "../../../src/store/auth.store";
 import Toast from "react-native-toast-message";
@@ -23,6 +23,7 @@ import AppHeader from "@/src/components/AppHeader";
 export default function ProfileScreen() {
   const logout = useAuthStore((s) => s.logout);
   const navigation = useNavigation();
+  const scrollRef = useRef<ScrollView>(null);
 
   const [profile, setProfile] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -46,9 +47,20 @@ export default function ProfileScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const refresh = async () => {
+        await fetchProfile();
+
+        scrollRef.current?.scrollTo({
+          y: 0,
+          animated: false,
+        });
+      };
+
+      refresh();
+    }, []),
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -108,6 +120,7 @@ export default function ProfileScreen() {
         onMenuPress={() => navigation.openDrawer()}
       />
       <ScrollView
+        ref={scrollRef}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

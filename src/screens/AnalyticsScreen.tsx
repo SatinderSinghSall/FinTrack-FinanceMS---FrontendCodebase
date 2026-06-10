@@ -8,7 +8,8 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import api from "../services/api";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,9 +28,15 @@ export default function AnalyticsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const refresh = async () => {
+        await fetchData();
+      };
+
+      refresh();
+    }, []),
+  );
 
   /* ---------------- FETCH ---------------- */
 

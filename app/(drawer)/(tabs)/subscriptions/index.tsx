@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useCallback, useRef } from "react";
 
 import {
   View,
@@ -8,9 +8,10 @@ import {
   ScrollView,
   RefreshControl,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 import { Ionicons } from "@expo/vector-icons";
 
@@ -39,13 +40,21 @@ export default function SubscriptionsScreen() {
 
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  const [loading, setLoading] = useState(true);
+
+  const scrollRef = useRef<ScrollView>(null);
+
   const fetchSubscriptions = async () => {
     try {
+      setLoading(true);
+
       const data = await getSubscriptions();
 
       setSubscriptions(data);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -61,9 +70,20 @@ export default function SubscriptionsScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchSubscriptions();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const refresh = async () => {
+        await fetchSubscriptions();
+
+        scrollRef.current?.scrollTo({
+          y: 0,
+          animated: false,
+        });
+      };
+
+      refresh();
+    }, []),
+  );
 
   const totalMonthly = subscriptions.reduce(
     (acc, item) => acc + item.amount,
@@ -83,9 +103,33 @@ export default function SubscriptionsScreen() {
     });
   }, [subscriptions, search, selectedCategory]);
 
+  if (loading) {
+    return (
+      <View className="flex-1 bg-zinc-100 items-center justify-center px-6">
+        {/* ICON */}
+        <View className="bg-indigo-100 w-24 h-24 rounded-full items-center justify-center mb-8">
+          <Ionicons name="albums" size={42} color="#4F46E5" />
+        </View>
+
+        {/* LOADER */}
+        <ActivityIndicator size="large" color="#4F46E5" />
+
+        {/* TEXT */}
+        <Text className="text-zinc-900 text-2xl font-black mt-8">
+          Loading Subscriptions
+        </Text>
+
+        <Text className="text-zinc-500 text-center mt-3 leading-7">
+          Preparing recurring bills, renewals and subscription insights...
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 bg-zinc-100">
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

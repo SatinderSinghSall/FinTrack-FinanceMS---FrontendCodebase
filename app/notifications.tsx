@@ -9,12 +9,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useEffect, useState, useMemo } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useState, useMemo, useCallback, useRef } from "react";
 import api from "../src/services/api";
 
 export default function NotificationScreen() {
   const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
 
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,9 +68,20 @@ export default function NotificationScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const refresh = async () => {
+        await fetchNotifications();
+
+        scrollRef.current?.scrollTo({
+          y: 0,
+          animated: false,
+        });
+      };
+
+      refresh();
+    }, []),
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -107,6 +119,7 @@ export default function NotificationScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
       <ScrollView
+        ref={scrollRef}
         className="px-4 py-4"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

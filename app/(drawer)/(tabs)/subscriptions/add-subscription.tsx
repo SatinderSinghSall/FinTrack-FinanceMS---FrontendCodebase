@@ -89,8 +89,7 @@ export default function AddSubscription() {
         startDate: new Date(),
         nextRenewalDate: new Date(),
       });
-
-      router.back();
+      router.push("/(drawer)/(tabs)/subscriptions");
     } catch (error) {
       console.log(error);
     }
@@ -105,15 +104,47 @@ export default function AddSubscription() {
         }}
       >
         {/* HEADER */}
-
         <View className="px-5 pt-16 pb-8">
-          <Text className="text-zinc-500 text-sm font-medium">
-            Subscription Manager
-          </Text>
+          <View className="flex-row items-center justify-between">
+            {/* BACK BUTTON */}
 
-          <Text className="text-zinc-900 text-4xl font-black mt-1">
-            Add Subscription
-          </Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(drawer)/(tabs)/subscriptions")}
+              className="
+                bg-white
+
+                border border-zinc-200
+
+                w-12 h-12
+
+                rounded-2xl
+
+                items-center justify-center
+              "
+            >
+              <Ionicons name="arrow-back" size={24} color="#18181b" />
+            </TouchableOpacity>
+
+            {/* TITLE */}
+
+            <View className="items-center">
+              <Text className="text-zinc-500 text-sm font-medium">
+                Subscription Manager
+              </Text>
+
+              <Text className="text-zinc-900 text-3xl font-black mt-1">
+                Add Subscription
+              </Text>
+            </View>
+
+            {/* RIGHT SPACER */}
+
+            <View
+              style={{
+                width: 48,
+              }}
+            />
+          </View>
         </View>
 
         {/* FORM */}

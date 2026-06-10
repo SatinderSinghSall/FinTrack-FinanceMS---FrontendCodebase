@@ -7,7 +7,8 @@ import {
   RefreshControl,
   Pressable,
 } from "react-native";
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import api from "../services/api";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -63,9 +64,15 @@ export default function TransactionsScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const refresh = async () => {
+        await fetchData();
+      };
+
+      refresh();
+    }, []),
+  );
 
   // 🔍 FILTER + SEARCH
   const filtered = useMemo(() => {
