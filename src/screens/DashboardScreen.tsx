@@ -17,6 +17,8 @@ import { useNavigation } from "@react-navigation/native";
 import api from "../services/api";
 import AppHeader from "../components/AppHeader";
 
+import SubscriptionFeatureModal from "../components/SubscriptionFeatureModal";
+
 export default function DashboardScreen() {
   const router = useRouter();
 
@@ -34,6 +36,8 @@ export default function DashboardScreen() {
   const isLargeScreen = width >= 768;
 
   const [savings, setSavings] = useState<any[]>([]);
+
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(true);
 
   /* ---------- Fetch Data ---------- */
 
@@ -162,6 +166,11 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100" edges={["top"]}>
+      <SubscriptionFeatureModal
+        visible={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+      />
+
       <StatusBar barStyle="dark-content" />
 
       {/* ✅ FIXED HEADER */}

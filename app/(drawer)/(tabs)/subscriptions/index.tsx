@@ -1,4 +1,6 @@
-import { useMemo, useState, useCallback, useRef } from "react";
+import { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import api from "@/src/services/api";
 
 import {
   View,
@@ -44,6 +46,17 @@ export default function SubscriptionsScreen() {
 
   const scrollRef = useRef<ScrollView>(null);
 
+  const [profile, setProfile] = useState<any>(null);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await api.get("/profile");
+      setProfile(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const fetchSubscriptions = async () => {
     try {
       setLoading(true);
@@ -73,7 +86,7 @@ export default function SubscriptionsScreen() {
   useFocusEffect(
     useCallback(() => {
       const refresh = async () => {
-        await fetchSubscriptions();
+        await Promise.all([fetchSubscriptions(), fetchProfile()]);
 
         scrollRef.current?.scrollTo({
           y: 0,
@@ -102,6 +115,13 @@ export default function SubscriptionsScreen() {
       return matchesSearch && matchesCategory;
     });
   }, [subscriptions, search, selectedCategory]);
+
+  const userName = profile?.user?.name || "User";
+
+  const hour = new Date().getHours();
+
+  const greeting =
+    hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 
   if (loading) {
     return (
@@ -140,23 +160,43 @@ export default function SubscriptionsScreen() {
       >
         {/* HEADER */}
 
-        <View className="px-5 pt-16 pb-6">
-          <View className="flex-row items-center justify-between">
-            <View>
-              <Text className="text-zinc-500 text-sm font-medium">
-                Subscription Manager
-              </Text>
-
-              <Text className="text-zinc-900 text-4xl font-black mt-1">
+        <View className="px-5 pt-14 pb-6">
+          {/* TOP ROW */}
+          <View className="flex-row items-start justify-between">
+            {/* LEFT CONTENT */}
+            <View className="flex-1 pr-4">
+              {/* MAIN TITLE */}
+              <Text className="text-zinc-900 text-[38px] font-black tracking-tight">
                 Subscriptions
               </Text>
+
+              {/* GREETING */}
+              <Text className="text-zinc-500 text-sm font-medium mt-3">
+                {greeting}
+              </Text>
+
+              {/* USER NAME */}
+              <Text className="text-zinc-700 text-3xl font-black mt-1">
+                {userName}
+              </Text>
+
+              {/* SUBTITLE */}
+              <View className="flex-row items-center mt-3">
+                <View className="w-2 h-2 rounded-full bg-indigo-600 mr-2" />
+
+                <Text className="text-indigo-600 font-semibold">
+                  Subscription Manager
+                </Text>
+              </View>
             </View>
 
+            {/* ACTION BUTTON */}
             <TouchableOpacity
               onPress={() =>
                 router.push("/(drawer)/(tabs)/subscriptions/add-subscription")
               }
-              className="bg-indigo-600 w-14 h-14 rounded-2xl items-center justify-center"
+              activeOpacity={0.85}
+              className="bg-indigo-600 w-14 h-14 rounded-2xl items-center justify-center shadow-sm"
             >
               <Ionicons name="add" size={28} color="white" />
             </TouchableOpacity>

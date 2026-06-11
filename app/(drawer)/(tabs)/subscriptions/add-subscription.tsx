@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import {
   View,
@@ -56,6 +57,10 @@ export default function AddSubscription() {
 
   const [autoRenew, setAutoRenew] = useState(initialForm.autoRenew);
 
+  const [startDate, setStartDate] = useState(new Date());
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
   const resetForm = () => {
     setName(initialForm.name);
     setAmount(initialForm.amount);
@@ -65,6 +70,8 @@ export default function AddSubscription() {
     setNotes(initialForm.notes);
     setReminderDaysBefore(initialForm.reminderDaysBefore);
     setAutoRenew(initialForm.autoRenew);
+    setStartDate(new Date());
+    setShowDatePicker(false);
   };
 
   useFocusEffect(
@@ -86,8 +93,7 @@ export default function AddSubscription() {
 
         autoRenew,
 
-        startDate: new Date(),
-        nextRenewalDate: new Date(),
+        startDate,
       });
       router.push("/(drawer)/(tabs)/subscriptions");
     } catch (error) {
@@ -235,6 +241,45 @@ export default function AddSubscription() {
                 </TouchableOpacity>
               ))}
             </View>
+          </View>
+
+          {/* START DATE */}
+
+          <View className="mb-5">
+            <Text className="text-zinc-700 font-bold mb-3">
+              Subscription Start Date
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(true)}
+              className="bg-white border border-zinc-200 rounded-2xl px-5 py-4 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center">
+                <Ionicons name="calendar-outline" size={20} color="#52525b" />
+
+                <Text className="text-zinc-900 ml-3 font-medium">
+                  {startDate.toDateString()}
+                </Text>
+              </View>
+
+              <Ionicons name="chevron-forward" size={18} color="#71717a" />
+            </TouchableOpacity>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={startDate}
+                mode="date"
+                display="default"
+                maximumDate={new Date()}
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+
+                  if (selectedDate) {
+                    setStartDate(selectedDate);
+                  }
+                }}
+              />
+            )}
           </View>
 
           {/* PAYMENT METHOD */}
