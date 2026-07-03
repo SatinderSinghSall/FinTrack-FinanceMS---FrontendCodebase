@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 
 import {
   View,
@@ -37,11 +38,13 @@ export default function SubscriptionDetails() {
     }
   };
 
-  useEffect(() => {
-    if (id) {
-      fetchSubscription();
-    }
-  }, [id]);
+  useFocusEffect(
+    useCallback(() => {
+      if (id) {
+        fetchSubscription();
+      }
+    }, [id]),
+  );
 
   const daysRemaining = useMemo(() => {
     if (!subscription) return 0;
@@ -113,7 +116,7 @@ export default function SubscriptionDetails() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: 140,
+          paddingBottom: 15,
         }}
       >
         {/* HERO */}

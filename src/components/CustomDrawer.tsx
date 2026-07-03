@@ -113,6 +113,14 @@ export default function CustomDrawer(props: any) {
           />
 
           <DrawerItem
+            label="Subscriptions"
+            icon="repeat-outline"
+            route="(tabs)/subscriptions"
+            active={pathname.includes("subscriptions")}
+            {...props}
+          />
+
+          <DrawerItem
             label="Analytics"
             icon="bar-chart-outline"
             route="(tabs)/analytics"

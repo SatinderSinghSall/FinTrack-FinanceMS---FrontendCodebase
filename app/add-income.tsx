@@ -7,6 +7,8 @@ import {
   useWindowDimensions,
   ActivityIndicator,
   Pressable,
+  Modal,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
@@ -26,12 +28,40 @@ export default function AddIncomeScreen() {
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+
+  const [errors, setErrors] = useState({
+    source: "",
+    amount: "",
+  });
 
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768;
 
-  const handleSubmit = async () => {
-    if (!source || !amount) {
+  const validateForm = () => {
+    const newErrors = {
+      source: "",
+      amount: "",
+    };
+
+    let valid = true;
+
+    if (!source.trim()) {
+      newErrors.source = "Income source is required.";
+      valid = false;
+    }
+
+    if (!amount.trim()) {
+      newErrors.amount = "Amount is required.";
+      valid = false;
+    } else if (isNaN(Number(amount)) || Number(amount) <= 0) {
+      newErrors.amount = "Enter a valid amount.";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+
+    if (!valid) {
       const message = "Please fill in all required fields.";
 
       setError(message);
@@ -43,8 +73,14 @@ export default function AddIncomeScreen() {
         position: "top",
       });
 
-      return;
+      setShowValidationModal(true);
     }
+
+    return valid;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
     setLoading(true);
     setError(null);
@@ -108,6 +144,116 @@ export default function AddIncomeScreen() {
         </Pressable>
       </View>
 
+      <Modal
+        visible={showValidationModal}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => {}}
+      >
+        <View className="flex-1 bg-black/70 justify-center items-center px-5">
+          <View
+            className="w-full bg-white rounded-[40px] overflow-hidden"
+            style={{
+              maxWidth: 430,
+            }}
+          >
+            {/* Decorative Background */}
+
+            <View className="absolute -top-16 -right-16 w-52 h-52 rounded-full bg-red-50" />
+
+            <View className="absolute -bottom-20 -left-16 w-44 h-44 rounded-full bg-orange-50" />
+
+            {/* Header */}
+
+            <View className="items-center px-7 pt-8">
+              <View
+                className="items-center justify-center"
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: 48,
+                  backgroundColor: "#FEE2E2",
+                }}
+              >
+                <View
+                  className="items-center justify-center bg-white"
+                  style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 36,
+                  }}
+                >
+                  <Ionicons name="warning" size={36} color="#EF4444" />
+                </View>
+              </View>
+
+              <Text className="text-zinc-900 text-[30px] font-black mt-6">
+                Validation Error
+              </Text>
+
+              <Text className="text-zinc-500 text-center leading-6 mt-3 text-[15px] px-4">
+                Please complete all required fields before adding your income.
+              </Text>
+            </View>
+
+            {/* Divider */}
+
+            <View className="h-px bg-zinc-100 mx-7 mt-7" />
+
+            {/* Errors */}
+
+            <View className="px-7 pt-6">
+              {errors.source !== "" && (
+                <View className="flex-row items-center bg-red-50 border border-red-100 rounded-2xl px-4 py-4 mb-3">
+                  <View className="w-9 h-9 rounded-full bg-red-100 items-center justify-center">
+                    <Ionicons name="close" size={18} color="#EF4444" />
+                  </View>
+
+                  <Text className="ml-3 flex-1 text-red-700 font-semibold text-[15px]">
+                    {errors.source}
+                  </Text>
+                </View>
+              )}
+
+              {errors.amount !== "" && (
+                <View className="flex-row items-center bg-red-50 border border-red-100 rounded-2xl px-4 py-4">
+                  <View className="w-9 h-9 rounded-full bg-red-100 items-center justify-center">
+                    <Ionicons name="close" size={18} color="#EF4444" />
+                  </View>
+
+                  <Text className="ml-3 flex-1 text-red-700 font-semibold text-[15px]">
+                    {errors.amount}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Buttons */}
+
+            <View className="px-7 pt-8 pb-7">
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => setShowValidationModal(false)}
+                className="bg-emerald-600 rounded-2xl py-5 items-center"
+              >
+                <Text className="text-white text-lg font-black">Got it</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setShowValidationModal(false)}
+                className="items-center mt-5"
+              >
+                <Text className="text-zinc-400 font-semibold text-base">
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -164,7 +310,14 @@ export default function AddIncomeScreen() {
                   label="Source"
                   placeholder="Salary, Freelance..."
                   value={source}
-                  onChangeText={setSource}
+                  onChangeText={(text) => {
+                    setSource(text);
+
+                    setErrors((prev) => ({
+                      ...prev,
+                      source: "",
+                    }));
+                  }}
                 />
               </View>
 
@@ -176,7 +329,14 @@ export default function AddIncomeScreen() {
                   placeholder="10000"
                   keyboardType="numeric"
                   value={amount}
-                  onChangeText={setAmount}
+                  onChangeText={(text) => {
+                    setAmount(text);
+
+                    setErrors((prev) => ({
+                      ...prev,
+                      amount: "",
+                    }));
+                  }}
                 />
               </View>
 

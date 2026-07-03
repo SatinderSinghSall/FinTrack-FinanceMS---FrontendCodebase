@@ -7,6 +7,8 @@ import {
   useWindowDimensions,
   ActivityIndicator,
   Pressable,
+  Modal,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
@@ -26,22 +28,59 @@ export default function AddBudgetScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [showValidationModal, setShowValidationModal] = useState(false);
+
+  const [errors, setErrors] = useState({
+    category: "",
+    limit: "",
+  });
+
   const { width } = useWindowDimensions();
   const isLargeScreen = width >= 768;
 
-  const handleSubmit = async () => {
-    if (!category || !limit) {
-      setError("Please fill in all fields before saving.");
+  const validateForm = () => {
+    const newErrors = {
+      category: "",
+      limit: "",
+    };
+
+    let valid = true;
+
+    if (!category.trim()) {
+      newErrors.category = "Budget category is required.";
+      valid = false;
+    }
+
+    if (!limit.trim()) {
+      newErrors.limit = "Monthly budget limit is required.";
+      valid = false;
+    } else if (isNaN(Number(limit)) || Number(limit) <= 0) {
+      newErrors.limit = "Enter a valid monthly budget.";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+
+    if (!valid) {
+      const message = "Please complete all required fields before saving.";
+
+      setError(message);
 
       Toast.show({
         type: "error",
         text1: "Missing fields",
-        text2: "Please fill in all fields before saving.",
+        text2: message,
         position: "top",
       });
 
-      return;
+      setShowValidationModal(true);
     }
+
+    return valid;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
     setLoading(true);
     setError(null);
@@ -104,11 +143,111 @@ export default function AddBudgetScreen() {
         </Pressable>
       </View>
 
+      <Modal
+        visible={showValidationModal}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => {}}
+      >
+        <View className="flex-1 bg-black/70 justify-center items-center px-5">
+          <View
+            className="w-full bg-white rounded-[40px] overflow-hidden"
+            style={{
+              maxWidth: 430,
+            }}
+          >
+            <View className="absolute -top-16 -right-16 w-52 h-52 rounded-full bg-red-50" />
+            <View className="absolute -bottom-20 -left-16 w-44 h-44 rounded-full bg-orange-50" />
+
+            <View className="items-center px-7 pt-8">
+              <View
+                className="items-center justify-center"
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: 48,
+                  backgroundColor: "#FEE2E2",
+                }}
+              >
+                <View
+                  className="bg-white items-center justify-center"
+                  style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 36,
+                  }}
+                >
+                  <Ionicons name="warning" size={36} color="#EF4444" />
+                </View>
+              </View>
+
+              <Text className="text-zinc-900 text-[30px] font-black mt-6">
+                Validation Error
+              </Text>
+
+              <Text className="text-zinc-500 text-center leading-6 mt-3 text-[15px] px-4">
+                Please complete all required fields before creating your budget.
+              </Text>
+            </View>
+
+            <View className="h-px bg-zinc-100 mx-7 mt-7" />
+
+            <View className="px-7 pt-6">
+              {errors.category !== "" && (
+                <View className="flex-row items-center bg-red-50 border border-red-100 rounded-2xl px-4 py-4 mb-3">
+                  <View className="w-9 h-9 rounded-full bg-red-100 items-center justify-center">
+                    <Ionicons name="close" size={18} color="#EF4444" />
+                  </View>
+
+                  <Text className="ml-3 flex-1 text-red-700 font-semibold text-[15px]">
+                    {errors.category}
+                  </Text>
+                </View>
+              )}
+
+              {errors.limit !== "" && (
+                <View className="flex-row items-center bg-red-50 border border-red-100 rounded-2xl px-4 py-4">
+                  <View className="w-9 h-9 rounded-full bg-red-100 items-center justify-center">
+                    <Ionicons name="close" size={18} color="#EF4444" />
+                  </View>
+
+                  <Text className="ml-3 flex-1 text-red-700 font-semibold text-[15px]">
+                    {errors.limit}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <View className="px-7 pt-8 pb-7">
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => setShowValidationModal(false)}
+                className="bg-indigo-600 rounded-2xl py-5 items-center"
+              >
+                <Text className="text-white text-lg font-black">Got it</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setShowValidationModal(false)}
+                className="items-center mt-5"
+              >
+                <Text className="text-zinc-400 font-semibold text-base">
+                  ✕ Close
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
+          scrollEnabled={!showValidationModal}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
@@ -163,7 +302,16 @@ export default function AddBudgetScreen() {
                   label="Category"
                   placeholder="Food, Rent, Travel..."
                   value={category}
-                  onChangeText={setCategory}
+                  onChangeText={(text) => {
+                    setCategory(text);
+
+                    if (error) setError(null);
+
+                    setErrors((prev) => ({
+                      ...prev,
+                      category: "",
+                    }));
+                  }}
                 />
               </View>
 
@@ -175,7 +323,16 @@ export default function AddBudgetScreen() {
                   placeholder="5000"
                   keyboardType="numeric"
                   value={limit}
-                  onChangeText={setLimit}
+                  onChangeText={(text) => {
+                    setLimit(text);
+
+                    if (error) setError(null);
+
+                    setErrors((prev) => ({
+                      ...prev,
+                      limit: "",
+                    }));
+                  }}
                 />
               </View>
 

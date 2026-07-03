@@ -18,6 +18,7 @@ import api from "../services/api";
 import AppHeader from "../components/AppHeader";
 
 import SubscriptionFeatureModal from "../components/SubscriptionFeatureModal";
+import SubscriptionCTA from "../components/SubscriptionCTA";
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -453,65 +454,7 @@ export default function DashboardScreen() {
             )}
           </View>
 
-          <TouchableOpacity
-            onPress={() => router.push("/subscriptions")}
-            activeOpacity={0.9}
-            className="bg-indigo-600 rounded-[32px] mt-5 mb-5 overflow-hidden"
-          >
-            {/* GLOW DECORATION */}
-
-            <View className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full" />
-
-            <View className="absolute -bottom-16 -left-10 w-40 h-40 bg-white/5 rounded-full" />
-
-            {/* CONTENT */}
-
-            <View className="p-6 flex-row items-center justify-between">
-              {/* LEFT */}
-
-              <View className="flex-row items-center flex-1">
-                {/* ICON */}
-
-                <View className="bg-white/20 w-16 h-16 rounded-3xl items-center justify-center mr-5">
-                  <Ionicons name="albums" size={32} color="white" />
-                </View>
-
-                {/* TEXT */}
-
-                <View className="flex-1">
-                  <Text className="text-white text-2xl font-black">
-                    Subscriptions
-                  </Text>
-
-                  <Text className="text-indigo-100 mt-2 leading-6">
-                    Track recurring payments, upcoming renewals & spending
-                  </Text>
-
-                  {/* MINI STATS */}
-
-                  <View className="flex-row mt-4">
-                    <View className="bg-white/20 px-4 py-2 rounded-2xl mr-3">
-                      <Text className="text-white font-bold">
-                        Smart Tracking
-                      </Text>
-                    </View>
-
-                    <View className="bg-white/20 px-4 py-2 rounded-2xl">
-                      <Text className="text-white font-bold">Renewals</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-
-              {/* RIGHT ARROW */}
-
-              <View className="ml-4">
-                <View className="bg-white w-12 h-12 rounded-2xl items-center justify-center">
-                  <Ionicons name="arrow-forward" size={22} color="#4F46E5" />
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
+          <SubscriptionCTA />
 
           {/* ---------- RECENT EXPENSES ---------- */}
 
