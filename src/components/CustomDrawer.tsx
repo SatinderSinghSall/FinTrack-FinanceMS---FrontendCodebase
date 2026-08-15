@@ -15,55 +15,160 @@ export default function CustomDrawer(props: any) {
   const handleLogout = () => {
     const doLogout = () => {
       logout();
-      Toast.show({ type: "success", text1: "Logged out" });
+
+      Toast.show({
+        type: "success",
+        text1: "Logged out",
+      });
+
       setTimeout(() => {
         router.replace("/landing");
       }, 300);
     };
 
     if (Platform.OS === "web") {
-      if (window.confirm("Logout?")) doLogout();
+      if (window.confirm("Logout?")) {
+        doLogout();
+      }
     } else {
       Alert.alert("Logout", "Logout from your account?", [
-        { text: "Cancel", style: "cancel" },
-        { text: "Logout", style: "destructive", onPress: doLogout },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: doLogout,
+        },
       ]);
     }
   };
+
+  const initials = getInitials(user?.name);
 
   return (
     <DrawerContentScrollView
       {...props}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ flexGrow: 1 }}
+      contentContainerStyle={{
+        flexGrow: 1,
+      }}
     >
-      <View className="flex-1 bg-white px-6 pt-16 pb-6">
-        {/* HEADER */}
-        <View className="mb-12">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center">
-              <View className="w-12 h-12 rounded-full bg-gray-100 items-center justify-center mr-4">
-                <Ionicons name="person" size={22} color="#374151" />
-              </View>
+      <View className="flex-1 bg-white px-5 pt-12 pb-5">
+        {/* ========================================================= */}
+        {/* BRAND HEADER */}
+        {/* ========================================================= */}
 
-              <View>
-                <Text className="text-lg font-semibold text-gray-900">
-                  Hello,
-                </Text>
-                <Text className="text-sm text-gray-500 mt-0.5">
-                  {user?.name}
-                </Text>
-              </View>
+        <View className="flex-row items-center justify-between mb-7">
+          <View className="flex-row items-center">
+            {/* LOGO */}
+            <View
+              className="w-12 h-12 rounded-[15px] items-center justify-center"
+              style={{
+                backgroundColor: "#0F2747",
+                shadowColor: "#0F2747",
+                shadowOffset: {
+                  width: 0,
+                  height: 5,
+                },
+                shadowOpacity: 0.15,
+                shadowRadius: 10,
+                elevation: 4,
+              }}
+            >
+              <Ionicons name="wallet-outline" size={24} color="#FFFFFF" />
             </View>
 
-            <TouchableOpacity onPress={() => props.navigation.closeDrawer()}>
-              <Ionicons name="close" size={20} color="#9ca3af" />
-            </TouchableOpacity>
+            {/* BRAND */}
+            <View className="ml-3">
+              <Text className="text-[20px] font-extrabold tracking-[-0.5px] text-[#0F172A]">
+                FinTrack
+              </Text>
+
+              <Text className="text-[11px] font-medium text-[#94A3B8] mt-[1px]">
+                Personal finance
+              </Text>
+            </View>
+          </View>
+
+          {/* CLOSE */}
+          <TouchableOpacity
+            onPress={() => props.navigation.closeDrawer()}
+            activeOpacity={0.7}
+            className="w-10 h-10 rounded-full bg-[#F8FAFC] border border-[#EEF2F7] items-center justify-center"
+          >
+            <Ionicons name="close-outline" size={21} color="#64748B" />
+          </TouchableOpacity>
+        </View>
+
+        {/* ========================================================= */}
+        {/* PROFILE CARD */}
+        {/* ========================================================= */}
+
+        <View
+          className="rounded-[20px] px-4 py-4 mb-8"
+          style={{
+            backgroundColor: "#F8FAFC",
+            borderWidth: 1,
+            borderColor: "#E8EEF5",
+          }}
+        >
+          <View className="flex-row items-center">
+            {/* AVATAR */}
+            <View
+              className="w-12 h-12 rounded-full items-center justify-center"
+              style={{
+                backgroundColor: "#EAF1FF",
+              }}
+            >
+              <Text className="text-[16px] font-bold text-[#2563EB]">
+                {initials}
+              </Text>
+            </View>
+
+            {/* USER */}
+            <View className="flex-1 ml-3">
+              <Text className="text-[11px] font-medium text-[#94A3B8]">
+                Welcome back
+              </Text>
+
+              <Text
+                numberOfLines={1}
+                className="text-[16px] font-bold text-[#0F172A] mt-[2px]"
+              >
+                {user?.name || "User"}
+              </Text>
+
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                className="text-[11px] text-[#94A3B8] mt-[2px]"
+              >
+                {user?.email || ""}
+              </Text>
+            </View>
+
+            {/* VERIFIED */}
+            <View className="w-8 h-8 rounded-full bg-white items-center justify-center">
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={17}
+                color="#22C55E"
+              />
+            </View>
           </View>
         </View>
 
-        {/* MENU */}
-        <View className="space-y-1">
+        {/* ========================================================= */}
+        {/* FINANCES */}
+        {/* ========================================================= */}
+
+        <Text className="text-[11px] font-bold tracking-[1.2px] text-[#94A3B8] mb-3 px-1">
+          FINANCES
+        </Text>
+
+        <View>
           <DrawerItem
             label="Dashboard"
             icon="home-outline"
@@ -82,7 +187,7 @@ export default function CustomDrawer(props: any) {
 
           <DrawerItem
             label="Expense"
-            icon="cash-outline"
+            icon="arrow-down-circle-outline"
             route="(tabs)/expenses"
             active={pathname.includes("expenses")}
             {...props}
@@ -90,7 +195,7 @@ export default function CustomDrawer(props: any) {
 
           <DrawerItem
             label="Income"
-            icon="receipt-outline"
+            icon="arrow-up-circle-outline"
             route="(tabs)/income"
             active={pathname.includes("income")}
             {...props}
@@ -127,100 +232,123 @@ export default function CustomDrawer(props: any) {
             active={pathname.includes("analytics")}
             {...props}
           />
-
-          <DrawerItem
-            label="Settings"
-            icon="settings-outline"
-            route="settings"
-            active={pathname.includes("settings")}
-            {...props}
-          />
-
-          <TouchableOpacity
-            activeOpacity={0.92}
-            onPress={() => props.navigation.navigate("developer")}
-            className={`mt-4 rounded-[22px] border overflow-hidden ${
-              pathname.includes("developer")
-                ? "bg-[#F8FAFF] border-[#DCE4FF]"
-                : "bg-white border-[#ECECEC]"
-            }`}
-            style={{
-              shadowColor: "#000",
-              shadowOffset: {
-                width: 0,
-                height: 4,
-              },
-              shadowOpacity: 0.04,
-              shadowRadius: 12,
-              elevation: 2,
-            }}
-          >
-            {/* LEFT ACCENT */}
-            <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#6366F1]" />
-
-            <View className="px-4 py-[15px]">
-              {/* TOP ROW */}
-              <View className="flex-row items-start">
-                {/* ICON */}
-                <View className="w-11 h-11 rounded-[14px] bg-[#EEF2FF] items-center justify-center">
-                  <Ionicons name="sparkles-outline" size={19} color="#4F46E5" />
-                </View>
-
-                {/* TEXT CONTENT */}
-                <View className="flex-1 ml-3 pr-2">
-                  <Text
-                    numberOfLines={1}
-                    className="text-[14px] font-semibold tracking-[-0.2px] text-[#111827]"
-                  >
-                    Meet the Developer
-                  </Text>
-
-                  <Text
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    className="text-[11px] leading-[16px] text-[#6B7280] mt-[3px]"
-                  >
-                    Skills, AI/ML, projects & tech stack
-                  </Text>
-                </View>
-
-                {/* RIGHT ICON */}
-                <View className="ml-2 mt-[2px]">
-                  <Ionicons name="chevron-forward" size={17} color="#9CA3AF" />
-                </View>
-              </View>
-
-              {/* EXPLORE BADGE */}
-              <View className="mt-3 ml-[56px]">
-                <View className="self-start px-3 py-[5px] rounded-full bg-[#EEF2FF] border border-[#DCE4FF]">
-                  <Text className="text-[9px] font-bold tracking-[0.5px] text-[#4F46E5]">
-                    EXPLORE PORTFOLIO
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
         </View>
 
+        {/* ========================================================= */}
+        {/* ACCOUNT */}
+        {/* ========================================================= */}
+
+        <Text className="text-[11px] font-bold tracking-[1.2px] text-[#94A3B8] mb-3 mt-7 px-1">
+          ACCOUNT
+        </Text>
+
+        <DrawerItem
+          label="Settings"
+          icon="settings-outline"
+          route="settings"
+          active={pathname.includes("settings")}
+          {...props}
+        />
+
+        {/* ========================================================= */}
+        {/* DEVELOPER CARD */}
+        {/* ========================================================= */}
+
+        <TouchableOpacity
+          activeOpacity={0.88}
+          onPress={() => props.navigation.navigate("developer")}
+          className="mt-5 rounded-[20px] overflow-hidden"
+          style={{
+            backgroundColor: "#F8FAFF",
+            borderWidth: 1,
+            borderColor: "#DCE7FF",
+            shadowColor: "#2563EB",
+            shadowOffset: {
+              width: 0,
+              height: 4,
+            },
+            shadowOpacity: 0.06,
+            shadowRadius: 12,
+            elevation: 2,
+          }}
+        >
+          {/* BLUE ACCENT */}
+          <View
+            className="absolute left-0 top-0 bottom-0 w-[3px]"
+            style={{
+              backgroundColor: "#2563EB",
+            }}
+          />
+
+          <View className="px-4 py-4">
+            <View className="flex-row items-center">
+              {/* ICON */}
+              <View
+                className="w-11 h-11 rounded-[14px] items-center justify-center"
+                style={{
+                  backgroundColor: "#EAF1FF",
+                }}
+              >
+                <Ionicons name="sparkles-outline" size={21} color="#2563EB" />
+              </View>
+
+              {/* CONTENT */}
+              <View className="flex-1 ml-3">
+                <Text className="text-[14px] font-bold text-[#0F172A]">
+                  Meet the Developer
+                </Text>
+
+                <Text
+                  numberOfLines={1}
+                  className="text-[11px] text-[#64748B] mt-[3px]"
+                >
+                  Skills, AI/ML, projects & tech
+                </Text>
+              </View>
+
+              <Ionicons name="chevron-forward" size={18} color="#64748B" />
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        {/* ========================================================= */}
         {/* FOOTER */}
-        <View className="mt-auto pt-10">
-          {/* SEPARATOR */}
-          <View className="h-px bg-gray-200 mb-6" />
+        {/* ========================================================= */}
 
-          <Text className="text-l text-gray-400 text-center mb-6">
-            v{Constants.expoConfig?.version} • build{" "}
-            {Platform.OS === "android"
-              ? Constants.expoConfig?.android?.versionCode
-              : Constants.expoConfig?.ios?.buildNumber}
-          </Text>
+        <View className="mt-auto pt-7">
+          {/* DIVIDER */}
+          <View className="h-px bg-[#EEF2F7] mb-5" />
 
+          {/* VERSION */}
+          <View className="flex-row items-center justify-center mb-5">
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={14}
+              color="#22C55E"
+            />
+
+            <Text className="text-[11px] font-medium text-[#94A3B8] ml-1.5">
+              v{Constants.expoConfig?.version} • build{" "}
+              {Platform.OS === "android"
+                ? Constants.expoConfig?.android?.versionCode
+                : Constants.expoConfig?.ios?.buildNumber}
+            </Text>
+          </View>
+
+          {/* LOGOUT */}
           <TouchableOpacity
             onPress={handleLogout}
-            activeOpacity={0.8}
-            className="bg-red-50 border border-red-100 py-4 rounded-2xl flex-row items-center justify-center"
+            activeOpacity={0.85}
+            className="py-[14px] rounded-[17px] flex-row items-center justify-center"
+            style={{
+              backgroundColor: "#FFF7F7",
+              borderWidth: 1,
+              borderColor: "#FEE2E2",
+            }}
           >
-            <Ionicons name="log-out-outline" size={20} color="#ef4444" />
-            <Text className="ml-2 text-base text-red-500 font-semibold">
+            <Ionicons name="log-out-outline" size={19} color="#EF4444" />
+
+            <Text className="ml-2 text-[14px] font-bold text-[#EF4444]">
               Logout
             </Text>
           </TouchableOpacity>
@@ -230,6 +358,10 @@ export default function CustomDrawer(props: any) {
   );
 }
 
+/* =============================================================== */
+/* DRAWER ITEM */
+/* =============================================================== */
+
 function DrawerItem({ label, icon, route, active, ...props }: any) {
   return (
     <TouchableOpacity
@@ -237,20 +369,74 @@ function DrawerItem({ label, icon, route, active, ...props }: any) {
         router.push(`/${route}`);
         props.navigation.closeDrawer();
       }}
-      activeOpacity={0.7}
-      className={`flex-row items-center py-4 px-2 rounded-xl ${
-        active ? "bg-gray-100" : ""
-      }`}
+      activeOpacity={0.78}
+      className="relative flex-row items-center"
+      style={{
+        height: 54,
+        paddingHorizontal: 10,
+        marginBottom: 3,
+        borderRadius: 15,
+        backgroundColor: active ? "#EEF4FF" : "transparent",
+      }}
     >
-      <Ionicons name={icon} size={22} color={active ? "#111827" : "#9ca3af"} />
+      {/* ACTIVE LEFT INDICATOR */}
+      {active && (
+        <View
+          className="absolute left-0 top-[10px] bottom-[10px] w-[3px] rounded-full"
+          style={{
+            backgroundColor: "#2563EB",
+          }}
+        />
+      )}
 
+      {/* ICON CONTAINER */}
+      <View
+        className="w-10 h-10 rounded-[12px] items-center justify-center"
+        style={{
+          backgroundColor: active ? "#FFFFFF" : "transparent",
+        }}
+      >
+        <Ionicons
+          name={icon}
+          size={23}
+          color={active ? "#2563EB" : "#94A3B8"}
+        />
+      </View>
+
+      {/* LABEL */}
       <Text
-        className={`ml-4 text-base ${
-          active ? "text-gray-900 font-semibold" : "text-gray-500"
+        className={`ml-3 text-[15px] ${
+          active ? "font-bold text-[#0F172A]" : "font-medium text-[#64748B]"
         }`}
       >
         {label}
       </Text>
+
+      {/* ACTIVE DOT */}
+      {active && (
+        <View
+          className="ml-auto w-[6px] h-[6px] rounded-full"
+          style={{
+            backgroundColor: "#2563EB",
+          }}
+        />
+      )}
     </TouchableOpacity>
   );
+}
+
+/* =============================================================== */
+/* HELPERS */
+/* =============================================================== */
+
+function getInitials(name: string | null | undefined) {
+  if (!name) return "U";
+
+  const parts = name.trim().split(/\s+/);
+
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }

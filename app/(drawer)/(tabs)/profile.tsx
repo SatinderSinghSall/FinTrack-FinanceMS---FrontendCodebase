@@ -23,29 +23,40 @@ import AppHeader from "@/src/components/AppHeader";
 export default function ProfileScreen() {
   const logout = useAuthStore((s) => s.logout);
   const navigation = useNavigation();
+
   const scrollRef = useRef<ScrollView>(null);
 
   const [profile, setProfile] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const { width } = useWindowDimensions();
+
   const isTablet = width >= 768;
   const isDesktop = width >= 1024;
 
   const appVersion = Constants.expoConfig?.version ?? "1.0.0";
+
   const buildNumber =
     Constants.expoConfig?.ios?.buildNumber ||
     Constants.expoConfig?.android?.versionCode ||
     "1";
 
+  /* ====================================================== */
+  /* FETCH PROFILE */
+  /* ====================================================== */
+
   const fetchProfile = async () => {
     try {
       const res = await api.get("/profile");
       setProfile(res.data);
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      console.log("Profile fetch error:", error);
     }
   };
+
+  /* ====================================================== */
+  /* REFRESH WHEN SCREEN FOCUSES */
+  /* ====================================================== */
 
   useFocusEffect(
     useCallback(() => {
@@ -62,11 +73,21 @@ export default function ProfileScreen() {
     }, []),
   );
 
+  /* ====================================================== */
+  /* PULL TO REFRESH */
+  /* ====================================================== */
+
   const onRefresh = async () => {
     setRefreshing(true);
+
     await fetchProfile();
+
     setRefreshing(false);
   };
+
+  /* ====================================================== */
+  /* LOGOUT */
+  /* ====================================================== */
 
   const handleLogout = () => {
     const doLogout = () => {
@@ -85,281 +106,858 @@ export default function ProfileScreen() {
     };
 
     if (Platform.OS === "web") {
-      if (window.confirm("Logout from your account?")) doLogout();
+      if (window.confirm("Logout from your account?")) {
+        doLogout();
+      }
     } else {
       Alert.alert("Logout", "Logout from your account?", [
-        { text: "Cancel", style: "cancel" },
-        { text: "Logout", style: "destructive", onPress: doLogout },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: doLogout,
+        },
       ]);
     }
   };
 
+  /* ====================================================== */
+  /* LOADING */
+  /* ====================================================== */
+
   if (!profile) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-100 items-center justify-center">
-        <ActivityIndicator size="large" color="#2563eb" />
-        <Text className="text-gray-500 mt-3">Loading profile...</Text>
+      <SafeAreaView className="flex-1 bg-slate-50 items-center justify-center">
+        <View
+          className="bg-white rounded-[24px] px-7 py-6 items-center"
+          style={{
+            shadowColor: "#0F172A",
+            shadowOffset: {
+              width: 0,
+              height: 6,
+            },
+            shadowOpacity: 0.06,
+            shadowRadius: 18,
+            elevation: 3,
+          }}
+        >
+          <View className="w-12 h-12 rounded-2xl bg-blue-50 items-center justify-center">
+            <ActivityIndicator size="small" color="#2563EB" />
+          </View>
+
+          <Text className="text-slate-900 font-semibold mt-4">
+            Loading profile
+          </Text>
+
+          <Text className="text-slate-400 text-xs mt-1">
+            Preparing your financial overview...
+          </Text>
+        </View>
       </SafeAreaView>
     );
   }
 
   const { user, stats } = profile;
 
+  /* ====================================================== */
+  /* USER INITIALS */
+  /* ====================================================== */
+
   const initials =
-    user.name
-      ?.split(" ")
-      .map((n: string) => n[0])
-      .join("") ?? "U";
+    user?.name
+      ?.trim()
+      ?.split(/\s+/)
+      ?.map((name: string) => name[0])
+      ?.join("")
+      ?.slice(0, 2)
+      ?.toUpperCase() || "U";
+
+  /* ====================================================== */
+  /* JOINED DATE */
+  /* ====================================================== */
+
+  const joinedDate = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      })
+    : "—";
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
-      {/* 🔥 HEADER */}
+      {/* ================================================== */}
+      {/* HEADER */}
+      {/* ================================================== */}
+
       <AppHeader
         title="Profile"
         showMenu
         onMenuPress={() => navigation.openDrawer()}
       />
+
+      {/* ================================================== */}
+      {/* CONTENT */}
+      {/* ================================================== */}
+
       <ScrollView
         ref={scrollRef}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#2563EB"
+            colors={["#2563EB"]}
+          />
         }
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingBottom: 40,
+          paddingHorizontal: isTablet ? 28 : 20,
+          paddingTop: 8,
+          paddingBottom: 42,
         }}
         showsVerticalScrollIndicator={false}
       >
         <View
           style={{
             width: "100%",
-            maxWidth: isDesktop ? 700 : isTablet ? 550 : "100%",
+            maxWidth: isDesktop ? 760 : isTablet ? 620 : "100%",
             alignSelf: "center",
           }}
         >
-          {/* HEADER */}
-          <Text
-            className="font-bold mb-1"
-            style={{ fontSize: isTablet ? 34 : 28 }}
+          {/* ================================================== */}
+          {/* PAGE INTRO */}
+          {/* ================================================== */}
+
+          <View className="mb-5">
+            <Text
+              className="text-slate-900 font-extrabold"
+              style={{
+                fontSize: isTablet ? 34 : 28,
+                letterSpacing: -0.8,
+              }}
+            >
+              Your profile
+            </Text>
+
+            <Text className="text-slate-500 text-sm mt-1.5">
+              Manage your account and financial activity.
+            </Text>
+          </View>
+
+          {/* ================================================== */}
+          {/* PREMIUM USER CARD */}
+          {/* ================================================== */}
+
+          <View
+            className="rounded-[26px] overflow-hidden mb-7"
+            style={{
+              backgroundColor: "#071D3A",
+
+              shadowColor: "#071D3A",
+              shadowOffset: {
+                width: 0,
+                height: 10,
+              },
+              shadowOpacity: 0.16,
+              shadowRadius: 22,
+              elevation: 6,
+            }}
           >
-            Profile
-          </Text>
+            {/* Decorative background */}
 
-          <Text className="text-gray-500 mb-6">
-            Manage your account & preferences
-          </Text>
+            <View
+              className="absolute rounded-full"
+              style={{
+                width: 170,
+                height: 170,
+                right: -70,
+                top: -80,
+                backgroundColor: "rgba(59,130,246,0.12)",
+              }}
+            />
 
-          {/* USER CARD */}
-          <View className="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-gray-100 flex-row items-center">
-            <View className="bg-blue-100 h-16 w-16 rounded-full items-center justify-center mr-4">
-              <Text className="text-blue-600 font-bold text-xl">
-                {initials}
-              </Text>
-            </View>
+            <View
+              className="absolute rounded-full"
+              style={{
+                width: 130,
+                height: 130,
+                right: -55,
+                bottom: -75,
+                backgroundColor: "rgba(99,102,241,0.10)",
+              }}
+            />
 
-            <View className="flex-1">
-              <Text className="text-lg font-semibold text-gray-900">
-                {user.name}
-              </Text>
+            <View className="p-5">
+              {/* USER */}
 
-              <Text className="text-gray-500 text-sm">{user.email}</Text>
+              <View className="flex-row items-center">
+                <View className="w-[66px] h-[66px] rounded-[20px] bg-[#EEF4FF] items-center justify-center">
+                  <Text
+                    className="text-blue-600 font-extrabold"
+                    style={{
+                      fontSize: 21,
+                      letterSpacing: -0.5,
+                    }}
+                  >
+                    {initials}
+                  </Text>
+                </View>
 
-              <Text className="text-gray-400 text-xs mt-1">
-                Joined {new Date(user.createdAt).toDateString()}
-              </Text>
+                <View className="flex-1 ml-4 pr-2">
+                  <Text
+                    className="text-white font-extrabold"
+                    numberOfLines={1}
+                    style={{
+                      fontSize: isTablet ? 23 : 20,
+                      letterSpacing: -0.4,
+                    }}
+                  >
+                    {user?.name}
+                  </Text>
 
-              <View className="bg-blue-50 px-2 py-1 rounded-full mt-2 self-start">
-                <Text className="text-xs text-blue-600 font-medium">
-                  Active account
-                </Text>
+                  <Text
+                    className="text-blue-100/70 text-xs mt-1"
+                    numberOfLines={1}
+                  >
+                    {user?.email}
+                  </Text>
+                </View>
+
+                <View className="w-9 h-9 rounded-full bg-white/10 items-center justify-center">
+                  <Ionicons
+                    name="shield-checkmark-outline"
+                    size={18}
+                    color="#60A5FA"
+                  />
+                </View>
+              </View>
+
+              {/* DIVIDER */}
+
+              <View
+                className="h-px my-5"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.10)",
+                }}
+              />
+
+              {/* META */}
+
+              <View className="flex-row">
+                <View className="flex-1 flex-row items-center">
+                  <View className="w-9 h-9 rounded-xl bg-emerald-400/10 items-center justify-center mr-3">
+                    <View className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                  </View>
+
+                  <View>
+                    <Text className="text-blue-100/50 text-[10px] font-semibold uppercase tracking-wider">
+                      Account
+                    </Text>
+
+                    <Text className="text-white text-sm font-semibold mt-0.5">
+                      Active
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="flex-1 flex-row items-center">
+                  <View className="w-9 h-9 rounded-xl bg-white/10 items-center justify-center mr-3">
+                    <Ionicons
+                      name="calendar-outline"
+                      size={17}
+                      color="#BFDBFE"
+                    />
+                  </View>
+
+                  <View>
+                    <Text className="text-blue-100/50 text-[10px] font-semibold uppercase tracking-wider">
+                      Member since
+                    </Text>
+
+                    <Text className="text-white text-sm font-semibold mt-0.5">
+                      {joinedDate}
+                    </Text>
+                  </View>
+                </View>
               </View>
             </View>
           </View>
 
-          {/* 🔥 STATS */}
-          <View className="mb-6">
-            <Text className="text-gray-800 font-semibold text-base mb-4">
-              Overview
+          {/* ================================================== */}
+          {/* FINANCIAL OVERVIEW */}
+          {/* ================================================== */}
+
+          <View className="mb-4">
+            <Text className="text-blue-600 text-[10px] font-extrabold tracking-[1.5px]">
+              YOUR FINANCES
             </Text>
 
-            <View className="flex-row flex-wrap justify-between gap-y-3">
-              <StatCard
-                icon="wallet-outline"
-                color="#2563eb"
-                label="Budgets"
-                value={stats.budgetsCount}
-                bg="bg-blue-50"
-                isTablet={isTablet}
-              />
+            <Text
+              className="text-slate-900 font-extrabold mt-1"
+              style={{
+                fontSize: isTablet ? 25 : 22,
+                letterSpacing: -0.5,
+              }}
+            >
+              Financial overview
+            </Text>
 
-              <StatCard
-                icon="receipt-outline"
-                color="#dc2626"
-                label="Expenses"
-                value={stats.expensesCount}
-                bg="bg-red-50"
-                isTablet={isTablet}
-              />
+            <Text className="text-slate-400 text-sm mt-1">
+              A quick look at what you're tracking.
+            </Text>
+          </View>
 
-              <StatCard
-                icon="cash-outline"
-                color="#16a34a"
+          {/* ================================================== */}
+          {/* FINANCIAL CARDS */}
+          {/* ================================================== */}
+
+          <View className="flex-row flex-wrap justify-between mb-7">
+            <StatCard
+              icon="wallet-outline"
+              color="#2563EB"
+              label="Budgets"
+              value={stats?.budgetsCount ?? 0}
+              background="#EEF4FF"
+              accent="#2563EB"
+              onPress={() => router.push("/budgets")}
+            />
+
+            <StatCard
+              icon="receipt-outline"
+              color="#EF4444"
+              label="Expenses"
+              value={stats?.expensesCount ?? 0}
+              background="#FFF1F2"
+              accent="#EF4444"
+              onPress={() => router.push("/expenses")}
+            />
+
+            <StatCard
+              icon="trending-up-outline"
+              color="#16A34A"
+              label="Income"
+              value={stats?.incomeCount ?? 0}
+              background="#ECFDF5"
+              accent="#16A34A"
+              onPress={() => router.push("/income")}
+            />
+
+            <StatCard
+              icon="leaf-outline"
+              color="#059669"
+              label="Savings"
+              value={stats?.savingsCount ?? 0}
+              background="#ECFDF5"
+              accent="#059669"
+              onPress={() => router.push("/savings")}
+            />
+          </View>
+
+          {/* ================================================== */}
+          {/* QUICK ACTIONS */}
+          {/* ================================================== */}
+
+          <View className="mb-7">
+            <Text className="text-blue-600 text-[10px] font-extrabold tracking-[1.5px]">
+              SHORTCUTS
+            </Text>
+
+            <Text
+              className="text-slate-900 font-extrabold mt-1"
+              style={{
+                fontSize: isTablet ? 25 : 22,
+                letterSpacing: -0.5,
+              }}
+            >
+              Quick actions
+            </Text>
+
+            <Text className="text-slate-400 text-sm mt-1 mb-4">
+              Jump straight into your finances.
+            </Text>
+
+            <View className="flex-row flex-wrap justify-between">
+              <QuickAction
                 label="Income"
-                value={stats.incomeCount || 0}
-                bg="bg-green-50"
-                isTablet={isTablet}
+                description="Add income"
+                icon="arrow-down-circle-outline"
+                color="#16A34A"
+                background="#ECFDF5"
+                onPress={() => router.push("/income")}
               />
 
-              <StatCard
+              <QuickAction
+                label="Expense"
+                description="Record spending"
+                icon="arrow-up-circle-outline"
+                color="#EF4444"
+                background="#FFF1F2"
+                onPress={() => router.push("/expenses")}
+              />
+
+              <QuickAction
+                label="Budget"
+                description="Plan your spending"
+                icon="wallet-outline"
+                color="#2563EB"
+                background="#EEF4FF"
+                onPress={() => router.push("/budgets")}
+              />
+
+              <QuickAction
+                label="Savings"
+                description="Track your goals"
                 icon="leaf-outline"
                 color="#059669"
-                label="Savings"
-                value={stats.savingsCount || 0}
-                bg="bg-emerald-50"
-                isTablet={isTablet}
+                background="#ECFDF5"
+                onPress={() => router.push("/savings")}
               />
             </View>
           </View>
 
-          {/* 🔥 QUICK ACTIONS */}
-          <View className="mb-6">
-            <Text className="text-gray-800 font-semibold text-base mb-4">
-              Quick Actions
+          {/* ================================================== */}
+          {/* ACCOUNT / PREFERENCES */}
+          {/* ================================================== */}
+
+          <View className="mb-7">
+            <Text className="text-blue-600 text-[10px] font-extrabold tracking-[1.5px] mb-1">
+              ACCOUNT
             </Text>
 
-            <View className="flex-row flex-wrap justify-between gap-y-3">
-              {/* 💰 INCOME */}
+            <Text
+              className="text-slate-900 font-extrabold mb-4"
+              style={{
+                fontSize: isTablet ? 25 : 22,
+                letterSpacing: -0.5,
+              }}
+            >
+              Preferences
+            </Text>
 
-              <Pressable
-                onPress={() => router.push("/income")}
-                className="w-[48.5%] bg-green-500 py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
-              >
-                <Ionicons name="cash-outline" size={18} color="#fff" />
+            <View
+              className="bg-white rounded-[24px] overflow-hidden"
+              style={{
+                borderWidth: 1,
+                borderColor: "#E8EDF4",
 
-                <Text className="text-white font-semibold ml-2">Income</Text>
-              </Pressable>
+                shadowColor: "#0F172A",
+                shadowOffset: {
+                  width: 0,
+                  height: 5,
+                },
+                shadowOpacity: 0.045,
+                shadowRadius: 16,
+                elevation: 2,
+              }}
+            >
+              <ProfileItem
+                icon="notifications-outline"
+                label="Notifications"
+                description="Manage financial reminders"
+                color="#6366F1"
+                background="#EEF2FF"
+                onPress={() => router.push("/notifications")}
+              />
 
-              {/* 💸 EXPENSE */}
+              <Divider />
 
-              <Pressable
-                onPress={() => router.push("/expenses")}
-                className="w-[48.5%] bg-red-500 py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
-              >
-                <Ionicons name="receipt-outline" size={18} color="#fff" />
+              <ProfileItem
+                icon="settings-outline"
+                label="Settings"
+                description="App preferences and controls"
+                color="#64748B"
+                background="#F1F5F9"
+                onPress={() => router.push("/settings")}
+              />
 
-                <Text className="text-white font-semibold ml-2">Expense</Text>
-              </Pressable>
+              <Divider />
 
-              {/* 💳 BUDGET */}
+              <ProfileItem
+                icon="lock-closed-outline"
+                label="Change Password"
+                description="Keep your account secure"
+                color="#8B5CF6"
+                background="#F5F3FF"
+              />
 
-              <Pressable
-                onPress={() => router.push("/budgets")}
-                className="w-[48.5%] bg-blue-600 py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
-              >
-                <Ionicons name="wallet-outline" size={18} color="#fff" />
+              <Divider />
 
-                <Text className="text-white font-semibold ml-2">Budget</Text>
-              </Pressable>
+              <ProfileItem
+                icon="help-circle-outline"
+                label="Help & Support"
+                description="Get help with FinTrack"
+                color="#0891B2"
+                background="#ECFEFF"
+              />
 
-              {/* 💚 SAVINGS */}
+              <Divider />
 
-              <Pressable
-                onPress={() => router.push("/savings")}
-                className="w-[48.5%] bg-emerald-600 py-4 rounded-2xl flex-row items-center justify-center shadow-sm"
-              >
-                <Ionicons name="leaf-outline" size={18} color="#fff" />
-
-                <Text className="text-white font-semibold ml-2">Savings</Text>
-              </Pressable>
+              <ProfileItem
+                icon="document-text-outline"
+                label="Privacy Policy"
+                description="Learn how your data is handled"
+                color="#475569"
+                background="#F1F5F9"
+              />
             </View>
           </View>
 
-          {/* SETTINGS */}
-          <View className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-            <ProfileItem
-              icon="notifications-outline"
-              label="Notifications"
-              onPress={() => router.push("/notifications")}
-            />
-            <Divider />
-            <ProfileItem
-              icon="settings-outline"
-              label="Settings"
-              onPress={() => router.push("/settings")}
-            />
-            <Divider />
-            <ProfileItem icon="lock-closed-outline" label="Change Password" />
-            <Divider />
-            <ProfileItem icon="help-circle-outline" label="Help & Support" />
-            <Divider />
-            <ProfileItem icon="document-text-outline" label="Privacy Policy" />
+          {/* ================================================== */}
+          {/* SECURITY CARD */}
+          {/* ================================================== */}
+
+          <View
+            className="bg-white rounded-[24px] p-4 mb-7"
+            style={{
+              borderWidth: 1,
+              borderColor: "#E7ECF3",
+
+              shadowColor: "#0F172A",
+              shadowOffset: {
+                width: 0,
+                height: 5,
+              },
+              shadowOpacity: 0.045,
+              shadowRadius: 16,
+              elevation: 2,
+            }}
+          >
+            <View className="flex-row items-center">
+              {/* ICON */}
+
+              <View className="w-11 h-11 rounded-[15px] bg-emerald-50 items-center justify-center">
+                <Ionicons
+                  name="shield-checkmark-outline"
+                  size={22}
+                  color="#059669"
+                />
+              </View>
+
+              {/* TEXT */}
+
+              <View className="flex-1 ml-3.5 pr-2">
+                <Text className="text-slate-800 font-bold text-[13px]">
+                  Your account is protected
+                </Text>
+
+                <Text
+                  className="text-slate-400 text-[11px] mt-1"
+                  numberOfLines={2}
+                >
+                  Your financial data is secured and accessible only to you.
+                </Text>
+              </View>
+
+              {/* STATUS */}
+
+              <View className="w-8 h-8 rounded-full bg-emerald-50 items-center justify-center">
+                <View className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              </View>
+            </View>
           </View>
 
-          {/* VERSION */}
-          <View className="items-center mt-8 mb-2">
-            <View className="h-[1px] bg-gray-200 w-full mb-4 opacity-60" />
-            <Text className="text-gray-400 text-xs tracking-wide">
+          {/* ================================================== */}
+          {/* FINTRACK BRANDING */}
+          {/* ================================================== */}
+
+          <View className="items-center mb-6">
+            {/* LOGO */}
+
+            <View className="w-11 h-11 rounded-[15px] bg-[#071D3A] items-center justify-center mb-3">
+              <Ionicons name="wallet-outline" size={21} color="#FFFFFF" />
+            </View>
+
+            <Text className="text-slate-800 font-bold text-sm">FinTrack</Text>
+
+            <Text className="text-slate-400 text-[10px] mt-1">
+              Smart money management, made simple.
+            </Text>
+
+            {/* VERSION */}
+
+            <Text className="text-slate-300 text-[9px] font-semibold uppercase tracking-[1px] mt-3">
               Version {appVersion} • Build {buildNumber}
             </Text>
           </View>
 
+          {/* ================================================== */}
           {/* LOGOUT */}
+          {/* ================================================== */}
+
           <Pressable
             onPress={handleLogout}
-            className="bg-red-600 py-4 rounded-xl flex-row items-center justify-center shadow-sm"
+            android_ripple={{ color: "#FEE2E2" }}
+            className="bg-white rounded-[20px] py-4 flex-row items-center justify-center"
+            style={{
+              borderWidth: 1,
+              borderColor: "#FECACA",
+
+              shadowColor: "#EF4444",
+              shadowOffset: {
+                width: 0,
+                height: 4,
+              },
+              shadowOpacity: 0.035,
+              shadowRadius: 12,
+              elevation: 2,
+            }}
           >
-            <Ionicons name="log-out-outline" size={20} color="#fff" />
-            <Text className="text-white font-semibold ml-2">Logout</Text>
+            <View className="w-9 h-9 rounded-xl bg-red-50 items-center justify-center">
+              <Ionicons name="log-out-outline" size={19} color="#EF4444" />
+            </View>
+
+            <Text className="text-red-500 font-bold text-sm ml-2">
+              Log out of FinTrack
+            </Text>
           </Pressable>
+
+          {/* ================================================== */}
+          {/* FOOTER */}
+          {/* ================================================== */}
+
+          <Text className="text-center text-slate-300 text-[9px] mt-5">
+            Secure • Private • Built for you
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* ---------------- STAT CARD (FIXED) ---------------- */
+/* ====================================================== */
+/* FINANCIAL STAT CARD */
+/* ====================================================== */
 
-function StatCard({ icon, color, label, value, bg, isTablet }: any) {
-  return (
-    <View
-      className="bg-white rounded-xl p-4 shadow-md border border-gray-100 mb-3"
-      style={{
-        width: isTablet ? "32%" : "48%",
-      }}
-    >
-      <View className={`${bg} p-2 rounded-lg self-start`}>
-        <Ionicons name={icon} size={20} color={color} />
-      </View>
-
-      <Text className="text-gray-500 text-sm mt-2">{label}</Text>
-
-      <Text className="text-xl font-bold mt-1">{value}</Text>
-    </View>
-  );
-}
-
-/* ---------------- PROFILE ITEM ---------------- */
-
-function ProfileItem({ icon, label, onPress }: any) {
+function StatCard({
+  icon,
+  color,
+  label,
+  value,
+  background,
+  accent,
+  onPress,
+}: any) {
   return (
     <Pressable
       onPress={onPress}
-      android_ripple={{ color: "#e5e7eb" }}
-      className="flex-row items-center px-4 py-4"
+      android_ripple={{ color: "#F1F5F9" }}
+      style={{
+        width: "48.5%",
+      }}
+      className="mb-3"
     >
-      <View className="bg-gray-100 p-2 rounded-lg">
-        <Ionicons name={icon} size={18} color="#374151" />
+      <View
+        className="bg-white rounded-[22px] p-[17px] min-h-[150px]"
+        style={{
+          borderWidth: 1,
+          borderColor: "#E7ECF3",
+
+          shadowColor: "#0F172A",
+          shadowOffset: {
+            width: 0,
+            height: 5,
+          },
+          shadowOpacity: 0.05,
+          shadowRadius: 15,
+          elevation: 2,
+        }}
+      >
+        {/* TOP */}
+
+        <View className="flex-row items-center justify-between">
+          <View
+            className="w-11 h-11 rounded-[15px] items-center justify-center"
+            style={{
+              backgroundColor: background,
+            }}
+          >
+            <Ionicons name={icon} size={21} color={color} />
+          </View>
+
+          <View className="w-8 h-8 rounded-full bg-slate-50 items-center justify-center">
+            <Ionicons name="arrow-forward" size={14} color="#94A3B8" />
+          </View>
+        </View>
+
+        {/* LABEL */}
+
+        <Text className="text-slate-400 text-[11px] font-semibold mt-4">
+          {label}
+        </Text>
+
+        {/* VALUE */}
+
+        <Text
+          className="text-slate-900 font-extrabold mt-1"
+          style={{
+            fontSize: 25,
+            letterSpacing: -0.7,
+          }}
+        >
+          {value}
+        </Text>
+
+        {/* FOOTER */}
+
+        <View className="flex-row items-center mt-3">
+          <View
+            className="w-1.5 h-1.5 rounded-full mr-1.5"
+            style={{
+              backgroundColor: accent,
+            }}
+          />
+
+          <Text className="text-slate-300 text-[9px] font-medium">Tracked</Text>
+        </View>
       </View>
-
-      <Text className="ml-4 text-gray-800 font-medium flex-1">{label}</Text>
-
-      <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
     </Pressable>
   );
 }
 
-/* ---------------- DIVIDER ---------------- */
+/* ====================================================== */
+/* QUICK ACTION */
+/* ====================================================== */
+
+function QuickAction({
+  label,
+  description,
+  icon,
+  color,
+  background,
+  onPress,
+}: any) {
+  return (
+    <Pressable
+      onPress={onPress}
+      android_ripple={{ color: "#F1F5F9" }}
+      style={{
+        width: "48.5%",
+      }}
+      className="mb-3"
+    >
+      <View
+        className="bg-white rounded-[22px] p-[17px]"
+        style={{
+          borderWidth: 1,
+          borderColor: "#E7ECF3",
+
+          shadowColor: "#0F172A",
+          shadowOffset: {
+            width: 0,
+            height: 5,
+          },
+          shadowOpacity: 0.045,
+          shadowRadius: 15,
+          elevation: 2,
+        }}
+      >
+        {/* TOP */}
+
+        <View className="flex-row items-center justify-between">
+          <View
+            className="w-11 h-11 rounded-[15px] items-center justify-center"
+            style={{
+              backgroundColor: background,
+            }}
+          >
+            <Ionicons name={icon} size={21} color={color} />
+          </View>
+
+          <View className="w-8 h-8 rounded-full bg-slate-50 items-center justify-center">
+            <Ionicons name="arrow-forward" size={14} color="#94A3B8" />
+          </View>
+        </View>
+
+        {/* TEXT */}
+
+        <Text className="text-slate-900 text-[14px] font-bold mt-4">
+          {label}
+        </Text>
+
+        <Text className="text-slate-400 text-[11px] mt-1">{description}</Text>
+
+        {/* ACCENT LINE */}
+
+        <View className="flex-row items-center mt-4">
+          <View
+            className="h-[3px] rounded-full"
+            style={{
+              width: 25,
+              backgroundColor: color,
+            }}
+          />
+
+          <View className="h-[3px] flex-1 rounded-full bg-slate-100 ml-1.5" />
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+/* ====================================================== */
+/* PROFILE ITEM */
+/* ====================================================== */
+
+function ProfileItem({
+  icon,
+  label,
+  description,
+  color,
+  background,
+  onPress,
+}: any) {
+  return (
+    <Pressable
+      onPress={onPress}
+      android_ripple={{ color: "#F1F5F9" }}
+      className="flex-row items-center px-4 py-[15px]"
+    >
+      {/* ICON */}
+
+      <View
+        className="w-10 h-10 rounded-[13px] items-center justify-center"
+        style={{
+          backgroundColor: background,
+        }}
+      >
+        <Ionicons name={icon} size={19} color={color} />
+      </View>
+
+      {/* TEXT */}
+
+      <View className="flex-1 ml-3.5">
+        <Text className="text-slate-800 font-semibold text-[13px]">
+          {label}
+        </Text>
+
+        <Text className="text-slate-400 text-[10px] mt-0.5" numberOfLines={1}>
+          {description}
+        </Text>
+      </View>
+
+      {/* CHEVRON */}
+
+      <View className="w-7 h-7 rounded-full bg-slate-50 items-center justify-center">
+        <Ionicons name="chevron-forward" size={14} color="#94A3B8" />
+      </View>
+    </Pressable>
+  );
+}
+
+/* ====================================================== */
+/* DIVIDER */
+/* ====================================================== */
 
 function Divider() {
-  return <View className="h-[1px] bg-gray-100 ml-12" />;
+  return (
+    <View
+      className="h-px bg-slate-100"
+      style={{
+        marginLeft: 68,
+        marginRight: 16,
+      }}
+    />
+  );
 }
