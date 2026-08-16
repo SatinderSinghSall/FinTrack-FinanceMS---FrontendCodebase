@@ -8,6 +8,8 @@ import {
   useWindowDimensions,
   Platform,
   ActivityIndicator,
+  Modal,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,6 +30,10 @@ export default function ProfileScreen() {
 
   const [profile, setProfile] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  /* External webpage modal */
+  const [showWebpageModal, setShowWebpageModal] = useState(false);
+  const [selectedWebpage, setSelectedWebpage] = useState("");
 
   const { width } = useWindowDimensions();
 
@@ -125,6 +131,41 @@ export default function ProfileScreen() {
   };
 
   /* ====================================================== */
+  /* EXTERNAL WEBPAGE */
+  /* ====================================================== */
+
+  const handleWebpagePress = (page: string) => {
+    setSelectedWebpage(page);
+    setShowWebpageModal(true);
+  };
+
+  const openWebpage = async () => {
+    setShowWebpageModal(false);
+
+    const url = "https://fintrack-policy.vercel.app/";
+
+    try {
+      const supported = await Linking.canOpenURL(url);
+
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert(
+          "Unable to open webpage",
+          "This webpage could not be opened on your device.",
+        );
+      }
+    } catch (error) {
+      console.log("Webpage opening error:", error);
+
+      Alert.alert(
+        "Unable to open webpage",
+        "Something went wrong while opening the webpage.",
+      );
+    }
+  };
+
+  /* ====================================================== */
   /* LOADING */
   /* ====================================================== */
 
@@ -188,6 +229,101 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
+      {/* ================================================== */}
+      {/* EXTERNAL WEBPAGE CONFIRMATION MODAL */}
+      {/* ================================================== */}
+
+      <Modal
+        visible={showWebpageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowWebpageModal(false)}
+      >
+        <View className="flex-1 bg-black/50 items-center justify-center px-6">
+          <View
+            className="w-full max-w-[420px] bg-white rounded-[26px] p-5"
+            style={{
+              shadowColor: "#0F172A",
+              shadowOffset: {
+                width: 0,
+                height: 10,
+              },
+              shadowOpacity: 0.15,
+              shadowRadius: 25,
+              elevation: 10,
+            }}
+          >
+            {/* ICON */}
+
+            <View className="items-center">
+              <View className="w-16 h-16 rounded-[20px] bg-blue-50 items-center justify-center">
+                <Ionicons name="open-outline" size={28} color="#2563EB" />
+              </View>
+
+              {/* TITLE */}
+
+              <Text className="text-slate-900 text-lg font-extrabold mt-4 text-center">
+                Leaving FinTrack
+              </Text>
+
+              {/* MESSAGE */}
+
+              <Text className="text-slate-500 text-sm text-center mt-2 leading-5">
+                You are being directed to an external webpage to view{" "}
+                <Text className="font-semibold text-slate-700">
+                  {selectedWebpage}
+                </Text>
+                .
+              </Text>
+
+              {/* URL */}
+
+              <View className="w-full bg-slate-50 rounded-xl px-3 py-2.5 mt-4 flex-row items-center">
+                <Ionicons name="globe-outline" size={16} color="#64748B" />
+
+                <Text
+                  className="text-slate-500 text-[10px] ml-2 flex-1"
+                  numberOfLines={1}
+                >
+                  fintrack-policy.vercel.app
+                </Text>
+              </View>
+
+              {/* BUTTONS */}
+
+              <View className="flex-row w-full mt-5">
+                <Pressable
+                  onPress={() => setShowWebpageModal(false)}
+                  className="flex-1 bg-slate-100 rounded-xl py-3.5 items-center mr-2"
+                >
+                  <Text className="text-slate-600 font-bold text-sm">
+                    Cancel
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={openWebpage}
+                  className="flex-1 bg-blue-600 rounded-xl py-3.5 items-center ml-2"
+                >
+                  <View className="flex-row items-center">
+                    <Text className="text-white font-bold text-sm">
+                      Continue
+                    </Text>
+
+                    <Ionicons
+                      name="arrow-forward"
+                      size={15}
+                      color="#FFFFFF"
+                      style={{ marginLeft: 6 }}
+                    />
+                  </View>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* ================================================== */}
       {/* HEADER */}
       {/* ================================================== */}
@@ -574,15 +710,20 @@ export default function ProfileScreen() {
 
               <Divider />
 
+              {/* CHANGE PASSWORD */}
+
               <ProfileItem
                 icon="lock-closed-outline"
                 label="Change Password"
                 description="Keep your account secure"
                 color="#8B5CF6"
                 background="#F5F3FF"
+                onPress={() => handleWebpagePress("Change Password")}
               />
 
               <Divider />
+
+              {/* HELP & SUPPORT */}
 
               <ProfileItem
                 icon="help-circle-outline"
@@ -590,9 +731,12 @@ export default function ProfileScreen() {
                 description="Get help with FinTrack"
                 color="#0891B2"
                 background="#ECFEFF"
+                onPress={() => handleWebpagePress("Help & Support")}
               />
 
               <Divider />
+
+              {/* PRIVACY POLICY */}
 
               <ProfileItem
                 icon="document-text-outline"
@@ -600,6 +744,7 @@ export default function ProfileScreen() {
                 description="Learn how your data is handled"
                 color="#475569"
                 background="#F1F5F9"
+                onPress={() => handleWebpagePress("Privacy Policy")}
               />
             </View>
           </View>

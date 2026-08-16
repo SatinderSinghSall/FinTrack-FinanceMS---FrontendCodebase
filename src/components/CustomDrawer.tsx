@@ -19,6 +19,8 @@ export default function CustomDrawer(props: any) {
       Toast.show({
         type: "success",
         text1: "Logged out",
+        text2: "You have been successfully logged out",
+        position: "top",
       });
 
       setTimeout(() => {

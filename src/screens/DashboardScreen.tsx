@@ -3,17 +3,18 @@ import {
   Text,
   ScrollView,
   RefreshControl,
-  useWindowDimensions,
   TouchableOpacity,
   StatusBar,
   Pressable,
+  useWindowDimensions,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useCallback } from "react";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
+
 import api from "../services/api";
 import AppHeader from "../components/AppHeader";
 
@@ -22,25 +23,27 @@ import SubscriptionCTA from "../components/SubscriptionCTA";
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
+  const { width } = useWindowDimensions();
+
+  const isLargeScreen = width >= 768;
 
   const [summary, setSummary] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
-  const navigation = useNavigation();
 
   const [expensePage, setExpensePage] = useState(1);
   const [incomePage, setIncomePage] = useState(1);
+
   const PAGE_SIZE = 5;
 
-  const { width } = useWindowDimensions();
-  const isLargeScreen = width >= 768;
-
   const [savings, setSavings] = useState<any[]>([]);
-
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(true);
 
-  /* ---------- Fetch Data ---------- */
+  /* ============================================================
+     FETCH DATA
+  ============================================================ */
 
   const fetchSummary = async () => {
     const [dashboardRes, incomeRes, savingsRes] = await Promise.all([
@@ -50,33 +53,40 @@ export default function DashboardScreen() {
     ]);
 
     const dashboard = dashboardRes.data;
-    const incomeList = incomeRes.data.data || [];
+    const incomeList = incomeRes.data?.data || [];
     const savingsList = savingsRes.data || [];
 
     const totalIncome = incomeList.reduce(
-      (sum: number, i: any) => sum + i.amount,
+      (sum: number, item: any) => sum + Number(item.amount || 0),
       0,
     );
 
-    // 🔔 Calculate notifications count
+    /* Notifications */
     const now = new Date();
 
-    const expenseCount = (dashboard.recentExpenses || []).filter((e: any) => {
-      return new Date(e.date) > new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    }).length;
+    const expenseCount = (dashboard.recentExpenses || []).filter(
+      (expense: any) => {
+        return (
+          new Date(expense.date) > new Date(now.getTime() - 24 * 60 * 60 * 1000)
+        );
+      },
+    ).length;
 
-    const incomeCount = incomeList.filter((i: any) => {
-      return new Date(i.date) > new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const incomeCount = incomeList.filter((income: any) => {
+      return (
+        new Date(income.date) > new Date(now.getTime() - 24 * 60 * 60 * 1000)
+      );
     }).length;
 
     setNotificationCount(expenseCount + incomeCount + 1);
+
     setSavings(savingsList);
 
     setSummary({
       ...dashboard,
       totalIncome,
       income: incomeList,
-      remainingBalance: totalIncome - dashboard.totalExpenses,
+      remainingBalance: totalIncome - Number(dashboard.totalExpenses || 0),
     });
   };
 
@@ -97,51 +107,121 @@ export default function DashboardScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadData();
-    setRefreshing(false);
+
+    try {
+      await loadData();
+    } finally {
+      setRefreshing(false);
+    }
   }, []);
+
+  /* ============================================================
+     LOADING
+  ============================================================ */
 
   if (!summary || !profile) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-100 items-center justify-center">
-        <Text className="text-gray-500">Loading dashboard...</Text>
+      <SafeAreaView className="flex-1 bg-[#F6F7FB]">
+        <View className="flex-1 items-center justify-center px-8">
+          <View
+            className="h-20 w-20 rounded-[26px] bg-white items-center justify-center"
+            style={{
+              shadowColor: "#2563EB",
+              shadowOpacity: 0.1,
+              shadowRadius: 18,
+              shadowOffset: {
+                width: 0,
+                height: 8,
+              },
+              elevation: 5,
+            }}
+          >
+            <View className="h-14 w-14 rounded-[20px] bg-blue-600 items-center justify-center">
+              <Ionicons name="wallet-outline" size={27} color="#FFFFFF" />
+            </View>
+          </View>
+
+          <Text className="text-gray-900 text-lg font-bold mt-6">
+            Preparing your dashboard
+          </Text>
+
+          <Text className="text-gray-400 text-sm text-center mt-2">
+            Loading your latest financial activity...
+          </Text>
+
+          {/* LOADING DOTS */}
+          <View className="flex-row items-center mt-5">
+            <View className="h-2 w-2 rounded-full bg-blue-600" />
+
+            <View className="h-2 w-2 rounded-full bg-blue-300 mx-2" />
+
+            <View className="h-2 w-2 rounded-full bg-blue-100" />
+          </View>
+
+          {/* LOADING SPINNER */}
+          <ActivityIndicator
+            size="large"
+            color="#2563EB"
+            style={{
+              marginTop: 20,
+              transform: [{ scale: 1.25 }],
+            }}
+          />
+        </View>
+
+        <View className="items-center pb-8">
+          <View className="flex-row items-center">
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={14}
+              color="#9CA3AF"
+            />
+
+            <Text className="text-gray-400 text-[10px] ml-1.5">
+              FinTrack · Secure financial management
+            </Text>
+          </View>
+        </View>
       </SafeAreaView>
     );
   }
 
-  const userName = profile?.user?.name || "User";
+  /* ============================================================
+     CALCULATIONS
+  ============================================================ */
 
-  /* ---------- Greeting ---------- */
+  const userName = profile?.user?.name || "User";
 
   const hour = new Date().getHours();
 
   const greeting =
     hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
 
-  /* ---------- Calculations ---------- */
+  const totalIncome = Number(summary.totalIncome || 0);
+  const totalExpenses = Number(summary.totalExpenses || 0);
+  const totalBudget = Number(summary.totalBudget || 0);
+  const remainingBalance = Number(summary.remainingBalance || 0);
 
   const spentPercentage =
-    summary.totalBudget > 0
-      ? Math.min((summary.totalExpenses / summary.totalBudget) * 100, 100)
-      : 0;
+    totalBudget > 0 ? Math.min((totalExpenses / totalBudget) * 100, 100) : 0;
 
-  const isOverBudget = summary.totalExpenses > summary.totalBudget;
+  const remainingBudget = Math.max(totalBudget - totalExpenses, 0);
 
-  const daysPassed = new Date().getDate();
+  const isOverBudget = totalExpenses > totalBudget;
+
+  const daysPassed = Math.max(new Date().getDate(), 1);
 
   const dailyAverage =
-    summary.totalExpenses > 0
-      ? Math.round(summary.totalExpenses / daysPassed)
-      : 0;
-
-  const remainingBalance = (summary.totalIncome || 0) - summary.totalExpenses;
+    totalExpenses > 0 ? Math.round(totalExpenses / daysPassed) : 0;
 
   const totalSavings = savings.reduce(
-    (sum: number, s: any) => sum + s.amount,
+    (sum: number, item: any) => sum + Number(item.amount || 0),
     0,
   );
 
-  /* ---------- Pagination ---------- */
+  /* ============================================================
+     PAGINATION
+  ============================================================ */
 
   const expenses = summary.recentExpenses || [];
 
@@ -153,9 +233,9 @@ export default function DashboardScreen() {
   );
 
   const totalExpensePages = Math.ceil(expenses.length / PAGE_SIZE);
-  const hasBudget = summary.totalBudget > 0;
 
   const incomeList = summary.income || [];
+
   const incomeStart = (incomePage - 1) * PAGE_SIZE;
 
   const paginatedIncome = incomeList.slice(
@@ -165,33 +245,40 @@ export default function DashboardScreen() {
 
   const totalIncomePages = Math.ceil(incomeList.length / PAGE_SIZE);
 
+  const hasBudget = totalBudget > 0;
+
+  /* ============================================================
+     UI
+  ============================================================ */
+
   return (
-    <SafeAreaView className="flex-1 bg-gray-100" edges={["top"]}>
-      <SubscriptionFeatureModal
-        visible={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
-      />
+    <SafeAreaView className="flex-1 bg-[#F6F7FB]" edges={["top"]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F6F7FB" />
 
-      <StatusBar barStyle="dark-content" />
+      {/* ========================================================
+          HEADER
+      ======================================================== */}
 
-      {/* ✅ FIXED HEADER */}
       <AppHeader
         title={userName}
         showMenu
         onMenuPress={() => navigation.openDrawer()}
         rightContent={
           <View className="flex-row items-center gap-2">
-            {/* Notification */}
             <Pressable
               onPress={() => router.push("/notifications")}
               className="relative"
             >
-              <View className="bg-gray-200 p-2 rounded-full">
-                <Ionicons name="notifications-outline" size={18} />
+              <View className="h-10 w-10 rounded-full bg-white items-center justify-center border border-gray-100">
+                <Ionicons
+                  name="notifications-outline"
+                  size={19}
+                  color="#111827"
+                />
               </View>
 
               {notificationCount > 0 && (
-                <View className="absolute -top-1 -right-1 bg-red-500 rounded-full min-w-[16px] h-[16px] items-center justify-center px-1">
+                <View className="absolute -top-1 -right-1 h-[18px] min-w-[18px] px-1 rounded-full bg-red-500 items-center justify-center border-2 border-[#F6F7FB]">
                   <Text className="text-white text-[9px] font-bold">
                     {notificationCount > 9 ? "9+" : notificationCount}
                   </Text>
@@ -199,489 +286,873 @@ export default function DashboardScreen() {
               )}
             </Pressable>
 
-            {/* Profile */}
-            <Pressable
-              onPress={() => router.push("/profile")}
-              className="bg-blue-100 p-2 rounded-full"
-            >
-              <Ionicons name="person-outline" size={18} color="#2563eb" />
+            <Pressable onPress={() => router.push("/profile")}>
+              <View className="h-10 w-10 rounded-full bg-blue-50 border border-blue-100 items-center justify-center">
+                <Ionicons name="person-outline" size={19} color="#2563EB" />
+              </View>
             </Pressable>
           </View>
         }
       />
 
-      {/* ✅ SCROLL CONTENT */}
       <ScrollView
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#2563EB"
+            colors={["#2563EB"]}
+          />
         }
         contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingTop: 16,
-          paddingBottom: 100, // 👈 breathing space
+          paddingHorizontal: 18,
+          paddingTop: 12,
+          paddingBottom: 110,
         }}
-        showsVerticalScrollIndicator={false}
       >
         <View
           style={{
             width: "100%",
-            maxWidth: 900,
+            maxWidth: 920,
             alignSelf: "center",
           }}
         >
-          {/* ---------- HEADER ---------- */}
+          {/* ====================================================
+              WELCOME
+          ==================================================== */}
 
-          <View className="flex-row justify-between items-center mb-6">
-            <View>
-              <Text className="text-gray-500 text-sm">{greeting}</Text>
+          <View className="flex-row items-end justify-between mb-5">
+            <View className="flex-1">
+              <Text className="text-gray-400 text-[13px] font-medium">
+                {greeting}
+              </Text>
 
-              <Text
-                className="font-bold text-gray-900"
-                style={{ fontSize: isLargeScreen ? 32 : 26 }}
-              >
-                {userName}
+              <View className="flex-row items-center mt-1">
+                <Text
+                  className="text-gray-950 font-extrabold"
+                  style={{
+                    fontSize: isLargeScreen ? 30 : 25,
+                    letterSpacing: -0.7,
+                  }}
+                >
+                  {userName}
+                </Text>
+
+                <Text className="text-xl ml-2">👋</Text>
+              </View>
+
+              <Text className="text-gray-400 text-xs mt-1">
+                Here's your financial overview
               </Text>
             </View>
+          </View>
 
-            <View className="flex-row items-center gap-3">
-              {/* 🔔 NOTIFICATION ICON */}
-              <Pressable
-                onPress={() => router.push("/notifications")}
-                className="relative"
-              >
-                <View className="bg-gray-200 p-3 rounded-full">
-                  <Ionicons
-                    name="notifications-outline"
-                    size={20}
-                    color="#111"
-                  />
+          {/* ====================================================
+              PREMIUM BALANCE HERO
+          ==================================================== */}
+
+          <View
+            className="bg-blue-600 rounded-[30px] p-6 mb-5 overflow-hidden"
+            style={{
+              shadowColor: "#2563EB",
+              shadowOpacity: 0.24,
+              shadowRadius: 22,
+              shadowOffset: {
+                width: 0,
+                height: 10,
+              },
+              elevation: 8,
+            }}
+          >
+            {/* Decorative circles */}
+            <View className="absolute -right-14 -top-16 h-44 w-44 rounded-full bg-white/10" />
+            <View className="absolute -right-6 bottom-[-75px] h-40 w-40 rounded-full bg-white/5" />
+
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <View className="h-9 w-9 rounded-xl bg-white/15 items-center justify-center">
+                  <Ionicons name="wallet-outline" size={18} color="#FFFFFF" />
                 </View>
 
-                {/* 🔴 BADGE */}
-                {notificationCount > 0 && (
-                  <View className="absolute -top-1 -right-1 bg-red-500 rounded-full min-w-[18px] h-[18px] items-center justify-center px-1">
-                    <Text className="text-white text-[10px] font-bold">
-                      {notificationCount > 9 ? "9+" : notificationCount}
-                    </Text>
+                <Text className="text-white/75 text-xs font-medium ml-2.5">
+                  Available Balance
+                </Text>
+              </View>
+
+              <View className="px-2.5 py-1 rounded-full bg-white/10 flex-row items-center">
+                <View className="h-1.5 w-1.5 rounded-full bg-green-300 mr-1.5" />
+                <Text className="text-white/80 text-[9px] font-semibold">
+                  Live
+                </Text>
+              </View>
+            </View>
+
+            <Text
+              className="text-white font-extrabold mt-5"
+              style={{
+                fontSize: isLargeScreen ? 38 : 34,
+                letterSpacing: -1,
+              }}
+            >
+              ₹{remainingBalance.toLocaleString("en-IN")}
+            </Text>
+
+            <Text className="text-white/60 text-[11px] mt-1">
+              Your current financial position
+            </Text>
+
+            {/* Income / Expense */}
+            <View className="flex-row mt-6 pt-5 border-t border-white/10">
+              <View className="flex-1">
+                <View className="flex-row items-center">
+                  <View className="h-7 w-7 rounded-lg bg-white/10 items-center justify-center">
+                    <Ionicons name="arrow-down" size={14} color="#86EFAC" />
                   </View>
-                )}
-              </Pressable>
 
-              {/* 👤 PROFILE */}
-              <Pressable
-                onPress={() => router.push("/profile")}
-                className="bg-blue-100 p-3 rounded-full"
-              >
-                <Ionicons name="person-outline" size={22} color="#2563eb" />
-              </Pressable>
+                  <Text className="text-white/55 text-[10px] ml-2">Income</Text>
+                </View>
+
+                <Text className="text-white font-bold text-base mt-2">
+                  ₹{totalIncome.toLocaleString("en-IN")}
+                </Text>
+              </View>
+
+              <View className="w-px bg-white/10 mx-5" />
+
+              <View className="flex-1">
+                <View className="flex-row items-center">
+                  <View className="h-7 w-7 rounded-lg bg-white/10 items-center justify-center">
+                    <Ionicons name="arrow-up" size={14} color="#FCA5A5" />
+                  </View>
+
+                  <Text className="text-white/55 text-[10px] ml-2">
+                    Spending
+                  </Text>
+                </View>
+
+                <Text className="text-white font-bold text-base mt-2">
+                  ₹{totalExpenses.toLocaleString("en-IN")}
+                </Text>
+              </View>
             </View>
           </View>
 
-          {/* ---------- BALANCE CARD ---------- */}
+          {/* ====================================================
+              QUICK ACTIONS
+          ==================================================== */}
 
-          <View className="bg-blue-600 rounded-3xl p-6 mb-6 shadow-lg">
-            <Text className="text-white text-sm opacity-80">
-              Remaining Balance
-            </Text>
-            <Text className="text-white text-3xl font-bold mt-2">
-              ₹{summary.remainingBalance}
-            </Text>
+          <View className="mb-6">
+            <View className="flex-row items-center justify-between mb-3 px-1">
+              <Text className="text-gray-900 text-base font-bold">
+                Quick Actions
+              </Text>
 
-            {/* Quick Actions */}
-            <View className="flex-row flex-wrap justify-between mt-5 gap-y-3">
-              {/* Income */}
+              <Text className="text-gray-400 text-[10px]">Manage finances</Text>
+            </View>
 
-              <TouchableOpacity
+            <View className="flex-row gap-2.5">
+              <QuickAction
+                icon="arrow-down"
+                label="Income"
+                bg="#ECFDF5"
+                iconColor="#059669"
                 onPress={() => router.push("/add-income")}
-                className="w-[48.5%] bg-white/20 py-3 rounded-xl flex-row items-center justify-center"
-              >
-                <Ionicons name="cash-outline" size={18} color="white" />
+              />
 
-                <Text className="text-white ml-2 font-semibold">Income</Text>
-              </TouchableOpacity>
-
-              {/* Expense */}
-
-              <TouchableOpacity
+              <QuickAction
+                icon="arrow-up"
+                label="Expense"
+                bg="#FEF2F2"
+                iconColor="#DC2626"
                 onPress={() => router.push("/add-expense")}
-                className="w-[48.5%] bg-white/20 py-3 rounded-xl flex-row items-center justify-center"
-              >
-                <Ionicons name="receipt-outline" size={18} color="white" />
+              />
 
-                <Text className="text-white ml-2 font-semibold">Expense</Text>
-              </TouchableOpacity>
-
-              {/* Budget */}
-
-              <TouchableOpacity
+              <QuickAction
+                icon="wallet-outline"
+                label="Budget"
+                bg="#EFF6FF"
+                iconColor="#2563EB"
                 onPress={() => router.push("/add-budget")}
-                className="w-[48.5%] bg-white/20 py-3 rounded-xl flex-row items-center justify-center"
-              >
-                <Ionicons name="wallet-outline" size={18} color="white" />
+              />
 
-                <Text className="text-white ml-2 font-semibold">Budget</Text>
-              </TouchableOpacity>
-
-              {/* Savings */}
-
-              <TouchableOpacity
+              <QuickAction
+                icon="leaf-outline"
+                label="Savings"
+                bg="#ECFDF5"
+                iconColor="#059669"
                 onPress={() => router.push("/add-saving")}
-                className="w-[48.5%] bg-white/20 py-3 rounded-xl flex-row items-center justify-center"
-              >
-                <Ionicons name="leaf-outline" size={18} color="white" />
-
-                <Text className="text-white ml-2 font-semibold">Savings</Text>
-              </TouchableOpacity>
+              />
             </View>
           </View>
 
-          {/* ---------- STAT CARDS ---------- */}
+          {/* ====================================================
+              FINANCIAL OVERVIEW
+          ==================================================== */}
+
+          <SectionHeader
+            title="Financial Overview"
+            subtitle="Your numbers at a glance"
+          />
 
           <View className="flex-row flex-wrap justify-between mb-6">
-            <StatCard
+            <OverviewCard
               icon="wallet-outline"
-              color="#2563eb"
-              label="Total Budget"
-              value={`₹${summary.totalBudget}`}
+              color="#2563EB"
+              label="Budget"
+              value={`₹${totalBudget.toLocaleString("en-IN")}`}
+              caption={
+                hasBudget ? `${Math.round(spentPercentage)}% used` : "Not set"
+              }
             />
 
-            <StatCard
-              icon="cash-outline"
-              color="#16a34a"
-              label="Total Income"
-              value={`₹${summary.totalIncome || 0}`}
+            <OverviewCard
+              icon="trending-up-outline"
+              color="#059669"
+              label="Income"
+              value={`₹${totalIncome.toLocaleString("en-IN")}`}
+              caption="Total received"
             />
 
-            <StatCard
+            <OverviewCard
               icon="receipt-outline"
-              color="#dc2626"
-              label="Total Expenses"
-              value={`₹${summary.totalExpenses}`}
+              color="#DC2626"
+              label="Expenses"
+              value={`₹${totalExpenses.toLocaleString("en-IN")}`}
+              caption="Total spent"
             />
 
-            <StatCard
+            <OverviewCard
               icon="calendar-outline"
-              color="#9333ea"
+              color="#7C3AED"
               label="Daily Average"
-              value={`₹${dailyAverage}`}
+              value={`₹${dailyAverage.toLocaleString("en-IN")}`}
+              caption="Average per day"
             />
 
-            <StatCard
-              icon="analytics-outline"
-              color="#16a34a"
+            <OverviewCard
+              icon="pie-chart-outline"
+              color="#0891B2"
               label="Remaining"
-              value={`₹${remainingBalance}`}
+              value={`₹${remainingBudget.toLocaleString("en-IN")}`}
+              caption={hasBudget ? "Budget remaining" : "Available"}
             />
 
-            <StatCard
+            <OverviewCard
               icon="leaf-outline"
               color="#059669"
               label="Savings"
-              value={`₹${totalSavings}`}
+              value={`₹${totalSavings.toLocaleString("en-IN")}`}
+              caption="Total saved"
             />
           </View>
 
-          {/* ---------- SPENDING INSIGHT ---------- */}
+          {/* ====================================================
+              SPENDING INSIGHTS
+          ==================================================== */}
 
-          <View className="bg-white rounded-2xl p-5 mb-6 shadow-sm">
-            <Text className="text-lg font-semibold mb-4">
-              Spending Insights
-            </Text>
+          <SectionHeader
+            title="Spending Insights"
+            subtitle="How you're tracking this month"
+          />
 
+          <View
+            className="bg-white rounded-[26px] p-5 mb-6 border border-gray-100"
+            style={{
+              shadowColor: "#111827",
+              shadowOpacity: 0.04,
+              shadowRadius: 16,
+              shadowOffset: {
+                width: 0,
+                height: 6,
+              },
+              elevation: 2,
+            }}
+          >
             {!hasBudget ? (
-              /* ---------------- NO BUDGET STATE ---------------- */
-
-              <View className="items-center py-4">
-                <View className="bg-gray-100 p-3 rounded-full mb-2">
-                  <Ionicons name="wallet-outline" size={22} color="#9ca3af" />
+              <View className="items-center py-5">
+                <View className="h-14 w-14 rounded-2xl bg-blue-50 items-center justify-center">
+                  <Ionicons name="wallet-outline" size={25} color="#2563EB" />
                 </View>
 
-                <Text className="text-gray-700 font-medium">No budget set</Text>
+                <Text className="text-gray-900 font-bold text-base mt-4">
+                  Set your monthly budget
+                </Text>
 
-                <Text className="text-gray-500 text-sm text-center mt-1 mb-3">
-                  Add a budget to track your spending insights.
+                <Text className="text-gray-400 text-xs text-center mt-1.5 max-w-[280px]">
+                  Create a budget to unlock spending insights and track your
+                  progress.
                 </Text>
 
                 <Pressable
                   onPress={() => router.push("/add-budget")}
-                  className="bg-blue-600 px-4 py-2 rounded-lg flex-row items-center"
+                  className="bg-blue-600 px-5 py-3 rounded-xl flex-row items-center mt-4"
                 >
-                  <Ionicons name="add-outline" size={18} color="#fff" />
-                  <Text className="text-white font-semibold ml-1">
+                  <Ionicons name="add-outline" size={17} color="#FFFFFF" />
+
+                  <Text className="text-white font-bold text-xs ml-1.5">
                     Add Budget
                   </Text>
                 </Pressable>
               </View>
             ) : (
-              /* ---------------- NORMAL INSIGHTS ---------------- */
-
               <>
-                <View className="flex-row justify-between mb-1">
-                  <Text className="text-gray-500 text-sm">Budget Used</Text>
+                <View className="flex-row justify-between items-start">
+                  <View>
+                    <Text className="text-gray-400 text-[11px]">
+                      Budget used
+                    </Text>
 
-                  <Text className="text-gray-500 text-sm">
-                    {Math.round(spentPercentage)}%
+                    <Text className="text-gray-950 text-2xl font-extrabold mt-1">
+                      {Math.round(spentPercentage)}%
+                    </Text>
+                  </View>
+
+                  <View
+                    className={`px-3 py-1.5 rounded-full ${
+                      isOverBudget ? "bg-red-50" : "bg-emerald-50"
+                    }`}
+                  >
+                    <Text
+                      className={`text-[10px] font-bold ${
+                        isOverBudget ? "text-red-600" : "text-emerald-600"
+                      }`}
+                    >
+                      {isOverBudget ? "Over budget" : "On track"}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="h-3 bg-gray-100 rounded-full overflow-hidden mt-5">
+                  <View
+                    style={{
+                      width: `${spentPercentage}%`,
+                    }}
+                    className={`h-full rounded-full ${
+                      isOverBudget ? "bg-red-500" : "bg-blue-600"
+                    }`}
+                  />
+                </View>
+
+                <View className="flex-row justify-between mt-3">
+                  <Text className="text-gray-400 text-[10px]">
+                    ₹{totalExpenses.toLocaleString("en-IN")} spent
+                  </Text>
+
+                  <Text className="text-gray-400 text-[10px]">
+                    ₹{remainingBudget.toLocaleString("en-IN")} remaining
                   </Text>
                 </View>
 
-                <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                  <View
-                    style={{ width: `${spentPercentage}%` }}
-                    className={`h-full ${
-                      isOverBudget ? "bg-red-500" : "bg-green-500"
-                    }`}
-                  />
-                </View>
-
-                <View className="flex-row items-center mt-4">
+                <View
+                  className={`flex-row items-center mt-5 p-3 rounded-xl ${
+                    isOverBudget ? "bg-red-50" : "bg-emerald-50"
+                  }`}
+                >
                   <Ionicons
-                    name={isOverBudget ? "alert-circle" : "checkmark-circle"}
-                    size={18}
-                    color={isOverBudget ? "#dc2626" : "#16a34a"}
+                    name={
+                      isOverBudget
+                        ? "alert-circle-outline"
+                        : "checkmark-circle-outline"
+                    }
+                    size={19}
+                    color={isOverBudget ? "#DC2626" : "#059669"}
                   />
 
                   <Text
-                    className={`ml-2 text-sm ${
-                      isOverBudget ? "text-red-600" : "text-green-600"
+                    className={`text-xs font-medium ml-2 flex-1 ${
+                      isOverBudget ? "text-red-700" : "text-emerald-700"
                     }`}
                   >
                     {isOverBudget
-                      ? "You have exceeded your budget"
-                      : "Your spending is under control"}
+                      ? "Your spending has exceeded the current budget."
+                      : "Nice work! Your spending is currently under control."}
                   </Text>
                 </View>
               </>
             )}
           </View>
 
-          <SubscriptionCTA />
+          {/* ====================================================
+              SUBSCRIPTION CTA
+          ==================================================== */}
 
-          {/* ---------- RECENT EXPENSES ---------- */}
+          <View className="mb-6">
+            <SubscriptionCTA />
+          </View>
 
-          <View className="bg-white rounded-2xl p-5 mt-5 shadow-sm">
-            <Text className="text-lg font-semibold mb-4">Recent Expenses</Text>
+          {/* ====================================================
+              RECENT EXPENSES
+          ==================================================== */}
 
+          <SectionHeader
+            title="Recent Expenses"
+            subtitle="Latest spending activity"
+            action="View all"
+            onAction={() => router.push("/transactions")}
+          />
+
+          <ActivityCard>
             {paginatedExpenses.length === 0 ? (
-              <View className="items-center py-8">
-                <View className="bg-gray-100 p-4 rounded-full mb-3">
-                  <Ionicons name="receipt-outline" size={28} color="#9ca3af" />
-                </View>
-
-                <Text className="text-gray-700 font-semibold mb-1">
-                  No expenses yet
-                </Text>
-
-                <Text className="text-gray-500 text-sm text-center mb-4">
-                  Start tracking your spending by adding your first expense.
-                </Text>
-
-                <Pressable
-                  onPress={() => router.push("/add-expense")}
-                  className="bg-red-600 px-5 py-2.5 rounded-lg flex-row items-center"
-                >
-                  <Ionicons name="add-outline" size={18} color="#fff" />
-                  <Text className="text-white font-semibold ml-1">
-                    Add Expense
-                  </Text>
-                </Pressable>
-              </View>
+              <EmptyState
+                icon="receipt-outline"
+                title="No expenses yet"
+                subtitle="Start tracking your spending by adding your first expense."
+                buttonText="Add Expense"
+                color="#DC2626"
+                onPress={() => router.push("/add-expense")}
+              />
             ) : (
-              paginatedExpenses.map((expense: any) => (
-                <View
-                  key={expense._id}
-                  className="flex-row justify-between items-center mb-4"
-                >
-                  <View className="flex-row items-center">
-                    <View className="bg-gray-100 p-2 rounded-lg">
-                      <Ionicons
-                        name="receipt-outline"
-                        size={18}
-                        color="#6b7280"
-                      />
-                    </View>
+              <>
+                {paginatedExpenses.map((expense: any, index: number) => (
+                  <TransactionRow
+                    key={expense._id}
+                    icon="receipt-outline"
+                    iconColor="#DC2626"
+                    iconBg="#FEF2F2"
+                    title={expense.title || "Expense"}
+                    subtitle={
+                      expense.date
+                        ? new Date(expense.date).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                          })
+                        : "Recent"
+                    }
+                    amount={`-₹${Number(expense.amount || 0).toLocaleString(
+                      "en-IN",
+                    )}`}
+                    amountColor="#DC2626"
+                    showDivider={index < paginatedExpenses.length - 1}
+                  />
+                ))}
 
-                    <Text className="ml-3 text-gray-800">{expense.title}</Text>
-                  </View>
-
-                  <Text className="font-semibold text-gray-900">
-                    ₹{expense.amount}
-                  </Text>
-                </View>
-              ))
+                <Pagination
+                  page={expensePage}
+                  totalPages={totalExpensePages}
+                  onPrevious={() =>
+                    setExpensePage(Math.max(expensePage - 1, 1))
+                  }
+                  onNext={() =>
+                    setExpensePage(Math.min(expensePage + 1, totalExpensePages))
+                  }
+                />
+              </>
             )}
+          </ActivityCard>
 
-            {/* Pagination Controls */}
+          {/* ====================================================
+              RECENT INCOME
+          ==================================================== */}
 
-            {totalExpensePages > 1 && (
-              <View className="flex-row justify-between mt-4">
-                <TouchableOpacity
-                  disabled={expensePage === 1}
-                  onPress={() => setExpensePage(expensePage - 1)}
-                  className="bg-gray-100 px-4 py-2 rounded-lg"
-                >
-                  <Text className="text-gray-700">Previous</Text>
-                </TouchableOpacity>
+          <View className="mt-6">
+            <SectionHeader
+              title="Recent Income"
+              subtitle="Latest money received"
+              action="View all"
+              onAction={() => router.push("/transactions")}
+            />
 
-                <Text className="text-gray-500 self-center">
-                  Page {expensePage} / {totalExpensePages}
-                </Text>
-
-                <TouchableOpacity
-                  disabled={expensePage === totalExpensePages}
-                  onPress={() => setExpensePage(expensePage + 1)}
-                  className="bg-gray-100 px-4 py-2 rounded-lg"
-                >
-                  <Text className="text-gray-700">Next</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-
-          {/* ---------- RECENT INCOMES ---------- */}
-          <View className="bg-white rounded-2xl p-5 shadow-sm mt-6">
-            <Text className="text-lg font-semibold mb-4">Recent Income</Text>
-
-            {paginatedIncome.length === 0 ? (
-              <View className="items-center py-8">
-                <View className="bg-gray-100 p-4 rounded-full mb-3">
-                  <Ionicons name="cash-outline" size={28} color="#9ca3af" />
-                </View>
-
-                <Text className="text-gray-700 font-semibold mb-1">
-                  No income yet
-                </Text>
-
-                <Text className="text-gray-500 text-sm text-center mb-4">
-                  Start tracking your earnings by adding your first income.
-                </Text>
-
-                <Pressable
+            <ActivityCard>
+              {paginatedIncome.length === 0 ? (
+                <EmptyState
+                  icon="cash-outline"
+                  title="No income yet"
+                  subtitle="Start tracking your earnings by adding your first income."
+                  buttonText="Add Income"
+                  color="#059669"
                   onPress={() => router.push("/add-income")}
-                  className="bg-green-600 px-5 py-2.5 rounded-lg flex-row items-center"
-                >
-                  <Ionicons name="add-outline" size={18} color="#fff" />
-                  <Text className="text-white font-semibold ml-1">
-                    Add Income
-                  </Text>
-                </Pressable>
-              </View>
-            ) : (
-              paginatedIncome.map((income: any) => (
-                <View
-                  key={income._id}
-                  className="flex-row justify-between items-center mb-4"
-                >
-                  <View className="flex-row items-center">
-                    <View className="bg-gray-100 p-2 rounded-lg">
-                      <Ionicons name="cash-outline" size={18} color="#16a34a" />
-                    </View>
+                />
+              ) : (
+                <>
+                  {paginatedIncome.map((income: any, index: number) => (
+                    <TransactionRow
+                      key={income._id}
+                      icon="arrow-down"
+                      iconColor="#059669"
+                      iconBg="#ECFDF5"
+                      title={income.source || "Income"}
+                      subtitle={
+                        income.date
+                          ? new Date(income.date).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                            })
+                          : "Recent"
+                      }
+                      amount={`+₹${Number(income.amount || 0).toLocaleString(
+                        "en-IN",
+                      )}`}
+                      amountColor="#059669"
+                      showDivider={index < paginatedIncome.length - 1}
+                    />
+                  ))}
 
-                    <Text className="ml-3 text-gray-800">{income.source}</Text>
-                  </View>
-
-                  <Text className="font-semibold text-green-600">
-                    +₹{income.amount}
-                  </Text>
-                </View>
-              ))
-            )}
-
-            {totalIncomePages > 1 && (
-              <View className="flex-row justify-between mt-4">
-                <TouchableOpacity
-                  disabled={incomePage === 1}
-                  onPress={() => setIncomePage(incomePage - 1)}
-                  className="bg-gray-100 px-4 py-2 rounded-lg"
-                >
-                  <Text className="text-gray-700">Previous</Text>
-                </TouchableOpacity>
-
-                <Text className="text-gray-500 self-center">
-                  Page {incomePage} / {totalIncomePages}
-                </Text>
-
-                <TouchableOpacity
-                  disabled={incomePage === totalIncomePages}
-                  onPress={() => setIncomePage(incomePage + 1)}
-                  className="bg-gray-100 px-4 py-2 rounded-lg"
-                >
-                  <Text className="text-gray-700">Next</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+                  <Pagination
+                    page={incomePage}
+                    totalPages={totalIncomePages}
+                    onPrevious={() =>
+                      setIncomePage(Math.max(incomePage - 1, 1))
+                    }
+                    onNext={() =>
+                      setIncomePage(Math.min(incomePage + 1, totalIncomePages))
+                    }
+                  />
+                </>
+              )}
+            </ActivityCard>
           </View>
 
-          {/* ---------- RECENT SAVINGS ---------- */}
-          <View className="bg-white rounded-2xl p-5 shadow-sm mt-6">
-            <Text className="text-lg font-semibold mb-4">Recent Savings</Text>
+          {/* ====================================================
+              SAVINGS
+          ==================================================== */}
 
-            {savings.length === 0 ? (
-              <View className="items-center py-8">
-                <View className="bg-emerald-50 p-4 rounded-full mb-3">
-                  <Ionicons name="leaf-outline" size={28} color="#059669" />
-                </View>
+          <View className="mt-6">
+            <SectionHeader
+              title="Savings"
+              subtitle="Building your financial future"
+              action="Manage"
+              onAction={() => router.push("/savings")}
+            />
 
-                <Text className="text-gray-700 font-semibold mb-1">
-                  No savings yet
-                </Text>
-
-                <Text className="text-gray-500 text-sm text-center mb-4">
-                  Start building your financial future by adding savings.
-                </Text>
-
-                <Pressable
+            <ActivityCard>
+              {savings.length === 0 ? (
+                <EmptyState
+                  icon="leaf-outline"
+                  title="No savings yet"
+                  subtitle="Start building your financial future by creating your first savings goal."
+                  buttonText="Add Saving"
+                  color="#059669"
                   onPress={() => router.push("/add-saving")}
-                  className="bg-emerald-600 px-5 py-2.5 rounded-lg flex-row items-center"
-                >
-                  <Ionicons name="add-outline" size={18} color="#fff" />
+                />
+              ) : (
+                savings.slice(0, 5).map((saving: any, index: number) => (
+                  <View key={saving._id}>
+                    <View className="flex-row items-center py-1">
+                      <View className="h-11 w-11 rounded-xl bg-emerald-50 items-center justify-center">
+                        <Ionicons
+                          name="leaf-outline"
+                          size={19}
+                          color="#059669"
+                        />
+                      </View>
 
-                  <Text className="text-white font-semibold ml-1">
-                    Add Saving
-                  </Text>
-                </Pressable>
-              </View>
-            ) : (
-              savings.slice(0, 5).map((saving: any) => (
-                <View
-                  key={saving._id}
-                  className="flex-row justify-between items-center mb-4"
-                >
-                  <View className="flex-row items-center">
-                    <View className="bg-emerald-50 p-2 rounded-lg">
-                      <Ionicons name="leaf-outline" size={18} color="#059669" />
+                      <View className="flex-1 ml-3">
+                        <Text
+                          className="text-gray-900 font-semibold text-sm"
+                          numberOfLines={1}
+                        >
+                          {saving.goal || "Savings Goal"}
+                        </Text>
+
+                        <Text className="text-gray-400 text-[10px] mt-1">
+                          Savings contribution
+                        </Text>
+                      </View>
+
+                      <Text className="text-emerald-600 font-extrabold text-sm">
+                        +₹
+                        {Number(saving.amount || 0).toLocaleString("en-IN")}
+                      </Text>
                     </View>
 
-                    <Text className="ml-3 text-gray-800">{saving.goal}</Text>
+                    {index < Math.min(savings.length, 5) - 1 && (
+                      <View className="h-px bg-gray-100 my-3 ml-14" />
+                    )}
                   </View>
-
-                  <Text className="font-semibold text-emerald-600">
-                    ₹{saving.amount}
-                  </Text>
-                </View>
-              ))
-            )}
+                ))
+              )}
+            </ActivityCard>
           </View>
         </View>
       </ScrollView>
+
+      {/* ========================================================
+          SUBSCRIPTION MODAL
+      ======================================================== */}
+
+      <SubscriptionFeatureModal
+        visible={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+      />
     </SafeAreaView>
   );
 }
 
-/* ---------- Stat Card ---------- */
+/* ================================================================
+   QUICK ACTION
+================================================================ */
 
-function StatCard({ icon, color, label, value }: any) {
+function QuickAction({ icon, label, bg, iconColor, onPress }: any) {
   return (
-    <View className="bg-white rounded-xl p-4 w-[48%] mb-3 shadow-sm">
-      <View
-        className="p-2 rounded-lg self-start"
-        style={{ backgroundColor: `${color}15` }}
-      >
-        <Ionicons name={icon} size={20} color={color} />
+    <TouchableOpacity activeOpacity={0.78} onPress={onPress} className="flex-1">
+      <View className="bg-white rounded-2xl py-3.5 items-center border border-gray-100">
+        <View
+          className="h-9 w-9 rounded-xl items-center justify-center"
+          style={{ backgroundColor: bg }}
+        >
+          <Ionicons name={icon} size={17} color={iconColor} />
+        </View>
+
+        <Text className="text-gray-700 text-[10px] font-semibold mt-2">
+          {label}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+/* ================================================================
+   SECTION HEADER
+================================================================ */
+
+function SectionHeader({ title, subtitle, action, onAction }: any) {
+  return (
+    <View className="flex-row items-end justify-between mb-3 px-1">
+      <View className="flex-1">
+        <Text className="text-gray-950 text-[17px] font-extrabold">
+          {title}
+        </Text>
+
+        {subtitle && (
+          <Text className="text-gray-400 text-[10px] mt-1">{subtitle}</Text>
+        )}
       </View>
 
-      <Text className="text-gray-500 text-sm mt-2">{label}</Text>
+      {action && (
+        <Pressable onPress={onAction} className="flex-row items-center">
+          <Text className="text-blue-600 text-[10px] font-bold">{action}</Text>
 
-      <Text className="text-lg font-semibold text-gray-900">{value}</Text>
+          <Ionicons name="chevron-forward" size={12} color="#2563EB" />
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+/* ================================================================
+   OVERVIEW CARD
+================================================================ */
+
+function OverviewCard({ icon, color, label, value, caption }: any) {
+  return (
+    <View
+      className="bg-white rounded-[22px] p-4 mb-3 border border-gray-100"
+      style={{
+        width: "48.5%",
+        shadowColor: "#111827",
+        shadowOpacity: 0.035,
+        shadowRadius: 12,
+        shadowOffset: {
+          width: 0,
+          height: 4,
+        },
+        elevation: 1,
+      }}
+    >
+      <View className="flex-row items-center justify-between">
+        <View
+          className="h-9 w-9 rounded-xl items-center justify-center"
+          style={{
+            backgroundColor: `${color}12`,
+          }}
+        >
+          <Ionicons name={icon} size={17} color={color} />
+        </View>
+
+        <Ionicons name="ellipsis-horizontal" size={15} color="#D1D5DB" />
+      </View>
+
+      <Text className="text-gray-400 text-[10px] font-medium mt-3">
+        {label}
+      </Text>
+
+      <Text
+        className="text-gray-950 font-extrabold mt-1"
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
+        {value}
+      </Text>
+
+      <Text className="text-gray-400 text-[9px] mt-1">{caption}</Text>
+    </View>
+  );
+}
+
+/* ================================================================
+   ACTIVITY CARD
+================================================================ */
+
+function ActivityCard({ children }: any) {
+  return (
+    <View
+      className="bg-white rounded-[26px] p-4 border border-gray-100"
+      style={{
+        shadowColor: "#111827",
+        shadowOpacity: 0.035,
+        shadowRadius: 16,
+        shadowOffset: {
+          width: 0,
+          height: 6,
+        },
+        elevation: 2,
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+/* ================================================================
+   TRANSACTION ROW
+================================================================ */
+
+function TransactionRow({
+  icon,
+  iconColor,
+  iconBg,
+  title,
+  subtitle,
+  amount,
+  amountColor,
+  showDivider,
+}: any) {
+  return (
+    <View>
+      <View className="flex-row items-center py-2">
+        <View
+          className="h-11 w-11 rounded-xl items-center justify-center"
+          style={{ backgroundColor: iconBg }}
+        >
+          <Ionicons name={icon} size={18} color={iconColor} />
+        </View>
+
+        <View className="flex-1 ml-3 pr-3">
+          <Text
+            className="text-gray-900 text-sm font-semibold"
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
+
+          <Text className="text-gray-400 text-[10px] mt-1">{subtitle}</Text>
+        </View>
+
+        <Text className="font-extrabold text-sm" style={{ color: amountColor }}>
+          {amount}
+        </Text>
+      </View>
+
+      {showDivider && <View className="h-px bg-gray-100 ml-14 my-2" />}
+    </View>
+  );
+}
+
+/* ================================================================
+   PAGINATION
+================================================================ */
+
+function Pagination({ page, totalPages, onPrevious, onNext }: any) {
+  if (totalPages <= 1) {
+    return null;
+  }
+
+  return (
+    <View className="flex-row items-center justify-between border-t border-gray-100 mt-3 pt-4">
+      <Pressable
+        disabled={page === 1}
+        onPress={onPrevious}
+        className={`h-9 px-3.5 rounded-xl flex-row items-center justify-center ${
+          page === 1 ? "bg-gray-50" : "bg-blue-50"
+        }`}
+      >
+        <Ionicons
+          name="chevron-back"
+          size={14}
+          color={page === 1 ? "#D1D5DB" : "#2563EB"}
+        />
+
+        <Text
+          className={`text-[10px] font-bold ml-1 ${
+            page === 1 ? "text-gray-300" : "text-blue-600"
+          }`}
+        >
+          Previous
+        </Text>
+      </Pressable>
+
+      <View className="px-3 py-1.5 rounded-full bg-gray-50">
+        <Text className="text-gray-500 text-[10px] font-semibold">
+          {page} / {totalPages}
+        </Text>
+      </View>
+
+      <Pressable
+        disabled={page === totalPages}
+        onPress={onNext}
+        className={`h-9 px-3.5 rounded-xl flex-row items-center justify-center ${
+          page === totalPages ? "bg-gray-50" : "bg-blue-50"
+        }`}
+      >
+        <Text
+          className={`text-[10px] font-bold mr-1 ${
+            page === totalPages ? "text-gray-300" : "text-blue-600"
+          }`}
+        >
+          Next
+        </Text>
+
+        <Ionicons
+          name="chevron-forward"
+          size={14}
+          color={page === totalPages ? "#D1D5DB" : "#2563EB"}
+        />
+      </Pressable>
+    </View>
+  );
+}
+
+/* ================================================================
+   EMPTY STATE
+================================================================ */
+
+function EmptyState({
+  icon,
+  title,
+  subtitle,
+  buttonText,
+  color,
+  onPress,
+}: any) {
+  return (
+    <View className="items-center py-7 px-5">
+      <View
+        className="h-14 w-14 rounded-2xl items-center justify-center"
+        style={{
+          backgroundColor: `${color}12`,
+        }}
+      >
+        <Ionicons name={icon} size={25} color={color} />
+      </View>
+
+      <Text className="text-gray-900 font-bold text-sm mt-4">{title}</Text>
+
+      <Text className="text-gray-400 text-[11px] text-center mt-1.5 leading-4">
+        {subtitle}
+      </Text>
+
+      <Pressable
+        onPress={onPress}
+        className="px-4 py-2.5 rounded-xl flex-row items-center mt-4"
+        style={{ backgroundColor: color }}
+      >
+        <Ionicons name="add-outline" size={16} color="#FFFFFF" />
+
+        <Text className="text-white text-[10px] font-bold ml-1">
+          {buttonText}
+        </Text>
+      </Pressable>
     </View>
   );
 }

@@ -2,7 +2,7 @@
   "expo": {
     "name": "FinTrack App",
     "slug": "fintrack-App",
-    "version": "3.0.0",
+    "version": "3.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mobileapp",
@@ -14,10 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "26"
+      "buildNumber": "27"
     },
     "android": {
-      "versionCode": 26,
+      "versionCode": 27,
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.satinder_singh_sall.mobileapp"
