@@ -9,13 +9,11 @@ import {
   ActivityIndicator,
   TextInput,
 } from "react-native";
-
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Swipeable } from "react-native-gesture-handler";
 import { useFocusEffect, useRouter } from "expo-router";
-
 import api from "../services/api";
 import Toast from "react-native-toast-message";
 
@@ -23,26 +21,34 @@ export default function SavingsScreen() {
   const [savings, setSavings] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
-
   const [selectedSaving, setSelectedSaving] = useState<any | null>(null);
-
   const [showDetails, setShowDetails] = useState(false);
 
   const [search, setSearch] = useState("");
   const [goalFilter, setGoalFilter] = useState("All");
 
-  const [page, setPage] = useState(1);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [sortBy, setSortBy] = useState<
+    "dateDesc" | "dateAsc" | "amountDesc" | "amountAsc"
+  >("dateDesc");
+  const [dateRangeFilter, setDateRangeFilter] = useState<
+    "all" | "thisMonth" | "last30Days"
+  >("all");
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
+  const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<string | null>(
+    null,
+  );
+
+  const [page, setPage] = useState(1);
   const PAGE_SIZE = 6;
 
   const [confirmDelete, setConfirmDelete] = useState(false);
-
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const router = useRouter();
-
   const { width } = useWindowDimensions();
-
   const isLargeScreen = width >= 768;
 
   /* ---------------- FETCH ---------------- */
@@ -50,10 +56,8 @@ export default function SavingsScreen() {
   const fetchSavings = async () => {
     try {
       setLoading(true);
-
       const res = await api.get("/savings");
-
-      setSavings(res.data);
+      setSavings(res.data.data || res.data);
     } catch (e) {
       console.log(e);
     } finally {
@@ -69,9 +73,7 @@ export default function SavingsScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-
     await fetchSavings();
-
     setRefreshing(false);
   };
 
@@ -104,34 +106,90 @@ export default function SavingsScreen() {
     }
   };
 
-  /* ---------------- FILTER + SEARCH ---------------- */
+  /* ---------------- FILTER + SEARCH + SORT ---------------- */
 
   const filteredSavings = useMemo(() => {
-    return savings.filter((s) => {
-      const matchesSearch = s.goal.toLowerCase().includes(search.toLowerCase());
+    const now = new Date();
+
+    const filtered = savings.filter((s) => {
+      const matchesSearch = (s.goal || s.title || "")
+        .toLowerCase()
+        .includes(search.toLowerCase());
 
       const matchesGoal = goalFilter === "All" || s.goal === goalFilter;
 
-      return matchesSearch && matchesGoal;
+      let matchesDate = true;
+      const savingDate = new Date(s.date || s.createdAt);
+
+      if (selectedCalendarDay) {
+        const savingDayStr = savingDate.toISOString().split("T")[0];
+        matchesDate = savingDayStr === selectedCalendarDay;
+      } else {
+        if (dateRangeFilter === "thisMonth") {
+          matchesDate =
+            savingDate.getMonth() === now.getMonth() &&
+            savingDate.getFullYear() === now.getFullYear();
+        } else if (dateRangeFilter === "last30Days") {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(now.getDate() - 30);
+          matchesDate = savingDate >= thirtyDaysAgo;
+        }
+      }
+
+      return matchesSearch && matchesGoal && matchesDate;
     });
-  }, [savings, search, goalFilter]);
 
-  /* ---------------- PAGINATION ---------------- */
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.date || a.createdAt).getTime();
+      const dateB = new Date(b.date || b.createdAt).getTime();
+      if (sortBy === "amountDesc") return b.amount - a.amount;
+      if (sortBy === "amountAsc") return a.amount - b.amount;
+      if (sortBy === "dateAsc") return dateA - dateB;
+      return dateB - dateA;
+    });
+  }, [
+    savings,
+    search,
+    goalFilter,
+    sortBy,
+    dateRangeFilter,
+    selectedCalendarDay,
+  ]);
 
-  const totalPages = Math.ceil(filteredSavings.length / PAGE_SIZE);
+  /* ---------------- CALENDAR GRID GENERATOR ---------------- */
+
+  const calendarDays = useMemo(() => {
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const days = [];
+    for (let i = 0; i < firstDayIndex; i++) {
+      days.push({ dayNum: null, dateString: null });
+    }
+
+    for (let d = 1; d <= totalDaysInMonth; d++) {
+      const formattedMonth = String(month + 1).padStart(2, "0");
+      const formattedDay = String(d).padStart(2, "0");
+      const dateString = `${year}-${formattedMonth}-${formattedDay}`;
+      days.push({ dayNum: d, dateString });
+    }
+
+    return days;
+  }, [currentCalendarDate]);
+
+  const totalPages = Math.ceil(filteredSavings.length / PAGE_SIZE) || 1;
 
   const paginatedSavings = filteredSavings.slice(
     (page - 1) * PAGE_SIZE,
     page * PAGE_SIZE,
   );
 
-  /* ---------------- TOTAL ---------------- */
-
   const totalAmount = filteredSavings.reduce((sum, s) => sum + s.amount, 0);
 
   const goals = ["All", ...Array.from(new Set(savings.map((s) => s.goal)))];
-
-  /* ---------------- SWIPE ACTIONS ---------------- */
 
   const renderRightActions = (id: string) => (
     <Pressable
@@ -139,317 +197,562 @@ export default function SavingsScreen() {
         setSelectedId(id);
         setConfirmDelete(true);
       }}
-      className="bg-red-600 justify-center items-center w-24 rounded-xl mr-2"
+      className="bg-red-500 justify-center items-center w-24 rounded-2xl mb-3 mr-1 shadow-sm"
     >
-      <Ionicons name="trash-outline" size={24} color="#fff" />
-
-      <Text className="text-white text-sm mt-1">Delete</Text>
+      <Ionicons name="trash-outline" size={22} color="#fff" />
+      <Text className="text-white text-xs font-bold mt-1">Delete</Text>
     </Pressable>
   );
 
   const renderLeftActions = (id: string) => (
     <Pressable
       onPress={() => router.push(`/edit-saving/${id}`)}
-      className="bg-emerald-600 justify-center items-center w-24 rounded-xl ml-2"
+      className="bg-blue-600 justify-center items-center w-24 rounded-2xl mb-3 ml-1 shadow-sm"
     >
-      <Ionicons name="pencil-outline" size={22} color="#fff" />
-
-      <Text className="text-white text-sm mt-1">Edit</Text>
+      <Ionicons name="pencil-outline" size={20} color="#fff" />
+      <Text className="text-white text-xs font-bold mt-1">Edit</Text>
     </Pressable>
   );
 
-  /* ---------------- LOADING ---------------- */
-
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-emerald-50 items-center justify-center">
-        <ActivityIndicator size="large" color="#10b981" />
-
-        <Text className="text-emerald-700 mt-3">Loading savings...</Text>
+      <SafeAreaView className="flex-1 bg-slate-50 items-center justify-center">
+        <ActivityIndicator size="large" color="#059669" />
+        <Text className="text-slate-400 font-medium mt-3">
+          Loading savings...
+        </Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-emerald-50">
-      {/* HEADER */}
-
-      <View className="flex-row items-center justify-between px-6 py-3 bg-white border-b border-emerald-100">
+    <SafeAreaView className="flex-1 bg-slate-50">
+      {/* TOP HEADER */}
+      <View className="flex-row items-center justify-between px-6 py-3.5 bg-white border-b border-slate-100 shadow-sm">
         <Pressable
           onPress={() => {
             if (router.canGoBack()) router.back();
             else router.replace("/(tabs)");
           }}
-          className="w-10 h-10 rounded-xl bg-emerald-100 items-center justify-center"
+          className="w-10 h-10 rounded-2xl bg-slate-100 items-center justify-center active:bg-slate-200"
         >
-          <Ionicons name="arrow-back" size={20} color="#065f46" />
+          <Ionicons name="arrow-back" size={20} color="#0f172a" />
         </Pressable>
 
-        <Text className="text-base font-semibold text-emerald-900 tracking-tight">
+        <Text className="text-base font-bold text-slate-900 tracking-tight">
           Savings
         </Text>
 
-        <Pressable className="w-10 h-10 rounded-xl bg-emerald-100 items-center justify-center">
-          <Ionicons name="wallet-outline" size={20} color="#065f46" />
+        <Pressable
+          onPress={() => setShowFilterModal(true)}
+          className="w-10 h-10 rounded-2xl bg-emerald-50 items-center justify-center active:bg-emerald-100 border border-emerald-100"
+        >
+          <Ionicons name="options-outline" size={20} color="#059669" />
         </Pressable>
       </View>
 
+      {/* RICH FILTER MODAL */}
+      <Modal visible={showFilterModal} transparent animationType="slide">
+        <View className="flex-1 bg-black/60 justify-end">
+          <View className="bg-white rounded-t-[38px] px-6 pt-4 pb-12 shadow-2xl max-h-[90%]">
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
+              <View className="items-center pt-1 pb-4">
+                <View className="w-12 h-1.5 rounded-full bg-slate-300" />
+              </View>
+
+              <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-xl font-black text-slate-900">
+                  Filters & Views
+                </Text>
+                <Pressable
+                  onPress={() => {
+                    setSortBy("dateDesc");
+                    setDateRangeFilter("all");
+                    setSelectedCalendarDay(null);
+                    setViewMode("list");
+                  }}
+                >
+                  <Text className="text-emerald-600 font-bold text-xs">
+                    Reset All
+                  </Text>
+                </Pressable>
+              </View>
+
+              <Text className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
+                Display Mode
+              </Text>
+              <View className="flex-row gap-2 mb-6">
+                <Pressable
+                  onPress={() => setViewMode("list")}
+                  className={`flex-1 py-3 rounded-xl border items-center flex-row justify-center ${
+                    viewMode === "list"
+                      ? "bg-emerald-600 border-emerald-600"
+                      : "bg-slate-50 border-slate-200"
+                  }`}
+                >
+                  <Ionicons
+                    name="list-outline"
+                    size={16}
+                    color={viewMode === "list" ? "#fff" : "#334155"}
+                  />
+                  <Text
+                    className={`font-bold text-xs ml-2 ${
+                      viewMode === "list" ? "text-white" : "text-slate-700"
+                    }`}
+                  >
+                    List View
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setViewMode("calendar")}
+                  className={`flex-1 py-3 rounded-xl border items-center flex-row justify-center ${
+                    viewMode === "calendar"
+                      ? "bg-emerald-600 border-emerald-600"
+                      : "bg-slate-50 border-slate-200"
+                  }`}
+                >
+                  <Ionicons
+                    name="calendar-outline"
+                    size={16}
+                    color={viewMode === "calendar" ? "#fff" : "#334155"}
+                  />
+                  <Text
+                    className={`font-bold text-xs ml-2 ${
+                      viewMode === "calendar" ? "text-white" : "text-slate-700"
+                    }`}
+                  >
+                    Calendar View
+                  </Text>
+                </Pressable>
+              </View>
+
+              {viewMode === "calendar" && (
+                <View className="bg-slate-50 p-4 rounded-3xl border border-slate-100 mb-6">
+                  <View className="flex-row justify-between items-center mb-4">
+                    <Pressable
+                      onPress={() =>
+                        setCurrentCalendarDate(
+                          new Date(
+                            currentCalendarDate.getFullYear(),
+                            currentCalendarDate.getMonth() - 1,
+                            1,
+                          ),
+                        )
+                      }
+                      className="w-8 h-8 rounded-xl bg-white items-center justify-center border border-slate-200"
+                    >
+                      <Ionicons name="chevron-back" size={16} color="#0f172a" />
+                    </Pressable>
+                    <Text className="font-bold text-slate-900 text-sm">
+                      {currentCalendarDate.toLocaleString("default", {
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </Text>
+                    <Pressable
+                      onPress={() =>
+                        setCurrentCalendarDate(
+                          new Date(
+                            currentCalendarDate.getFullYear(),
+                            currentCalendarDate.getMonth() + 1,
+                            1,
+                          ),
+                        )
+                      }
+                      className="w-8 h-8 rounded-xl bg-white items-center justify-center border border-slate-200"
+                    >
+                      <Ionicons
+                        name="chevron-forward"
+                        size={16}
+                        color="#0f172a"
+                      />
+                    </Pressable>
+                  </View>
+
+                  <View className="flex-row justify-between mb-2">
+                    {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+                      <Text
+                        key={d}
+                        style={{ width: "14.28%" }}
+                        className="text-center text-[10px] font-bold text-slate-400"
+                      >
+                        {d}
+                      </Text>
+                    ))}
+                  </View>
+
+                  <View className="flex-row flex-wrap">
+                    {calendarDays.map((item, index) => {
+                      if (!item.dayNum)
+                        return (
+                          <View
+                            key={index}
+                            style={{ width: "14.28%", aspectRatio: 1 }}
+                            className="p-1"
+                          />
+                        );
+
+                      const hasSavingOnDay = savings.some((s) =>
+                        (s.date || s.createdAt)?.startsWith(item.dateString),
+                      );
+                      const isSelected =
+                        selectedCalendarDay === item.dateString;
+
+                      return (
+                        <View
+                          key={index}
+                          style={{ width: "14.28%", aspectRatio: 1 }}
+                          className="p-0.5"
+                        >
+                          <Pressable
+                            onPress={() => {
+                              setSelectedCalendarDay(
+                                isSelected ? null : item.dateString,
+                              );
+                              setShowFilterModal(false);
+                            }}
+                            style={{ flex: 1 }}
+                            className={`items-center justify-center rounded-xl relative ${
+                              isSelected
+                                ? "bg-emerald-600 shadow-sm"
+                                : hasSavingOnDay
+                                  ? "bg-emerald-100 border border-emerald-300"
+                                  : "bg-white border border-slate-100"
+                            }`}
+                          >
+                            <Text
+                              className={`text-xs font-bold ${
+                                isSelected
+                                  ? "text-white"
+                                  : hasSavingOnDay
+                                    ? "text-emerald-700"
+                                    : "text-slate-700"
+                              }`}
+                            >
+                              {item.dayNum}
+                            </Text>
+                            {hasSavingOnDay && !isSelected && (
+                              <View className="absolute bottom-1.5 w-1 h-1 rounded-full bg-emerald-600" />
+                            )}
+                          </Pressable>
+                        </View>
+                      );
+                    })}
+                  </View>
+                  {selectedCalendarDay && (
+                    <Pressable
+                      onPress={() => setSelectedCalendarDay(null)}
+                      className="mt-4 py-2.5 bg-white rounded-xl border border-slate-200 items-center shadow-sm"
+                    >
+                      <Text className="text-xs font-bold text-emerald-600">
+                        Clear Selected Date Filter
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+              )}
+
+              <Text className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
+                Sort By
+              </Text>
+              <View className="flex-row flex-wrap gap-2 mb-6">
+                {[
+                  { id: "dateDesc", label: "Newest First" },
+                  { id: "dateAsc", label: "Oldest First" },
+                  { id: "amountDesc", label: "Highest Amount" },
+                  { id: "amountAsc", label: "Lowest Amount" },
+                ].map((s) => (
+                  <Pressable
+                    key={s.id}
+                    onPress={() => setSortBy(s.id as any)}
+                    className={`px-4 py-2.5 rounded-xl border ${
+                      sortBy === s.id
+                        ? "bg-emerald-600 border-emerald-600"
+                        : "bg-slate-50 border-slate-200"
+                    }`}
+                  >
+                    <Text
+                      className={`font-bold text-xs ${
+                        sortBy === s.id ? "text-white" : "text-slate-700"
+                      }`}
+                    >
+                      {s.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Text className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3">
+                Time Period
+              </Text>
+              <View className="flex-row gap-2 mb-6">
+                {[
+                  { id: "all", label: "All Time" },
+                  { id: "thisMonth", label: "This Month" },
+                  { id: "last30Days", label: "Last 30 Days" },
+                ].map((d) => (
+                  <Pressable
+                    key={d.id}
+                    onPress={() => setDateRangeFilter(d.id as any)}
+                    className={`flex-1 py-3 rounded-xl border items-center ${
+                      dateRangeFilter === d.id
+                        ? "bg-emerald-600 border-emerald-600"
+                        : "bg-slate-50 border-slate-200"
+                    }`}
+                  >
+                    <Text
+                      className={`font-bold text-xs ${
+                        dateRangeFilter === d.id
+                          ? "text-white"
+                          : "text-slate-700"
+                      }`}
+                    >
+                      {d.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Pressable
+                onPress={() => setShowFilterModal(false)}
+                className="bg-slate-900 py-4 rounded-2xl items-center shadow-lg mt-2"
+              >
+                <Text className="text-white font-bold text-sm">
+                  Apply Configuration
+                </Text>
+              </Pressable>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* DELETE MODAL */}
-
       <Modal transparent visible={confirmDelete} animationType="fade">
-        <View className="flex-1 bg-black/50 justify-center items-center px-6">
-          <View className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <Text className="text-xl font-bold mb-2">Delete Saving</Text>
-
-            <Text className="text-gray-500 mb-6">
-              Are you sure you want to delete this saving?
+        <View className="flex-1 bg-black/60 justify-center items-center px-6">
+          <View className="bg-white rounded-[32px] p-6 w-full max-w-sm shadow-2xl items-center">
+            <View className="w-16 h-16 rounded-2xl bg-red-100 items-center justify-center mb-4">
+              <Ionicons name="trash-outline" size={28} color="#dc2626" />
+            </View>
+            <Text className="text-xl font-black text-slate-900 mb-2 text-center">
+              Delete Saving
+            </Text>
+            <Text className="text-slate-500 text-sm mb-6 text-center leading-relaxed">
+              Are you sure you want to delete this saving? This action cannot be
+              undone.
             </Text>
 
-            <View className="flex-row justify-end">
+            <View className="flex-row gap-3 w-full">
               <Pressable
                 onPress={() => setConfirmDelete(false)}
-                className="px-4 py-2 mr-2"
+                className="flex-1 py-3.5 rounded-2xl bg-slate-100 items-center active:bg-slate-200"
               >
-                <Text className="text-gray-600">Cancel</Text>
+                <Text className="text-slate-700 font-bold text-sm">Cancel</Text>
               </Pressable>
 
               <Pressable
                 onPress={handleDelete}
-                className="bg-red-600 px-5 py-2 rounded-xl"
+                className="flex-1 bg-red-600 py-3.5 rounded-2xl items-center shadow-md shadow-red-600/30 active:bg-red-700"
               >
-                <Text className="text-white font-semibold">Delete</Text>
+                <Text className="text-white font-bold text-sm">Delete</Text>
               </Pressable>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* PREMIUM SAVING DETAILS MODAL */}
-      <Modal visible={showDetails} transparent animationType="fade">
-        <View className="flex-1 bg-black/55 justify-end">
-          <View className="bg-emerald-50 rounded-t-[34px] overflow-hidden">
+      {/* SAVINGS DETAILS MODAL */}
+      <Modal visible={showDetails} transparent animationType="slide">
+        <View className="flex-1 bg-black/60 justify-end">
+          <View className="bg-slate-50 rounded-t-[38px] overflow-hidden max-h-[90%] w-full shadow-2xl">
             {selectedSaving && (
               <>
-                {/* TOP GLOW */}
-                <View className="absolute top-0 left-0 right-0 h-24 bg-emerald-500/10" />
-
-                {/* HANDLE */}
-                <View className="items-center pt-4">
-                  <View className="w-14 h-1.5 rounded-full bg-zinc-300" />
+                <View className="flex-row justify-end px-6 pt-5 pb-1 bg-transparent z-10">
+                  <Pressable
+                    onPress={() => setShowDetails(false)}
+                    className="w-10 h-10 rounded-full bg-slate-200/80 items-center justify-center active:bg-slate-300"
+                  >
+                    <Ionicons name="close" size={20} color="#0f172a" />
+                  </Pressable>
                 </View>
 
                 <ScrollView
                   showsVerticalScrollIndicator={false}
                   contentContainerStyle={{
-                    paddingHorizontal: 22,
-                    paddingTop: 16,
-                    paddingBottom: 26,
+                    paddingHorizontal: 24,
+                    paddingTop: 0,
+                    paddingBottom: 40,
                   }}
                 >
-                  {/* HERO */}
-                  <View className="items-center">
-                    {/* ICON */}
-                    <View
-                      className="
-                  w-20 h-20 rounded-full
-                  bg-emerald-600
-                  items-center justify-center
-                  shadow-xl
-                "
-                    >
-                      <Ionicons name="wallet-outline" size={34} color="white" />
+                  <View className="items-center mt-1">
+                    <View className="w-20 h-20 rounded-3xl bg-emerald-600 items-center justify-center shadow-xl shadow-emerald-600/30 mb-4">
+                      <Ionicons name="wallet" size={36} color="white" />
                     </View>
 
-                    {/* AMOUNT */}
-                    <Text className="text-zinc-900 text-[34px] font-black mt-5">
+                    <Text className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+                      Savings Allocation
+                    </Text>
+                    <Text className="text-slate-900 text-4xl font-black mt-1">
                       ₹{selectedSaving.amount}
                     </Text>
 
-                    {/* GOAL */}
-                    <Text className="text-zinc-500 text-base mt-1">
+                    <Text className="text-slate-700 text-base font-bold mt-2 text-center px-4">
                       {selectedSaving.goal}
                     </Text>
 
-                    {/* BADGE */}
-                    <View className="bg-emerald-100 px-5 py-2 rounded-full mt-4">
-                      <Text className="text-emerald-700 font-bold">
-                        Savings Goal
+                    <View className="flex-row items-center bg-emerald-100 px-4 py-1.5 rounded-full mt-3">
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={14}
+                        color="#059669"
+                      />
+                      <Text className="text-emerald-700 text-xs font-bold uppercase tracking-wider ml-1.5">
+                        Active Goal
                       </Text>
                     </View>
                   </View>
 
-                  {/* DETAILS CARD */}
-                  <View
-                    className="
-                bg-white
-                rounded-[26px]
-                p-5
-                mt-6
-                border border-emerald-100
-              "
-                  >
-                    <Text className="text-zinc-900 text-xl font-black mb-5">
-                      Savings Details
-                    </Text>
-
-                    {/* GOAL */}
-                    <View className="flex-row items-center mb-4">
-                      <View className="bg-emerald-100 w-11 h-11 rounded-2xl items-center justify-center">
-                        <Ionicons
-                          name="flag-outline"
-                          size={20}
-                          color="#059669"
-                        />
-                      </View>
-
-                      <View className="ml-4 flex-1">
-                        <Text className="text-zinc-500 text-sm">Goal</Text>
-
-                        <Text className="text-zinc-900 text-lg font-black mt-1">
-                          {selectedSaving.goal}
+                  <View className="bg-white rounded-3xl p-5 mt-6 border border-slate-100 shadow-sm">
+                    <View className="flex-row items-center justify-between pb-3.5 border-b border-slate-100">
+                      <View className="flex-row items-center">
+                        <View className="bg-emerald-50 w-10 h-10 rounded-xl items-center justify-center mr-3">
+                          <Ionicons
+                            name="flag-outline"
+                            size={18}
+                            color="#059669"
+                          />
+                        </View>
+                        <Text className="text-slate-500 font-medium text-sm">
+                          Goal Name
                         </Text>
                       </View>
+                      <Text className="text-slate-900 font-black text-base">
+                        {selectedSaving.goal}
+                      </Text>
                     </View>
 
-                    {/* AMOUNT */}
-                    <View className="flex-row items-center mb-4">
-                      <View className="bg-blue-100 w-11 h-11 rounded-2xl items-center justify-center">
-                        <Ionicons
-                          name="cash-outline"
-                          size={20}
-                          color="#2563eb"
-                        />
-                      </View>
-
-                      <View className="ml-4 flex-1">
-                        <Text className="text-zinc-500 text-sm">
-                          Amount Saved
-                        </Text>
-
-                        <Text className="text-emerald-600 text-lg font-black mt-1">
-                          ₹{selectedSaving.amount}
+                    <View className="flex-row items-center justify-between py-3.5 border-b border-slate-100">
+                      <View className="flex-row items-center">
+                        <View className="bg-blue-50 w-10 h-10 rounded-xl items-center justify-center mr-3">
+                          <Ionicons
+                            name="time-outline"
+                            size={18}
+                            color="#2563eb"
+                          />
+                        </View>
+                        <Text className="text-slate-500 font-medium text-sm">
+                          Added On
                         </Text>
                       </View>
-                    </View>
-
-                    {/* DATE */}
-                    <View className="flex-row items-center">
-                      <View className="bg-orange-100 w-11 h-11 rounded-2xl items-center justify-center">
-                        <Ionicons
-                          name="calendar-outline"
-                          size={20}
-                          color="#ea580c"
-                        />
-                      </View>
-
-                      <View className="ml-4 flex-1">
-                        <Text className="text-zinc-500 text-sm">Created</Text>
-
-                        <Text className="text-zinc-900 text-base font-black mt-1">
+                      <View className="items-end">
+                        <Text className="text-slate-900 font-bold text-sm">
                           {new Date(
-                            selectedSaving.createdAt,
-                          ).toLocaleDateString()}
+                            selectedSaving.date || selectedSaving.createdAt,
+                          ).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </Text>
+                        <Text className="text-slate-400 text-xs font-medium mt-0.5">
+                          {new Date(
+                            selectedSaving.date || selectedSaving.createdAt,
+                          ).toLocaleTimeString(undefined, {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </Text>
                       </View>
                     </View>
-                  </View>
 
-                  {/* INSIGHT CARD */}
-                  <View
-                    className="
-                bg-white
-                rounded-[26px]
-                p-5
-                mt-4
-                border border-emerald-100
-              "
-                  >
-                    <View className="flex-row items-start">
-                      <View className="bg-emerald-100 w-12 h-12 rounded-2xl items-center justify-center mr-4">
-                        <Ionicons
-                          name="trending-up-outline"
-                          size={24}
-                          color="#059669"
-                        />
-                      </View>
-
-                      <View className="flex-1">
-                        <Text className="text-zinc-900 text-lg font-black">
-                          Savings Insight
+                    <View className="flex-row items-center justify-between py-3.5 border-b border-slate-100">
+                      <View className="flex-row items-center">
+                        <View className="bg-indigo-50 w-10 h-10 rounded-xl items-center justify-center mr-3">
+                          <Ionicons
+                            name="sync-outline"
+                            size={18}
+                            color="#4f46e5"
+                          />
+                        </View>
+                        <Text className="text-slate-500 font-medium text-sm">
+                          Last Updated
                         </Text>
-
-                        <Text className="text-zinc-600 leading-6 mt-2">
-                          Great progress. Consistent savings habits help build
-                          long-term financial security and future investments.
+                      </View>
+                      <View className="items-end">
+                        <Text className="text-slate-900 font-bold text-sm">
+                          {new Date(
+                            selectedSaving.updatedAt ||
+                              selectedSaving.date ||
+                              selectedSaving.createdAt,
+                          ).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </Text>
+                        <Text className="text-slate-400 text-xs font-medium mt-0.5">
+                          {new Date(
+                            selectedSaving.updatedAt ||
+                              selectedSaving.date ||
+                              selectedSaving.createdAt,
+                          ).toLocaleTimeString(undefined, {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </Text>
                       </View>
                     </View>
+
+                    <View className="flex-row items-center justify-between pt-3.5">
+                      <View className="flex-row items-center">
+                        <View className="bg-emerald-50 w-10 h-10 rounded-xl items-center justify-center mr-3">
+                          <Ionicons
+                            name="trending-up-outline"
+                            size={18}
+                            color="#059669"
+                          />
+                        </View>
+                        <Text className="text-slate-500 font-medium text-sm">
+                          Security Status
+                        </Text>
+                      </View>
+                      <Text className="text-emerald-600 font-bold text-sm">
+                        Growing
+                      </Text>
+                    </View>
                   </View>
 
-                  {/* ACTION BUTTONS */}
-                  <View className="flex-row mt-7">
-                    {/* EDIT */}
+                  <View className="flex-row mt-6 gap-4">
                     <Pressable
                       onPress={() => {
                         setShowDetails(false);
-
                         router.push(`/edit-saving/${selectedSaving._id}`);
                       }}
-                      className="
-                  flex-1
-                  bg-emerald-600
-                  rounded-[22px]
-                  py-3.5
-                  mr-2
-                  flex-row
-                  items-center
-                  justify-center
-                "
+                      className="flex-1 bg-blue-600 rounded-2xl py-4 flex-row items-center justify-center shadow-lg shadow-blue-600/30 active:bg-blue-700"
                     >
                       <Ionicons name="create-outline" size={18} color="white" />
-
-                      <Text className="text-white font-black text-base ml-2">
+                      <Text className="text-white font-bold text-sm ml-2">
                         Edit
                       </Text>
                     </Pressable>
 
-                    {/* DELETE */}
                     <Pressable
                       onPress={() => {
                         setShowDetails(false);
-
                         setSelectedId(selectedSaving._id);
-
                         setConfirmDelete(true);
                       }}
-                      className="
-                  flex-1
-                  bg-red-500
-                  rounded-[22px]
-                  py-3.5
-                  ml-2
-                  flex-row
-                  items-center
-                  justify-center
-                "
+                      className="flex-1 bg-red-500 rounded-2xl py-4 flex-row items-center justify-center shadow-lg shadow-red-500/30 active:bg-red-600"
                     >
                       <Ionicons name="trash-outline" size={18} color="white" />
-
-                      <Text className="text-white font-black text-base ml-2">
+                      <Text className="text-white font-bold text-sm ml-2">
                         Delete
                       </Text>
                     </Pressable>
                   </View>
-
-                  {/* CLOSE */}
-                  <Pressable
-                    onPress={() => setShowDetails(false)}
-                    className="items-center mt-6"
-                  >
-                    <Text className="text-zinc-400 font-semibold text-base">
-                      Close
-                    </Text>
-                  </Pressable>
                 </ScrollView>
               </>
             )}
@@ -458,13 +761,17 @@ export default function SavingsScreen() {
       </Modal>
 
       {/* MAIN UI */}
-
       <ScrollView
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#059669"
+          />
         }
         contentContainerStyle={{
           paddingHorizontal: 24,
+          paddingTop: 20,
           paddingBottom: 40,
         }}
         showsVerticalScrollIndicator={false}
@@ -476,52 +783,59 @@ export default function SavingsScreen() {
             alignSelf: "center",
           }}
         >
-          {/* HEADER */}
-
-          <View className="mb-6">
+          <View className="mb-5">
             <Text
-              className="font-bold text-emerald-900"
-              style={{
-                fontSize: isLargeScreen ? 34 : 28,
-              }}
+              className="font-black text-slate-900 tracking-tight"
+              style={{ fontSize: isLargeScreen ? 34 : 28 }}
             >
               Savings
             </Text>
-
-            <Text className="text-emerald-700 mt-1">
-              Build your financial future
+            <Text className="text-slate-500 font-medium text-sm mt-0.5">
+              Build your financial future effortlessly
             </Text>
           </View>
 
-          {/* TOTAL */}
-
-          <View className="bg-white rounded-xl p-4 mb-4 flex-row justify-between border border-emerald-100">
-            <Text className="text-gray-500">
-              Total ({filteredSavings.length})
-            </Text>
-
-            <Text className="font-bold text-emerald-600">₹{totalAmount}</Text>
+          <View className="bg-white rounded-3xl p-5 mb-5 flex-row justify-between items-center border border-slate-100 shadow-sm">
+            <View>
+              <Text className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+                {selectedCalendarDay
+                  ? `Savings on ${selectedCalendarDay}`
+                  : "Filtered Savings"}
+              </Text>
+              <Text className="text-slate-900 text-2xl font-black mt-0.5">
+                ₹{totalAmount}
+              </Text>
+            </View>
+            <View className="bg-emerald-50 px-3.5 py-1.5 rounded-2xl border border-emerald-100">
+              <Text className="text-emerald-600 text-xs font-bold">
+                {filteredSavings.length} Records
+              </Text>
+            </View>
           </View>
 
-          {/* SEARCH */}
-
-          <View className="bg-white rounded-xl px-4 py-3 mb-4 flex-row items-center border border-emerald-100">
-            <Ionicons name="search" size={18} color="#6b7280" />
-
+          <View className="bg-white rounded-2xl px-4 py-3 mb-4 flex-row items-center border border-slate-100 shadow-sm">
+            <Ionicons name="search" size={18} color="#94a3b8" />
             <TextInput
-              placeholder="Search savings..."
+              placeholder="Search savings by goal..."
+              placeholderTextColor="#94a3b8"
               value={search}
-              onChangeText={setSearch}
-              className="ml-2 flex-1"
+              onChangeText={(text) => {
+                setSearch(text);
+                setPage(1);
+              }}
+              className="ml-3 flex-1 text-slate-900 font-medium text-sm"
             />
+            {search.length > 0 && (
+              <Pressable onPress={() => setSearch("")}>
+                <Ionicons name="close-circle" size={18} color="#94a3b8" />
+              </Pressable>
+            )}
           </View>
-
-          {/* FILTER */}
 
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="mb-4"
+            className="mb-5"
           >
             {goals.map((goal) => (
               <Pressable
@@ -530,14 +844,16 @@ export default function SavingsScreen() {
                   setGoalFilter(goal);
                   setPage(1);
                 }}
-                className={`px-4 py-2 rounded-full mr-2 ${
-                  goalFilter === goal ? "bg-emerald-600" : "bg-emerald-100"
+                className={`px-4 py-2.5 rounded-2xl mr-2 shadow-sm ${
+                  goalFilter === goal
+                    ? "bg-emerald-600 shadow-emerald-600/30"
+                    : "bg-white border border-slate-100"
                 }`}
               >
                 <Text
-                  className={
-                    goalFilter === goal ? "text-white" : "text-emerald-700"
-                  }
+                  className={`font-bold text-xs ${
+                    goalFilter === goal ? "text-white" : "text-slate-600"
+                  }`}
                 >
                   {goal}
                 </Text>
@@ -545,41 +861,27 @@ export default function SavingsScreen() {
             ))}
           </ScrollView>
 
-          {/* ADD BUTTON */}
-
           <Pressable
             onPress={() => router.push("/add-saving")}
-            className="bg-emerald-600 py-4 rounded-xl mb-6 flex-row items-center justify-center"
+            className="bg-emerald-600 py-4 rounded-2xl mb-6 flex-row items-center justify-center shadow-lg shadow-emerald-600/30 active:opacity-90"
           >
             <Ionicons name="add-circle-outline" size={20} color="#fff" />
-
-            <Text className="text-white font-semibold ml-2">Add Saving</Text>
+            <Text className="text-white font-bold text-base ml-2">
+              Add New Saving
+            </Text>
           </Pressable>
 
-          {/* LIST */}
-
           {paginatedSavings.length === 0 ? (
-            <View className="bg-white rounded-xl p-8 items-center">
-              <Ionicons name="wallet-outline" size={40} color="#9ca3af" />
-
-              <Text className="text-gray-500 mt-3 text-center font-medium">
-                No savings yet
+            <View className="bg-white rounded-3xl p-8 items-center border border-slate-100 shadow-sm my-2">
+              <View className="w-16 h-16 rounded-3xl bg-slate-50 items-center justify-center mb-3">
+                <Ionicons name="wallet-outline" size={30} color="#94a3b8" />
+              </View>
+              <Text className="text-slate-900 font-bold text-base mt-1">
+                No matching savings
               </Text>
-
-              <Text className="text-gray-400 text-xs mt-1 text-center">
-                Start building your savings goals today.
+              <Text className="text-slate-400 text-xs mt-1 text-center max-w-[220px] leading-relaxed">
+                Try adjusting your search filters or calendar date selection.
               </Text>
-
-              <Pressable
-                onPress={() => router.push("/add-saving")}
-                className="mt-4 bg-emerald-600 px-5 py-2 rounded-lg flex-row items-center"
-              >
-                <Ionicons name="add-circle-outline" size={16} color="white" />
-
-                <Text className="text-white ml-2 font-semibold">
-                  Add Saving
-                </Text>
-              </Pressable>
             </View>
           ) : (
             paginatedSavings.map((s) => (
@@ -593,48 +895,69 @@ export default function SavingsScreen() {
                     setSelectedSaving(s);
                     setShowDetails(true);
                   }}
-                  className="bg-white rounded-2xl p-5 mb-3 border border-emerald-100"
+                  className="bg-white rounded-2xl p-4 mb-3 border border-slate-100 shadow-sm flex-row justify-between items-center"
                 >
-                  <View className="flex-row justify-between items-center">
-                    <View>
-                      <Text className="text-lg font-bold text-emerald-900">
+                  <View className="flex-row items-center flex-1 pr-3">
+                    <View className="w-11 h-11 rounded-xl bg-emerald-50 items-center justify-center mr-3 border border-emerald-100">
+                      <Ionicons name="wallet" size={20} color="#059669" />
+                    </View>
+                    <View className="flex-1">
+                      <Text
+                        className="text-slate-900 font-bold text-base"
+                        numberOfLines={1}
+                      >
                         {s.goal}
                       </Text>
-
-                      <Text className="text-emerald-700 mt-1">Saving Goal</Text>
+                      <Text className="text-slate-400 text-xs font-medium mt-0.5">
+                        {new Date(s.date || s.createdAt).toLocaleDateString(
+                          undefined,
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          },
+                        )}
+                      </Text>
                     </View>
-
-                    <Text className="text-xl font-bold text-emerald-600">
-                      ₹{s.amount}
-                    </Text>
                   </View>
+                  <Text className="text-emerald-600 font-black text-base">
+                    ₹{s.amount}
+                  </Text>
                 </Pressable>
               </Swipeable>
             ))
           )}
 
-          {/* PAGINATION */}
-
           {totalPages > 1 && (
-            <View className="flex-row justify-between mt-6">
+            <View className="flex-row justify-between items-center mt-6 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
               <Pressable
                 disabled={page === 1}
                 onPress={() => setPage(page - 1)}
-                className="bg-emerald-100 px-4 py-2 rounded-lg"
+                className={`px-4 py-2 rounded-xl ${
+                  page === 1
+                    ? "opacity-40 bg-slate-50"
+                    : "bg-slate-100 active:bg-slate-200"
+                }`}
               >
-                <Text className="text-emerald-700">Previous</Text>
+                <Text className="text-slate-700 font-bold text-xs">
+                  Previous
+                </Text>
               </Pressable>
 
-              <Text className="self-center text-emerald-700">
-                Page {page} / {totalPages}
+              <Text className="text-slate-500 font-bold text-xs">
+                Page {page} of {totalPages}
               </Text>
 
               <Pressable
                 disabled={page === totalPages}
                 onPress={() => setPage(page + 1)}
-                className="bg-emerald-100 px-4 py-2 rounded-lg"
+                className={`px-4 py-2 rounded-xl ${
+                  page === totalPages
+                    ? "opacity-40 bg-slate-50"
+                    : "bg-slate-100 active:bg-slate-200"
+                }`}
               >
-                <Text className="text-emerald-700">Next</Text>
+                <Text className="text-slate-700 font-bold text-xs">Next</Text>
               </Pressable>
             </View>
           )}

@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
@@ -11,6 +12,11 @@ export default function CustomDrawer(props: any) {
 
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+
+  // Dropdown state for Support & Feedback
+  const [isSupportOpen, setIsSupportOpen] = useState(
+    pathname.includes("feedback"),
+  );
 
   const handleLogout = () => {
     const doLogout = () => {
@@ -251,6 +257,124 @@ export default function CustomDrawer(props: any) {
           active={pathname.includes("settings")}
           {...props}
         />
+
+        {/* SUPPORT & FEEDBACK DROPDOWN */}
+        <View className="mt-1">
+          <TouchableOpacity
+            onPress={() => setIsSupportOpen(!isSupportOpen)}
+            activeOpacity={0.78}
+            className="relative flex-row items-center"
+            style={{
+              height: 54,
+              paddingHorizontal: 10,
+              marginBottom: 3,
+              borderRadius: 15,
+              backgroundColor: pathname.includes("feedback")
+                ? "#EEF4FF"
+                : "transparent",
+            }}
+          >
+            {pathname.includes("feedback") && (
+              <View
+                className="absolute left-0 top-[10px] bottom-[10px] w-[3px] rounded-full"
+                style={{ backgroundColor: "#2563EB" }}
+              />
+            )}
+            <View
+              className="w-10 h-10 rounded-[12px] items-center justify-center"
+              style={{
+                backgroundColor: pathname.includes("feedback")
+                  ? "#FFFFFF"
+                  : "transparent",
+              }}
+            >
+              <Ionicons
+                name="chatbubbles-outline"
+                size={23}
+                color={pathname.includes("feedback") ? "#2563EB" : "#94A3B8"}
+              />
+            </View>
+            <Text
+              className={`ml-3 text-[15px] flex-1 ${
+                pathname.includes("feedback")
+                  ? "font-bold text-[#0F172A]"
+                  : "font-medium text-[#64748B]"
+              }`}
+            >
+              Support & Feedback
+            </Text>
+            <Ionicons
+              name={isSupportOpen ? "chevron-down" : "chevron-forward"}
+              size={18}
+              color="#94A3B8"
+            />
+          </TouchableOpacity>
+
+          {/* DROPDOWN SUB-ITEMS */}
+          {isSupportOpen && (
+            <View className="pl-6 ml-4 border-l border-[#EEF2F7] my-1 space-y-1">
+              <TouchableOpacity
+                onPress={() => {
+                  router.push("/feedback/FeedbackScreen");
+                  props.navigation.closeDrawer();
+                }}
+                className="py-2.5 px-3 rounded-xl flex-row items-center"
+                style={{
+                  backgroundColor: pathname.includes("FeedbackScreen")
+                    ? "#EEF4FF"
+                    : "transparent",
+                }}
+              >
+                <Ionicons
+                  name="chatbubble-ellipses-outline"
+                  size={18}
+                  color={
+                    pathname.includes("FeedbackScreen") ? "#2563EB" : "#64748B"
+                  }
+                />
+                <Text
+                  className={`ml-3 text-[14px] ${
+                    pathname.includes("FeedbackScreen")
+                      ? "font-bold text-[#2563EB]"
+                      : "font-medium text-[#64748B]"
+                  }`}
+                >
+                  Help & Feedback
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  router.push("/feedback/my-feedback");
+                  props.navigation.closeDrawer();
+                }}
+                className="py-2.5 px-3 rounded-xl flex-row items-center"
+                style={{
+                  backgroundColor: pathname.includes("my-feedback")
+                    ? "#EEF4FF"
+                    : "transparent",
+                }}
+              >
+                <Ionicons
+                  name="time-outline"
+                  size={18}
+                  color={
+                    pathname.includes("my-feedback") ? "#2563EB" : "#64748B"
+                  }
+                />
+                <Text
+                  className={`ml-3 text-[14px] ${
+                    pathname.includes("my-feedback")
+                      ? "font-bold text-[#2563EB]"
+                      : "font-medium text-[#64748B]"
+                  }`}
+                >
+                  Check Submissions
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
 
         {/* ========================================================= */}
         {/* DEVELOPER CARD */}

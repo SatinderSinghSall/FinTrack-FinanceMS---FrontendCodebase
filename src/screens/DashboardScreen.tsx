@@ -20,6 +20,7 @@ import AppHeader from "../components/AppHeader";
 
 import SubscriptionFeatureModal from "../components/SubscriptionFeatureModal";
 import SubscriptionCTA from "../components/SubscriptionCTA";
+import FeedbackCTA from "../components/FeedbackCTA";
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -308,7 +309,7 @@ export default function DashboardScreen() {
         contentContainerStyle={{
           paddingHorizontal: 18,
           paddingTop: 12,
-          paddingBottom: 110,
+          paddingBottom: 50,
         }}
       >
         <View
@@ -679,6 +680,10 @@ export default function DashboardScreen() {
 
           <View className="mb-6">
             <SubscriptionCTA />
+          </View>
+
+          <View className="mb-8">
+            <FeedbackCTA />
           </View>
 
           {/* ====================================================

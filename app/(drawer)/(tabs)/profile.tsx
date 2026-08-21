@@ -21,6 +21,7 @@ import Toast from "react-native-toast-message";
 import Constants from "expo-constants";
 import { useNavigation } from "@react-navigation/native";
 import AppHeader from "@/src/components/AppHeader";
+import { TouchableOpacity } from "react-native";
 
 export default function ProfileScreen() {
   const logout = useAuthStore((s) => s.logout);
@@ -748,6 +749,34 @@ export default function ProfileScreen() {
               />
             </View>
           </View>
+
+          {/* Help & Feedback Button */}
+          <Pressable
+            onPress={() => router.push("/feedback/FeedbackScreen")}
+            className="flex-row items-center justify-between py-3.5 px-4 bg-white rounded-2xl mb-4 border border-emerald-100 shadow-sm"
+          >
+            <View className="flex-row items-center">
+              <Ionicons name="chatbubbles-outline" size={20} color="#065f46" />
+              <Text className="text-emerald-950 font-semibold ml-3">
+                Help & Feedback
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#9ca3af" />
+          </Pressable>
+
+          {/* View My Submissions & Status Button */}
+          <Pressable
+            onPress={() => router.push("/feedback/my-feedback")}
+            className="flex-row items-center justify-between py-3.5 px-4 bg-emerald-50 rounded-2xl mb-6 border border-emerald-200 shadow-sm"
+          >
+            <View className="flex-row items-center">
+              <Ionicons name="time-outline" size={20} color="#065f46" />
+              <Text className="text-emerald-900 font-semibold ml-3">
+                Check My Submissions & Status
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#065f46" />
+          </Pressable>
 
           {/* ================================================== */}
           {/* SECURITY CARD */}

@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { useRouter } from "expo-router";
+import FeedbackCTA from "@/src/components/FeedbackCTA";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -201,6 +202,10 @@ export default function SettingsScreen() {
             </Text>
           </Pressable>
         </Section>
+
+        <View className="mb-12">
+          <FeedbackCTA />
+        </View>
       </ScrollView>
 
       {/* ====================================================== */}

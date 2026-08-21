@@ -15,6 +15,7 @@ import AppHeader from "../components/AppHeader";
 import { useNavigation } from "@react-navigation/native";
 import { useAuthStore } from "../store/auth.store";
 import api from "../services/api";
+import FeedbackCTA from "../components/FeedbackCTA";
 
 export default function AnalyticsScreen() {
   const user = useAuthStore((s) => s.user);
@@ -959,6 +960,10 @@ export default function AnalyticsScreen() {
             value={`${savingsRate.toFixed(0)}%`}
             icon="leaf-outline"
           />
+        </View>
+
+        <View className="mt-8">
+          <FeedbackCTA />
         </View>
       </ScrollView>
     </SafeAreaView>

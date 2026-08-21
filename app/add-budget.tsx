@@ -16,7 +16,6 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import Input from "../src/components/Input";
-import Button from "../src/components/Button";
 import api from "../src/services/api";
 import Toast from "react-native-toast-message";
 
@@ -27,7 +26,6 @@ export default function AddBudgetScreen() {
   const [limit, setLimit] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [showValidationModal, setShowValidationModal] = useState(false);
 
   const [errors, setErrors] = useState({
@@ -63,7 +61,6 @@ export default function AddBudgetScreen() {
 
     if (!valid) {
       const message = "Please complete all required fields before saving.";
-
       setError(message);
 
       Toast.show({
@@ -103,7 +100,6 @@ export default function AddBudgetScreen() {
       }, 700);
     } catch (err: any) {
       const message = err.response?.data?.message || "Failed to add budget.";
-
       setError(message);
 
       Toast.show({
@@ -118,31 +114,27 @@ export default function AddBudgetScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100">
-      {/* 🔝 TOP HEADER */}
-      <View className="flex-row items-center justify-between px-6 py-3 bg-white border-b border-gray-100">
-        {/* Back Button (modern container) */}
+    <SafeAreaView className="flex-1 bg-slate-50">
+      {/* TOP HEADER */}
+      <View className="flex-row items-center justify-between px-6 py-3.5 bg-white border-b border-slate-100 shadow-sm">
         <Pressable
           onPress={() => {
             if (router.canGoBack()) router.back();
             else router.replace("/(tabs)");
           }}
-          className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center"
+          className="w-10 h-10 rounded-2xl bg-slate-100 items-center justify-center active:bg-slate-200"
         >
-          <Ionicons name="arrow-back" size={20} color="#111827" />
+          <Ionicons name="arrow-back" size={20} color="#0f172a" />
         </Pressable>
 
-        {/* Title */}
-        <Text className="text-base font-semibold text-gray-900 tracking-tight">
-          Add your Budget
+        <Text className="text-base font-bold text-slate-900 tracking-tight">
+          Add Budget
         </Text>
 
-        {/* Right Action (future ready) */}
-        <Pressable className="w-10 h-10 rounded-xl bg-gray-100 items-center justify-center">
-          <Ionicons name="options-outline" size={20} color="#111827" />
-        </Pressable>
+        <View className="w-10 h-10" />
       </View>
 
+      {/* VALIDATION MODAL (Strictly preserved from your original budget modal) */}
       <Modal
         visible={showValidationModal}
         transparent
@@ -252,72 +244,69 @@ export default function AddBudgetScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 24,
-            paddingBottom: 32,
+            paddingTop: 24,
+            paddingBottom: 40,
             flexGrow: 1,
           }}
         >
           <View
             style={{
               width: "100%",
-              maxWidth: isLargeScreen ? 420 : "100%",
+              maxWidth: isLargeScreen ? 450 : "100%",
               alignSelf: "center",
             }}
           >
-            {/* Header */}
-
-            <Text
-              className="font-bold mb-2"
-              style={{ fontSize: isLargeScreen ? 34 : 28 }}
-            >
-              Add Budget
-            </Text>
-
-            <Text className="text-gray-500 mb-6">
-              Set a monthly spending limit for a category
-            </Text>
+            {/* Header info */}
+            <View className="mb-6">
+              <Text
+                className="font-black text-slate-900 tracking-tight"
+                style={{ fontSize: isLargeScreen ? 34 : 28 }}
+              >
+                Add Budget
+              </Text>
+              <Text className="text-slate-500 font-medium text-sm mt-0.5">
+                Set a monthly spending limit for a category
+              </Text>
+            </View>
 
             {/* Form Card */}
-
-            <View className="bg-white rounded-2xl p-5 shadow-sm">
-              {/* Error Message */}
-
+            <View className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+              {/* Top Error Banner */}
               {error && (
-                <View className="flex-row items-center bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                  <Ionicons
-                    name="alert-circle-outline"
-                    size={18}
-                    color="#dc2626"
-                  />
-
-                  <Text className="text-red-600 ml-2 text-sm flex-1">
+                <View className="flex-row items-center bg-red-50 border border-red-200 rounded-2xl p-4 mb-5 shadow-sm">
+                  <View className="w-8 h-8 rounded-xl bg-red-100 items-center justify-center mr-3">
+                    <Ionicons name="alert" size={16} color="#dc2626" />
+                  </View>
+                  <Text className="text-red-700 font-bold text-xs flex-1 leading-relaxed">
                     {error}
                   </Text>
                 </View>
               )}
 
-              {/* Category Input */}
-
-              <View className="mb-4">
+              {/* Category Field */}
+              <View className="mb-5">
                 <Input
                   label="Category"
                   placeholder="Food, Rent, Travel..."
                   value={category}
                   onChangeText={(text) => {
                     setCategory(text);
-
                     if (error) setError(null);
-
-                    setErrors((prev) => ({
-                      ...prev,
-                      category: "",
-                    }));
+                    setErrors((prev) => ({ ...prev, category: "" }));
                   }}
                 />
+                {errors.category !== "" && (
+                  <View className="flex-row items-center bg-red-50/80 border border-red-100 rounded-xl px-3 py-2 mt-2">
+                    <Ionicons name="alert-circle" size={14} color="#dc2626" />
+                    <Text className="text-red-700 text-xs font-bold ml-2 flex-1">
+                      {errors.category}
+                    </Text>
+                  </View>
+                )}
               </View>
 
-              {/* Limit Input */}
-
-              <View className="mb-5">
+              {/* Limit Field */}
+              <View className="mb-6">
                 <Input
                   label="Monthly Limit (₹)"
                   placeholder="5000"
@@ -325,36 +314,60 @@ export default function AddBudgetScreen() {
                   value={limit}
                   onChangeText={(text) => {
                     setLimit(text);
-
                     if (error) setError(null);
-
-                    setErrors((prev) => ({
-                      ...prev,
-                      limit: "",
-                    }));
+                    setErrors((prev) => ({ ...prev, limit: "" }));
                   }}
                 />
+                {errors.limit !== "" && (
+                  <View className="flex-row items-center bg-red-50/80 border border-red-100 rounded-xl px-3 py-2 mt-2">
+                    <Ionicons name="alert-circle" size={14} color="#dc2626" />
+                    <Text className="text-red-700 text-xs font-bold ml-2 flex-1">
+                      {errors.limit}
+                    </Text>
+                  </View>
+                )}
               </View>
 
-              {/* Save Button */}
-
-              <Button
-                title="Save Budget"
+              {/* Submit Button with Loading State */}
+              <Pressable
                 onPress={handleSubmit}
-                loading={loading}
-              />
+                disabled={loading}
+                className={`py-4 rounded-2xl flex-row items-center justify-center shadow-lg ${
+                  loading
+                    ? "bg-slate-700 opacity-90"
+                    : "bg-slate-900 active:bg-slate-800"
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <ActivityIndicator size="small" color="#fff" />
+                    <Text className="text-white font-bold text-base ml-2.5">
+                      Creating Budget...
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons
+                      name="checkmark-circle-outline"
+                      size={20}
+                      color="#fff"
+                    />
+                    <Text className="text-white font-bold text-base ml-2">
+                      Save Budget
+                    </Text>
+                  </>
+                )}
+              </Pressable>
             </View>
 
             {/* Helper Tip */}
-
-            <View className="flex-row items-start mt-5">
+            <View className="flex-row items-center bg-slate-100/70 border border-slate-200/60 rounded-2xl p-4 mt-5">
               <Ionicons
                 name="information-circle-outline"
                 size={18}
-                color="#6b7280"
+                color="#64748b"
               />
-
-              <Text className="text-gray-500 text-xs ml-2 flex-1">
+              <Text className="text-slate-600 font-medium text-xs ml-2.5 flex-1 leading-relaxed">
                 Tip: Setting budgets helps you track and control your monthly
                 spending.
               </Text>
@@ -364,12 +377,13 @@ export default function AddBudgetScreen() {
       </KeyboardAvoidingView>
 
       {/* FULLSCREEN LOADING OVERLAY */}
-
       {loading && (
-        <View className="absolute inset-0 bg-black/20 items-center justify-center">
-          <View className="bg-white px-6 py-5 rounded-xl items-center shadow-md">
+        <View className="absolute inset-0 bg-black/40 items-center justify-center">
+          <View className="bg-white px-6 py-5 rounded-3xl items-center shadow-2xl">
             <ActivityIndicator size="large" color="#2563eb" />
-            <Text className="text-gray-600 mt-2">Creating budget...</Text>
+            <Text className="text-slate-800 font-bold text-sm mt-3">
+              Creating budget...
+            </Text>
           </View>
         </View>
       )}

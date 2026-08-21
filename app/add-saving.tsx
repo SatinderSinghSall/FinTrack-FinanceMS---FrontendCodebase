@@ -10,14 +10,12 @@ import {
   Modal,
   TouchableOpacity,
 } from "react-native";
-
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import Input from "../src/components/Input";
-import Button from "../src/components/Button";
 import api from "../src/services/api";
 import Toast from "react-native-toast-message";
 
@@ -26,10 +24,8 @@ export default function AddSavingScreen() {
 
   const [goal, setGoal] = useState("");
   const [amount, setAmount] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [showValidationModal, setShowValidationModal] = useState(false);
 
   const [errors, setErrors] = useState({
@@ -38,7 +34,6 @@ export default function AddSavingScreen() {
   });
 
   const { width } = useWindowDimensions();
-
   const isLargeScreen = width >= 768;
 
   const validateForm = () => {
@@ -66,7 +61,6 @@ export default function AddSavingScreen() {
 
     if (!valid) {
       const message = "Please complete all required fields before saving.";
-
       setError(message);
 
       Toast.show({
@@ -106,7 +100,6 @@ export default function AddSavingScreen() {
       }, 700);
     } catch (err: any) {
       const message = err.response?.data?.message || "Failed to add saving.";
-
       setError(message);
 
       Toast.show({
@@ -123,27 +116,25 @@ export default function AddSavingScreen() {
   return (
     <SafeAreaView className="flex-1 bg-emerald-50">
       {/* TOP HEADER */}
-
-      <View className="flex-row items-center justify-between px-6 py-3 bg-white border-b border-emerald-100">
+      <View className="flex-row items-center justify-between px-6 py-3.5 bg-white border-b border-emerald-100 shadow-sm">
         <Pressable
           onPress={() => {
             if (router.canGoBack()) router.back();
             else router.replace("/(tabs)");
           }}
-          className="w-10 h-10 rounded-xl bg-emerald-100 items-center justify-center"
+          className="w-10 h-10 rounded-2xl bg-emerald-100 items-center justify-center active:bg-emerald-200"
         >
           <Ionicons name="arrow-back" size={20} color="#065f46" />
         </Pressable>
 
-        <Text className="text-base font-semibold text-emerald-900 tracking-tight">
-          Add your Saving
+        <Text className="text-base font-bold text-emerald-900 tracking-tight">
+          Add Saving
         </Text>
 
-        <Pressable className="w-10 h-10 rounded-xl bg-emerald-100 items-center justify-center">
-          <Ionicons name="wallet-outline" size={20} color="#065f46" />
-        </Pressable>
+        <View className="w-10 h-10" />
       </View>
 
+      {/* VALIDATION MODAL (Strictly preserved) */}
       <Modal
         visible={showValidationModal}
         transparent
@@ -254,72 +245,69 @@ export default function AddSavingScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 24,
-            paddingBottom: 32,
+            paddingTop: 24,
+            paddingBottom: 40,
             flexGrow: 1,
           }}
         >
           <View
             style={{
               width: "100%",
-              maxWidth: isLargeScreen ? 420 : "100%",
+              maxWidth: isLargeScreen ? 450 : "100%",
               alignSelf: "center",
             }}
           >
-            {/* HEADER */}
+            {/* Header info */}
+            <View className="mb-6">
+              <Text
+                className="font-black text-emerald-950 tracking-tight"
+                style={{ fontSize: isLargeScreen ? 34 : 28 }}
+              >
+                Add Saving
+              </Text>
+              <Text className="text-emerald-700 font-medium text-sm mt-0.5">
+                Set your saving goal and target amount
+              </Text>
+            </View>
 
-            <Text
-              className="font-bold mb-2 text-emerald-900"
-              style={{ fontSize: isLargeScreen ? 34 : 28 }}
-            >
-              Add Saving
-            </Text>
-
-            <Text className="text-emerald-700 mb-6">
-              Set your saving goal and target amount
-            </Text>
-
-            {/* FORM CARD */}
-
-            <View className="bg-white rounded-2xl p-5 shadow-sm border border-emerald-100">
-              {/* ERROR */}
-
+            {/* Form Card */}
+            <View className="bg-white rounded-3xl p-6 shadow-sm border border-emerald-100">
+              {/* Top Error Banner */}
               {error && (
-                <View className="flex-row items-center bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                  <Ionicons
-                    name="alert-circle-outline"
-                    size={18}
-                    color="#dc2626"
-                  />
-
-                  <Text className="text-red-600 ml-2 text-sm flex-1">
+                <View className="flex-row items-center bg-red-50 border border-red-200 rounded-2xl p-4 mb-5 shadow-sm">
+                  <View className="w-8 h-8 rounded-xl bg-red-100 items-center justify-center mr-3">
+                    <Ionicons name="alert" size={16} color="#dc2626" />
+                  </View>
+                  <Text className="text-red-700 font-bold text-xs flex-1 leading-relaxed">
                     {error}
                   </Text>
                 </View>
               )}
 
-              {/* GOAL */}
-
-              <View className="mb-4">
+              {/* Goal Field */}
+              <View className="mb-5">
                 <Input
                   label="Saving Goal"
                   placeholder="Emergency Fund, Car..."
                   value={goal}
                   onChangeText={(text) => {
                     setGoal(text);
-
                     if (error) setError(null);
-
-                    setErrors((prev) => ({
-                      ...prev,
-                      goal: "",
-                    }));
+                    setErrors((prev) => ({ ...prev, goal: "" }));
                   }}
                 />
+                {errors.goal !== "" && (
+                  <View className="flex-row items-center bg-red-50/80 border border-red-100 rounded-xl px-3 py-2 mt-2">
+                    <Ionicons name="alert-circle" size={14} color="#dc2626" />
+                    <Text className="text-red-700 text-xs font-bold ml-2 flex-1">
+                      {errors.goal}
+                    </Text>
+                  </View>
+                )}
               </View>
 
-              {/* AMOUNT */}
-
-              <View className="mb-5">
+              {/* Amount Field */}
+              <View className="mb-6">
                 <Input
                   label="Target Amount (₹)"
                   placeholder="10000"
@@ -327,30 +315,56 @@ export default function AddSavingScreen() {
                   value={amount}
                   onChangeText={(text) => {
                     setAmount(text);
-
                     if (error) setError(null);
-
-                    setErrors((prev) => ({
-                      ...prev,
-                      amount: "",
-                    }));
+                    setErrors((prev) => ({ ...prev, amount: "" }));
                   }}
                 />
+                {errors.amount !== "" && (
+                  <View className="flex-row items-center bg-red-50/80 border border-red-100 rounded-xl px-3 py-2 mt-2">
+                    <Ionicons name="alert-circle" size={14} color="#dc2626" />
+                    <Text className="text-red-700 text-xs font-bold ml-2 flex-1">
+                      {errors.amount}
+                    </Text>
+                  </View>
+                )}
               </View>
 
-              <Button
-                title="Save Saving"
+              {/* Submit Button with Loading State */}
+              <Pressable
                 onPress={handleSubmit}
-                loading={loading}
-              />
+                disabled={loading}
+                className={`py-4 rounded-2xl flex-row items-center justify-center shadow-lg ${
+                  loading
+                    ? "bg-emerald-700 opacity-90"
+                    : "bg-emerald-900 active:bg-emerald-800"
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <ActivityIndicator size="small" color="#fff" />
+                    <Text className="text-white font-bold text-base ml-2.5">
+                      Creating Saving...
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Ionicons
+                      name="checkmark-circle-outline"
+                      size={20}
+                      color="#fff"
+                    />
+                    <Text className="text-white font-bold text-base ml-2">
+                      Save Saving
+                    </Text>
+                  </>
+                )}
+              </Pressable>
             </View>
 
-            {/* TIP */}
-
-            <View className="flex-row items-start mt-5">
+            {/* Helper Tip */}
+            <View className="flex-row items-center bg-emerald-100/70 border border-emerald-200/60 rounded-2xl p-4 mt-5">
               <Ionicons name="leaf-outline" size={18} color="#047857" />
-
-              <Text className="text-emerald-700 text-xs ml-2 flex-1">
+              <Text className="text-emerald-800 font-medium text-xs ml-2.5 flex-1 leading-relaxed">
                 Tip: Small consistent savings can create long-term financial
                 stability.
               </Text>
@@ -359,14 +373,14 @@ export default function AddSavingScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* LOADING */}
-
+      {/* FULLSCREEN LOADING OVERLAY */}
       {loading && (
-        <View className="absolute inset-0 bg-black/20 items-center justify-center">
-          <View className="bg-white px-6 py-5 rounded-xl items-center shadow-md">
+        <View className="absolute inset-0 bg-black/40 items-center justify-center">
+          <View className="bg-white px-6 py-5 rounded-3xl items-center shadow-2xl">
             <ActivityIndicator size="large" color="#10b981" />
-
-            <Text className="text-emerald-700 mt-2">Creating saving...</Text>
+            <Text className="text-emerald-800 font-bold text-sm mt-3">
+              Creating saving...
+            </Text>
           </View>
         </View>
       )}

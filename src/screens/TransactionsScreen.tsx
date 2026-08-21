@@ -16,6 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 
 import api from "../services/api";
 import AppHeader from "../components/AppHeader";
+import FeedbackCTA from "../components/FeedbackCTA";
 
 type TransactionType = "income" | "expense";
 type FilterType = "All" | "Income" | "Expense";
@@ -55,6 +56,7 @@ const WEEK_DAYS = ["S", "M", "T", "W", "T", "F", "S"];
 export default function TransactionsScreen() {
   const router = useRouter();
   const navigation = useNavigation();
+  const [isFabOpen, setIsFabOpen] = useState(false);
 
   // =====================================================
   // DATA
@@ -599,7 +601,7 @@ export default function TransactionsScreen() {
           />
         }
         contentContainerStyle={{
-          paddingBottom: 125,
+          paddingBottom: 40,
         }}
       >
         {/* ================================================= */}
@@ -1501,25 +1503,123 @@ export default function TransactionsScreen() {
       </Modal>
 
       {/* ================================================= */}
-      {/* FLOATING ACTION */}
+      {/* EXPANDABLE FLOATING ACTION BUTTON (FAB) */}
       {/* ================================================= */}
 
+      {/* ================================================= */}
+      {/* PREMIUM EXPANDABLE FLOATING ACTION BUTTON (FAB) */}
+      {/* ================================================= */}
+
+      {/* Backdrop overlay with blur effect */}
+      {isFabOpen && (
+        <Pressable
+          onPress={() => setIsFabOpen(false)}
+          className="absolute inset-0 bg-black/40 backdrop-blur-md z-40"
+        />
+      )}
+
+      {/* Popup Options Menu */}
+      {isFabOpen && (
+        <View className="absolute bottom-24 right-5 z-50 items-end space-y-3.5">
+          {/* Income Option */}
+          <Pressable
+            onPress={() => {
+              setIsFabOpen(false);
+              router.push("/add-income");
+            }}
+            className="flex-row items-center mb-3.5"
+            activeOpacity={0.85}
+          >
+            <View className="bg-white/95 px-4 py-2 rounded-2xl shadow-xl border border-gray-100 mr-3">
+              <Text className="text-gray-900 font-bold text-sm tracking-wide">
+                Add Income
+              </Text>
+            </View>
+            <View className="h-12 w-12 rounded-2xl bg-emerald-500 items-center justify-center shadow-lg shadow-emerald-500/30">
+              <Ionicons name="arrow-down-outline" size={22} color="#FFFFFF" />
+            </View>
+          </Pressable>
+
+          {/* Expense Option */}
+          <Pressable
+            onPress={() => {
+              setIsFabOpen(false);
+              router.push("/add-expense");
+            }}
+            className="flex-row items-center mb-3.5"
+            activeOpacity={0.85}
+          >
+            <View className="bg-white/95 px-4 py-2 rounded-2xl shadow-xl border border-gray-100 mr-3">
+              <Text className="text-gray-900 font-bold text-sm tracking-wide">
+                Add Expense
+              </Text>
+            </View>
+            <View className="h-12 w-12 rounded-2xl bg-rose-600 items-center justify-center shadow-lg shadow-rose-600/30">
+              <Ionicons name="arrow-up-outline" size={22} color="#FFFFFF" />
+            </View>
+          </Pressable>
+
+          {/* Savings Option */}
+          <Pressable
+            onPress={() => {
+              setIsFabOpen(false);
+              router.push("/add-saving");
+            }}
+            className="flex-row items-center mb-3.5"
+            activeOpacity={0.85}
+          >
+            <View className="bg-white/95 px-4 py-2 rounded-2xl shadow-xl border border-gray-100 mr-3">
+              <Text className="text-gray-900 font-bold text-sm tracking-wide">
+                Add Savings
+              </Text>
+            </View>
+            <View className="h-12 w-12 rounded-2xl bg-emerald-600 items-center justify-center shadow-lg shadow-emerald-600/30">
+              <Ionicons name="leaf-outline" size={22} color="#FFFFFF" />
+            </View>
+          </Pressable>
+
+          {/* Budget Option */}
+          <Pressable
+            onPress={() => {
+              setIsFabOpen(false);
+              router.push("/add-budget");
+            }}
+            className="flex-row items-center mb-3.5"
+            activeOpacity={0.85}
+          >
+            <View className="bg-white/95 px-4 py-2 rounded-2xl shadow-xl border border-gray-100 mr-3">
+              <Text className="text-gray-900 font-bold text-sm tracking-wide">
+                Add Budget
+              </Text>
+            </View>
+            <View className="h-12 w-12 rounded-2xl bg-blue-600 items-center justify-center shadow-lg shadow-blue-600/30">
+              <Ionicons name="wallet-outline" size={22} color="#FFFFFF" />
+            </View>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Main Trigger FAB */}
       <Pressable
-        onPress={() => router.push("/add-expense")}
-        className="absolute bottom-7 right-5 h-14 w-14 rounded-full bg-blue-600 items-center justify-center"
+        onPress={() => setIsFabOpen(!isFabOpen)}
+        className="absolute bottom-7 right-5 h-16 w-16 rounded-3xl bg-blue-600 items-center justify-center z-50"
         style={({ pressed }) => ({
-          opacity: pressed ? 0.85 : 1,
-          elevation: 10,
-          shadowColor: "#000",
-          shadowOpacity: 0.22,
-          shadowRadius: 10,
+          transform: [{ scale: pressed ? 0.94 : 1 }],
+          elevation: 12,
+          shadowColor: "#2563EB",
+          shadowOpacity: 0.4,
+          shadowRadius: 12,
           shadowOffset: {
             width: 0,
-            height: 5,
+            height: 6,
           },
         })}
       >
-        <Ionicons name="add" size={29} color="#FFFFFF" />
+        <Ionicons
+          name={isFabOpen ? "close" : "add"}
+          size={32}
+          color="#FFFFFF"
+        />
       </Pressable>
     </SafeAreaView>
   );
