@@ -15,23 +15,30 @@ import { checkAppUpdate } from "../src/utils/checkAppUpdate";
 import NetInfo from "@react-native-community/netinfo";
 import NetworkErrorModal from "../src/components/NetworkErrorModal";
 
+type UpdateInfo = {
+  latestVersion: string;
+  minSupportedVersion: string;
+  forceUpdate: boolean;
+  playStoreUrl: string;
+  updateMessage?: string;
+};
+
 export default function RootLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-
-  const [updateInfo, setUpdateInfo] = useState<any>(null);
-
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [fontsLoaded] = useFonts({
     ...Ionicons.font,
   });
-
   const [showNetworkModal, setShowNetworkModal] = useState(false);
-
   const [slowConnection, setSlowConnection] = useState(false);
 
   useEffect(() => {
     const run = async () => {
       const res = await checkAppUpdate();
-      if (res) setUpdateInfo(res);
+
+      if (res) {
+        setUpdateInfo(res);
+      }
     };
 
     run();
@@ -39,7 +46,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
-      const offline = !state.isConnected || !state.isInternetReachable;
+      const offline = !state.isConnected || state.isInternetReachable === false;
 
       setShowNetworkModal(offline);
 
@@ -88,8 +95,10 @@ export default function RootLayout() {
 
         <UpdateModal
           visible={!!updateInfo}
-          storeUrl={updateInfo?.playStoreUrl}
-          force={updateInfo?.forceUpdate}
+          storeUrl={updateInfo?.playStoreUrl ?? ""}
+          force={updateInfo?.forceUpdate ?? false}
+          updateMessage={updateInfo?.updateMessage}
+          onClose={() => setUpdateInfo(null)}
         />
       </>
     </GestureHandlerRootView>

@@ -13,13 +13,15 @@ type Props = {
   visible: boolean;
   storeUrl: string;
   force?: boolean;
+  updateMessage?: string;
   onClose?: () => void;
 };
 
 export default function UpdateModal({
   visible,
   storeUrl,
-  force,
+  force = false,
+  updateMessage,
   onClose,
 }: Props) {
   const { width } = useWindowDimensions();
@@ -27,8 +29,26 @@ export default function UpdateModal({
   const isTablet = width >= 768;
   const isDesktop = width >= 1024;
 
+  const openStore = async () => {
+    try {
+      const supported = await Linking.canOpenURL(storeUrl);
+
+      if (supported) {
+        await Linking.openURL(storeUrl);
+      }
+    } catch (error) {
+      console.warn("Unable to open Play Store:", error);
+    }
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={force ? undefined : onClose}
+    >
       <View className="flex-1 bg-black/50 items-center justify-center px-6">
         <View
           style={{
@@ -95,7 +115,7 @@ export default function UpdateModal({
                 marginBottom: 6,
               }}
             >
-              Update Available
+              {force ? "Update Required" : "Update Available"}
             </Text>
 
             {/* DESCRIPTION */}
@@ -109,13 +129,19 @@ export default function UpdateModal({
                 paddingHorizontal: 8,
               }}
             >
-              A new version of FinTrack is available with improvements and new
-              features.
+              {force
+                ? "Your current version of FinTrack is no longer supported. Please update to continue."
+                : updateMessage ||
+                  "A new version of FinTrack is available with improvements and new features."}
             </Text>
 
             {/* CTA BUTTON */}
             <Pressable
-              onPress={() => Linking.openURL(storeUrl)}
+              onPress={openStore}
+              accessibilityRole="button"
+              accessibilityLabel={
+                force ? "Update FinTrack to continue" : "Update FinTrack"
+              }
               style={({ pressed }) => ({
                 opacity: pressed ? 0.9 : 1,
               })}
@@ -136,6 +162,7 @@ export default function UpdateModal({
                 }}
               >
                 <Ionicons name="download-outline" size={18} color="#fff" />
+
                 <Text
                   style={{
                     color: "#fff",
@@ -144,14 +171,20 @@ export default function UpdateModal({
                     marginLeft: 8,
                   }}
                 >
-                  Update Now
+                  {force ? "Update to Continue" : "Update Now"}
                 </Text>
               </LinearGradient>
             </Pressable>
 
             {/* SECONDARY */}
             {!force && (
-              <Pressable onPress={onClose} className="mt-5 items-center">
+              <Pressable
+                onPress={onClose}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Maybe later"
+                className="mt-5 items-center"
+              >
                 <Text
                   style={{
                     fontSize: 13,
