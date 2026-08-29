@@ -8,6 +8,7 @@ import {
   Pressable,
   useWindowDimensions,
   ActivityIndicator,
+  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useCallback } from "react";
@@ -115,6 +116,44 @@ export default function DashboardScreen() {
       setRefreshing(false);
     }
   }, []);
+
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [flipAnimation] = useState(new Animated.Value(0));
+
+  const handleCardFlip = () => {
+    Animated.spring(flipAnimation, {
+      toValue: isFlipped ? 0 : 1,
+      friction: 8,
+      tension: 10,
+      useNativeDriver: true,
+    }).start();
+    setIsFlipped(!isFlipped);
+  };
+
+  const frontInterpolate = flipAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
+
+  const backInterpolate = flipAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["180deg", "360deg"],
+  });
+
+  const frontAnimatedStyle = {
+    transform: [{ rotateY: frontInterpolate }],
+    backfaceVisibility: "hidden" as const,
+  };
+
+  const backAnimatedStyle = {
+    transform: [{ rotateY: backInterpolate }],
+    backfaceVisibility: "hidden" as const,
+    position: "absolute" as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  };
 
   /* ============================================================
      LOADING
@@ -353,91 +392,169 @@ export default function DashboardScreen() {
               PREMIUM BALANCE HERO
           ==================================================== */}
 
-          <View
-            className="bg-blue-600 rounded-[30px] p-6 mb-5 overflow-hidden"
-            style={{
-              shadowColor: "#2563EB",
-              shadowOpacity: 0.24,
-              shadowRadius: 22,
-              shadowOffset: {
-                width: 0,
-                height: 10,
-              },
-              elevation: 8,
-            }}
-          >
-            {/* Decorative circles */}
-            <View className="absolute -right-14 -top-16 h-44 w-44 rounded-full bg-white/10" />
-            <View className="absolute -right-6 bottom-[-75px] h-40 w-40 rounded-full bg-white/5" />
-
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center">
-                <View className="h-9 w-9 rounded-xl bg-white/15 items-center justify-center">
-                  <Ionicons name="wallet-outline" size={18} color="#FFFFFF" />
-                </View>
-
-                <Text className="text-white/75 text-xs font-medium ml-2.5">
-                  Available Balance
-                </Text>
-              </View>
-
-              <View className="px-2.5 py-1 rounded-full bg-white/10 flex-row items-center">
-                <View className="h-1.5 w-1.5 rounded-full bg-green-300 mr-1.5" />
-                <Text className="text-white/80 text-[9px] font-semibold">
-                  Live
-                </Text>
-              </View>
-            </View>
-
-            <Text
-              className="text-white font-extrabold mt-5"
-              style={{
-                fontSize: isLargeScreen ? 38 : 34,
-                letterSpacing: -1,
-              }}
-            >
-              ₹{remainingBalance.toLocaleString("en-IN")}
-            </Text>
-
-            <Text className="text-white/60 text-[11px] mt-1">
-              Your current financial position
-            </Text>
-
-            {/* Income / Expense */}
-            <View className="flex-row mt-6 pt-5 border-t border-white/10">
-              <View className="flex-1">
-                <View className="flex-row items-center">
-                  <View className="h-7 w-7 rounded-lg bg-white/10 items-center justify-center">
-                    <Ionicons name="arrow-down" size={14} color="#86EFAC" />
+          {/* ====================================================
+              FLIPPABLE VIRTUAL CARD HERO
+          ==================================================== */}
+          <Pressable onPress={handleCardFlip} className="mb-6">
+            <View style={{ height: 215 }}>
+              {/* FRONT OF THE CARD */}
+              <Animated.View
+                className="rounded-[28px] p-6 bg-slate-900 border border-slate-800 h-full justify-between overflow-hidden"
+                style={[
+                  frontAnimatedStyle,
+                  {
+                    shadowColor: "#0F172A",
+                    shadowOpacity: 0.25,
+                    shadowRadius: 20,
+                    shadowOffset: { width: 0, height: 10 },
+                    elevation: 8,
+                  },
+                ]}
+              >
+                {/* Top Row: Chip & Live Badge */}
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View className="w-10 h-7 rounded-md bg-amber-400/90 border border-amber-300/50 justify-center px-1">
+                      <View className="w-full h-[1px] bg-amber-600/40 my-[2px]" />
+                      <View className="w-full h-[1px] bg-amber-600/40 my-[2px]" />
+                    </View>
+                    <Ionicons
+                      name="wifi"
+                      size={16}
+                      color="#94A3B8"
+                      style={{
+                        transform: [{ rotate: "90deg" }],
+                        marginLeft: 10,
+                      }}
+                    />
                   </View>
 
-                  <Text className="text-white/55 text-[10px] ml-2">Income</Text>
+                  <View className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex-row items-center">
+                    <View className="h-1.5 w-1.5 rounded-full bg-emerald-400 mr-1.5" />
+                    <Text className="text-emerald-400 text-[10px] font-bold tracking-widest uppercase">
+                      Secure
+                    </Text>
+                  </View>
                 </View>
 
-                <Text className="text-white font-bold text-base mt-2">
-                  ₹{totalIncome.toLocaleString("en-IN")}
-                </Text>
-              </View>
-
-              <View className="w-px bg-white/10 mx-5" />
-
-              <View className="flex-1">
-                <View className="flex-row items-center">
-                  <View className="h-7 w-7 rounded-lg bg-white/10 items-center justify-center">
-                    <Ionicons name="arrow-up" size={14} color="#FCA5A5" />
+                {/* Balance Label & Amount */}
+                <View className="my-2 pb-3 border-b border-slate-800">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-slate-400 text-xs font-medium uppercase tracking-wider">
+                      Available Liquid Balance
+                    </Text>
+                    <View className="flex-row items-center">
+                      <Text className="text-slate-500 text-[9px] mr-1">
+                        Tap to flip
+                      </Text>
+                      <Ionicons
+                        name="repeat-outline"
+                        size={11}
+                        color="#64748B"
+                      />
+                    </View>
                   </View>
-
-                  <Text className="text-white/55 text-[10px] ml-2">
-                    Spending
+                  <Text
+                    className="text-white font-black tracking-tight mt-1"
+                    style={{ fontSize: isLargeScreen ? 36 : 32 }}
+                  >
+                    ₹{remainingBalance.toLocaleString("en-IN")}
                   </Text>
                 </View>
 
-                <Text className="text-white font-bold text-base mt-2">
-                  ₹{totalExpenses.toLocaleString("en-IN")}
-                </Text>
-              </View>
+                {/* Bottom Row: Income / Spending Stats */}
+                <View className="flex-row justify-between items-center pt-1">
+                  <View className="flex-row items-center flex-1 pr-3">
+                    <View className="h-7 w-7 rounded-xl bg-emerald-500/15 items-center justify-center mr-2.5 border border-emerald-500/20">
+                      <Ionicons name="arrow-down" size={13} color="#34D399" />
+                    </View>
+                    <View>
+                      <Text className="text-slate-400 text-[9px] uppercase tracking-wider font-bold">
+                        Income
+                      </Text>
+                      <Text className="text-white font-extrabold text-xs mt-0.5">
+                        ₹{totalIncome.toLocaleString("en-IN")}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="h-7 w-[1px] bg-slate-700 mx-1" />
+
+                  <View className="flex-row items-center flex-1 pl-3 justify-end">
+                    <View className="items-end mr-2.5">
+                      <Text className="text-slate-400 text-[9px] uppercase tracking-wider font-bold">
+                        Spent
+                      </Text>
+                      <Text className="text-white font-extrabold text-xs mt-0.5">
+                        ₹{totalExpenses.toLocaleString("en-IN")}
+                      </Text>
+                    </View>
+                    <View className="h-7 w-7 rounded-xl bg-rose-500/15 items-center justify-center border border-rose-500/20">
+                      <Ionicons name="arrow-up" size={13} color="#F87171" />
+                    </View>
+                  </View>
+                </View>
+              </Animated.View>
+
+              <Animated.View
+                className="rounded-[28px] p-6 bg-slate-950 border border-slate-800/80 h-full justify-between overflow-hidden"
+                style={[
+                  backAnimatedStyle,
+                  {
+                    shadowColor: "#0F172A",
+                    shadowOpacity: 0.25,
+                    shadowRadius: 20,
+                    shadowOffset: { width: 0, height: 10 },
+                    elevation: 8,
+                  },
+                ]}
+              >
+                {/* Top Row: Bank-Grade Security & Flip Back (Clean top spacing) */}
+                <View className="flex-row items-center justify-between z-10 pt-1">
+                  <View className="flex-row items-center">
+                    <View className="h-7 w-7 rounded-xl bg-blue-500/10 items-center justify-center mr-2 border border-blue-500/20">
+                      <Ionicons
+                        name="shield-checkmark"
+                        size={14}
+                        color="#60A5FA"
+                      />
+                    </View>
+                    <Text className="text-white font-black text-xs tracking-wider uppercase">
+                      Bank-Grade Security
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center bg-slate-900/90 px-2.5 py-1 rounded-full border border-slate-800">
+                    <Text className="text-slate-400 text-[9px] mr-1 font-medium">
+                      Flip back
+                    </Text>
+                    <Ionicons name="repeat-outline" size={10} color="#94A3B8" />
+                  </View>
+                </View>
+
+                {/* Middle Security Description Card */}
+                <View className="z-10 bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800/60 my-auto">
+                  <Text className="text-slate-300 text-[11px] leading-4 font-medium text-center">
+                    Your financial vault is protected with end-to-end
+                    encryption. Our backend servers secure your database entries
+                    permanently.
+                  </Text>
+                </View>
+
+                {/* Bottom Row: Encryption status & version */}
+                <View className="flex-row items-center justify-between z-10 pt-3 border-t border-slate-900/80">
+                  <View className="flex-row items-center">
+                    <Ionicons name="lock-closed" size={11} color="#34D399" />
+                    <Text className="text-emerald-400 text-[9px] font-bold ml-1.5 uppercase tracking-wider">
+                      AES-256 Bit Encryption Active
+                    </Text>
+                  </View>
+                  <Text className="text-slate-500 text-[9px] font-mono font-semibold">
+                    FinTrack
+                  </Text>
+                </View>
+              </Animated.View>
             </View>
-          </View>
+          </Pressable>
 
           {/* ====================================================
               QUICK ACTIONS
