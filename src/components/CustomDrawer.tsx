@@ -186,6 +186,14 @@ export default function CustomDrawer(props: any) {
           />
 
           <DrawerItem
+            label="Announcements"
+            icon="megaphone-outline"
+            route="announcements/AnnouncementScreen"
+            active={pathname.includes("announcements")}
+            {...props}
+          />
+
+          <DrawerItem
             label="Transactions"
             icon="swap-horizontal-outline"
             route="(tabs)/transactions"

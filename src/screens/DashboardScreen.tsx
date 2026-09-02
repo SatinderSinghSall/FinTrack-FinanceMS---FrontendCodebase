@@ -22,6 +22,7 @@ import AppHeader from "../components/AppHeader";
 import SubscriptionFeatureModal from "../components/SubscriptionFeatureModal";
 import SubscriptionCTA from "../components/SubscriptionCTA";
 import FeedbackCTA from "../components/FeedbackCTA";
+import AnnouncementsPreview from "../components/AnnouncementsPreview";
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -664,6 +665,8 @@ export default function DashboardScreen() {
               caption="Total saved"
             />
           </View>
+
+          <AnnouncementsPreview />
 
           {/* ====================================================
               SPENDING INSIGHTS

@@ -25,15 +25,20 @@ type PriorityLevel = "Low" | "Medium" | "High";
 export default function FeedbackScreen() {
   const router = useRouter();
 
+  /* ---------------- STATE ---------------- */
+
   const [type, setType] = useState<FeedbackType>("Contact Us");
   const [priority, setPriority] = useState<PriorityLevel>("Medium");
+
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [showValidationModal, setShowValidationModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const [errors, setErrors] = useState({
     email: "",
@@ -60,6 +65,7 @@ export default function FeedbackScreen() {
       valid = false;
     } else {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
       if (!emailRegex.test(email.trim())) {
         newErrors.email = "Please enter a valid email address.";
         valid = false;
@@ -83,6 +89,7 @@ export default function FeedbackScreen() {
 
     if (!valid) {
       const errorMessage = "Please complete all required fields correctly.";
+
       setError(errorMessage);
 
       Toast.show({
@@ -110,24 +117,16 @@ export default function FeedbackScreen() {
       await api.post("/feedback", {
         type,
         priority,
-        email,
-        subject,
-        message,
+        email: email.trim(),
+        subject: subject.trim(),
+        message: message.trim(),
       });
 
-      Toast.show({
-        type: "success",
-        text1: "Submitted successfully",
-        text2: "Thank you for your feedback!",
-        position: "top",
-      });
-
-      setTimeout(() => {
-        router.back();
-      }, 700);
+      setShowSuccessModal(true);
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || "Failed to submit feedback.";
+
       setError(errorMessage);
 
       Toast.show({
@@ -141,13 +140,38 @@ export default function FeedbackScreen() {
     }
   };
 
+  /* ---------------- BACK ---------------- */
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)");
+    }
+  };
+
+  /* ---------------- SUCCESS CLOSE ---------------- */
+
+  const handleSuccessDone = () => {
+    setShowSuccessModal(false);
+
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)");
+    }
+  };
+
   /* ---------------- UI ---------------- */
 
   return (
     <SafeAreaView className="flex-1 bg-zinc-100">
+      {/* ========================================================= */}
       {/* TOP HEADER */}
+      {/* ========================================================= */}
+
       <View
-        className="flex-row items-center justify-between px-6 py-3.5 bg-white border-b border-zinc-200"
+        className="flex-row items-center justify-between border-b border-zinc-200 bg-white px-6 py-3.5"
         style={{
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 1 },
@@ -157,45 +181,51 @@ export default function FeedbackScreen() {
         }}
       >
         <Pressable
-          onPress={() => {
-            if (router.canGoBack()) router.back();
-            else router.replace("/(tabs)");
-          }}
-          className="w-10 h-10 rounded-2xl bg-zinc-100 items-center justify-center active:bg-zinc-200"
+          onPress={handleBack}
+          className="h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100 active:bg-zinc-200"
         >
           <Ionicons name="arrow-back" size={20} color="#09090b" />
         </Pressable>
 
-        <Text className="text-base font-bold text-zinc-900 tracking-tight">
+        <Text className="text-base font-bold tracking-tight text-zinc-900">
           Help & Feedback
         </Text>
 
-        <View className="w-10 h-10" />
+        <View className="h-10 w-10" />
       </View>
 
+      {/* ========================================================= */}
       {/* VALIDATION MODAL */}
+      {/* ========================================================= */}
+
       <Modal
         visible={showValidationModal}
         transparent
         animationType="fade"
         statusBarTranslucent
-        onRequestClose={() => {}}
+        onRequestClose={() => setShowValidationModal(false)}
       >
         <View
-          className="flex-1 justify-center items-center px-5"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
+          className="flex-1 items-center justify-center px-5"
+          style={{
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+          }}
         >
           <View
-            className="w-full bg-white rounded-[32px] overflow-hidden"
+            className="w-full overflow-hidden rounded-[32px] bg-white"
             style={{
               maxWidth: 430,
               shadowColor: "#000",
-              shadowOffset: { width: 0, height: 10 },
+              shadowOffset: {
+                width: 0,
+                height: 10,
+              },
               shadowOpacity: 0.2,
               shadowRadius: 15,
               elevation: 10,
             }}
           >
+            {/* Icon */}
             <View className="items-center px-7 pt-8">
               <View
                 className="items-center justify-center"
@@ -210,76 +240,271 @@ export default function FeedbackScreen() {
               </View>
 
               <Text
-                className="text-zinc-900 text-2xl font-black mt-5"
+                className="mt-5 text-2xl font-black text-zinc-900"
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
                 Validation Error
               </Text>
 
-              <Text className="text-zinc-500 text-center leading-5 mt-2 text-sm px-4">
+              <Text className="mt-2 px-4 text-center text-sm leading-5 text-zinc-500">
                 Please make sure all fields are filled properly before
                 submitting.
               </Text>
             </View>
 
-            <View className="h-px bg-zinc-200 mx-7 mt-6" />
+            {/* Divider */}
+            <View className="mx-7 mt-6 h-px bg-zinc-200" />
 
+            {/* Errors */}
             <View className="px-7 pt-5">
               {errors.email !== "" && (
-                <View className="flex-row items-center bg-zinc-50 border border-zinc-200 rounded-2xl px-4 py-3.5 mb-2.5">
+                <View className="mb-2.5 flex-row items-center rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3.5">
                   <Ionicons name="alert-circle" size={16} color="#ef4444" />
-                  <Text className="ml-3 flex-1 text-zinc-800 font-medium text-xs">
+
+                  <Text className="ml-3 flex-1 text-xs font-medium text-zinc-800">
                     {errors.email}
                   </Text>
                 </View>
               )}
 
               {errors.subject !== "" && (
-                <View className="flex-row items-center bg-zinc-50 border border-zinc-200 rounded-2xl px-4 py-3.5 mb-2.5">
+                <View className="mb-2.5 flex-row items-center rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3.5">
                   <Ionicons name="alert-circle" size={16} color="#ef4444" />
-                  <Text className="ml-3 flex-1 text-zinc-800 font-medium text-xs">
+
+                  <Text className="ml-3 flex-1 text-xs font-medium text-zinc-800">
                     {errors.subject}
                   </Text>
                 </View>
               )}
 
               {errors.message !== "" && (
-                <View className="flex-row items-center bg-zinc-50 border border-zinc-200 rounded-2xl px-4 py-3.5">
+                <View className="flex-row items-center rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3.5">
                   <Ionicons name="alert-circle" size={16} color="#ef4444" />
-                  <Text className="ml-3 flex-1 text-zinc-800 font-medium text-xs">
+
+                  <Text className="ml-3 flex-1 text-xs font-medium text-zinc-800">
                     {errors.message}
                   </Text>
                 </View>
               )}
             </View>
 
-            <View className="px-7 pt-6 pb-7">
+            {/* Button */}
+            <View className="px-7 pb-7 pt-6">
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => setShowValidationModal(false)}
-                className="bg-black rounded-2xl py-4 items-center"
+                className="items-center rounded-2xl bg-black py-4"
                 style={{
                   shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 },
+                  shadowOffset: {
+                    width: 0,
+                    height: 2,
+                  },
                   shadowOpacity: 0.1,
                   shadowRadius: 3,
                   elevation: 2,
                 }}
               >
-                <Text className="text-white text-base font-black">Got it</Text>
+                <Text className="text-base font-black text-white">Got it</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
+      {/* ========================================================= */}
+      {/* SUCCESS MODAL */}
+      {/* ========================================================= */}
+
+      {/* ========================================================= */}
+      {/* SUCCESS MODAL */}
+      {/* ========================================================= */}
+
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => {}}
+      >
+        <View
+          className="flex-1 items-center justify-center px-5"
+          style={{
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+          }}
+        >
+          <View
+            className="w-full overflow-hidden rounded-[32px] bg-white"
+            style={{
+              maxWidth: 430,
+              shadowColor: "#000",
+              shadowOffset: {
+                width: 0,
+                height: 12,
+              },
+              shadowOpacity: 0.22,
+              shadowRadius: 18,
+              elevation: 12,
+            }}
+          >
+            {/* ===================================================== */}
+            {/* SUCCESS HEADER */}
+            {/* ===================================================== */}
+
+            <View className="items-center px-7 pt-7">
+              {/* Success Icon */}
+              <View
+                className="h-[76px] w-[76px] items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: "#f4f4f5",
+                }}
+              >
+                <View
+                  className="h-[58px] w-[58px] items-center justify-center rounded-full"
+                  style={{
+                    backgroundColor: "#18181b",
+                  }}
+                >
+                  <Ionicons name="checkmark" size={32} color="#ffffff" />
+                </View>
+              </View>
+
+              <Text className="mt-5 text-center text-[23px] font-black tracking-tight text-zinc-900">
+                Feedback Submitted
+              </Text>
+
+              <Text className="mt-2 px-5 text-center text-sm font-medium leading-5 text-zinc-500">
+                Thank you for taking the time to share your feedback with us.
+              </Text>
+            </View>
+
+            {/* ===================================================== */}
+            {/* DIVIDER */}
+            {/* ===================================================== */}
+
+            <View className="mx-7 mt-6 h-px bg-zinc-200" />
+
+            {/* ===================================================== */}
+            {/* SUBMITTED FEEDBACK PREVIEW */}
+            {/* ===================================================== */}
+
+            <View className="px-7 pt-5">
+              <View className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                {/* Subject */}
+                <View className="flex-row items-center">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-white">
+                    <Ionicons
+                      name="chatbubble-ellipses-outline"
+                      size={18}
+                      color="#18181b"
+                    />
+                  </View>
+
+                  <View className="ml-3 flex-1">
+                    <Text className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                      Your feedback
+                    </Text>
+
+                    <Text
+                      numberOfLines={1}
+                      className="mt-0.5 text-sm font-bold text-zinc-900"
+                    >
+                      {subject.trim()}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Metadata */}
+                <View className="mt-3 flex-row">
+                  <View className="mr-2 rounded-lg bg-white px-2.5 py-1.5">
+                    <Text className="text-[10px] font-bold text-zinc-600">
+                      {type}
+                    </Text>
+                  </View>
+
+                  <View className="rounded-lg bg-white px-2.5 py-1.5">
+                    <Text className="text-[10px] font-bold text-zinc-600">
+                      {priority} Priority
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Information */}
+              <View className="mt-3 flex-row items-start px-1">
+                <Ionicons
+                  name="information-circle-outline"
+                  size={16}
+                  color="#71717a"
+                />
+
+                <Text className="ml-2 flex-1 text-xs leading-5 text-zinc-500">
+                  Our team will review your feedback and use it to help improve
+                  FinTrack.
+                </Text>
+              </View>
+            </View>
+
+            {/* ===================================================== */}
+            {/* ACTION BUTTONS */}
+            {/* ===================================================== */}
+
+            <View className="px-7 pb-7 pt-6">
+              {/* Check Submissions */}
+              <Pressable
+                onPress={() => {
+                  setShowSuccessModal(false);
+                  router.push("/feedback/my-feedback");
+                }}
+                className="flex-row items-center justify-center rounded-2xl bg-black py-4 active:bg-zinc-800"
+                style={{
+                  shadowColor: "#000",
+                  shadowOffset: {
+                    width: 0,
+                    height: 2,
+                  },
+                  shadowOpacity: 0.12,
+                  shadowRadius: 3,
+                  elevation: 2,
+                }}
+              >
+                <Ionicons name="time-outline" size={17} color="#ffffff" />
+
+                <Text className="ml-2.5 text-sm font-black text-white">
+                  Check Submissions
+                </Text>
+
+                <Ionicons
+                  name="arrow-forward"
+                  size={15}
+                  color="#ffffff"
+                  style={{ marginLeft: 8 }}
+                />
+              </Pressable>
+
+              {/* Done */}
+              <Pressable
+                onPress={handleSuccessDone}
+                className="mt-3 items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 py-4 active:bg-zinc-200"
+              >
+                <Text className="text-sm font-bold text-zinc-700">Done</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ========================================================= */}
+      {/* FORM */}
+      {/* ========================================================= */}
+
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          scrollEnabled={!showValidationModal}
+          scrollEnabled={!showValidationModal && !showSuccessModal}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
@@ -296,45 +521,65 @@ export default function FeedbackScreen() {
               alignSelf: "center",
             }}
           >
-            {/* Header Title Section */}
+            {/* ================================================= */}
+            {/* PAGE HEADER */}
+            {/* ================================================= */}
+
             <View className="mb-6">
               <Text
-                className="font-black text-zinc-900 tracking-tight"
-                style={{ fontSize: isLargeScreen ? 34 : 28 }}
+                className="font-black tracking-tight text-zinc-900"
+                style={{
+                  fontSize: isLargeScreen ? 34 : 28,
+                }}
               >
                 We'd love to hear from you
               </Text>
-              <Text className="text-zinc-500 font-medium text-sm mt-1">
+
+              <Text className="mt-1 text-sm font-medium text-zinc-500">
                 Help us improve your experience with more details
               </Text>
             </View>
 
-            {/* Form Card */}
+            {/* ================================================= */}
+            {/* FORM CARD */}
+            {/* ================================================= */}
+
             <View
-              className="bg-white rounded-[28px] p-6 border border-zinc-200"
+              className="rounded-[28px] border border-zinc-200 bg-white p-6"
               style={{
                 shadowColor: "#000",
-                shadowOffset: { width: 0, height: 1 },
+                shadowOffset: {
+                  width: 0,
+                  height: 1,
+                },
                 shadowOpacity: 0.05,
                 shadowRadius: 2,
                 elevation: 1,
               }}
             >
-              {/* Top Error Banner */}
+              {/* ================================================= */}
+              {/* ERROR BANNER */}
+              {/* ================================================= */}
+
               {error && (
-                <View className="flex-row items-center bg-zinc-100 border border-zinc-300 rounded-2xl p-4 mb-5">
+                <View className="mb-5 flex-row items-center rounded-2xl border border-zinc-300 bg-zinc-100 p-4">
                   <Ionicons name="alert-circle" size={18} color="#ef4444" />
-                  <Text className="text-zinc-800 font-semibold text-xs ml-3 flex-1 leading-relaxed">
+
+                  <Text className="ml-3 flex-1 text-xs font-semibold leading-relaxed text-zinc-800">
                     {error}
                   </Text>
                 </View>
               )}
 
-              {/* Feedback Type Selector */}
+              {/* ================================================= */}
+              {/* FEEDBACK TYPE */}
+              {/* ================================================= */}
+
               <View className="mb-5">
-                <Text className="text-xs font-bold text-zinc-500 mb-2.5 uppercase tracking-wider">
+                <Text className="mb-2.5 text-xs font-bold uppercase tracking-wider text-zinc-500">
                   Type
                 </Text>
+
                 <View className="flex-row gap-2">
                   {(
                     [
@@ -344,20 +589,24 @@ export default function FeedbackScreen() {
                     ] as FeedbackType[]
                   ).map((item) => {
                     const isSelected = type === item;
+
                     return (
                       <Pressable
                         key={item}
                         onPress={() => setType(item)}
-                        className={`flex-1 py-3 px-2 rounded-xl items-center justify-center border ${
+                        className={`flex-1 items-center justify-center rounded-xl border px-2 py-3 ${
                           isSelected
-                            ? "bg-black border-black"
-                            : "bg-zinc-100 border-zinc-200"
+                            ? "border-black bg-black"
+                            : "border-zinc-200 bg-zinc-100"
                         }`}
                         style={
                           isSelected
                             ? {
                                 shadowColor: "#000",
-                                shadowOffset: { width: 0, height: 1 },
+                                shadowOffset: {
+                                  width: 0,
+                                  height: 1,
+                                },
                                 shadowOpacity: 0.1,
                                 shadowRadius: 2,
                                 elevation: 1,
@@ -366,7 +615,7 @@ export default function FeedbackScreen() {
                         }
                       >
                         <Text
-                          className={`text-[11px] font-bold text-center ${
+                          className={`text-center text-[11px] font-bold ${
                             isSelected ? "text-white" : "text-zinc-600"
                           }`}
                           numberOfLines={1}
@@ -379,29 +628,37 @@ export default function FeedbackScreen() {
                 </View>
               </View>
 
-              {/* Priority Selector */}
+              {/* ================================================= */}
+              {/* PRIORITY */}
+              {/* ================================================= */}
+
               <View className="mb-5">
-                <Text className="text-xs font-bold text-zinc-500 mb-2.5 uppercase tracking-wider">
+                <Text className="mb-2.5 text-xs font-bold uppercase tracking-wider text-zinc-500">
                   Priority Level
                 </Text>
+
                 <View className="flex-row gap-2">
                   {(["Low", "Medium", "High"] as PriorityLevel[]).map(
                     (item) => {
                       const isSelected = priority === item;
+
                       return (
                         <Pressable
                           key={item}
                           onPress={() => setPriority(item)}
-                          className={`flex-1 py-2.5 px-2 rounded-xl items-center justify-center border ${
+                          className={`flex-1 items-center justify-center rounded-xl border px-2 py-2.5 ${
                             isSelected
-                              ? "bg-zinc-900 border-zinc-900"
-                              : "bg-zinc-100 border-zinc-200"
+                              ? "border-zinc-900 bg-zinc-900"
+                              : "border-zinc-200 bg-zinc-100"
                           }`}
                           style={
                             isSelected
                               ? {
                                   shadowColor: "#000",
-                                  shadowOffset: { width: 0, height: 1 },
+                                  shadowOffset: {
+                                    width: 0,
+                                    height: 1,
+                                  },
                                   shadowOpacity: 0.1,
                                   shadowRadius: 2,
                                   elevation: 1,
@@ -410,7 +667,7 @@ export default function FeedbackScreen() {
                           }
                         >
                           <Text
-                            className={`text-xs font-bold text-center ${
+                            className={`text-center text-xs font-bold ${
                               isSelected ? "text-white" : "text-zinc-600"
                             }`}
                           >
@@ -423,86 +680,128 @@ export default function FeedbackScreen() {
                 </View>
               </View>
 
-              {/* Email Address Field */}
+              {/* ================================================= */}
+              {/* EMAIL */}
+              {/* ================================================= */}
+
               <View className="mb-5">
                 <Input
                   label="Email Address"
                   value={email}
                   onChangeText={(text) => {
                     setEmail(text);
-                    if (error) setError(null);
-                    setErrors((prev) => ({ ...prev, email: "" }));
+
+                    if (error) {
+                      setError(null);
+                    }
+
+                    setErrors((prev) => ({
+                      ...prev,
+                      email: "",
+                    }));
                   }}
                   placeholder="name@example.com"
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
+
                 {errors.email !== "" && (
-                  <View className="flex-row items-center bg-zinc-100 border border-zinc-200 rounded-xl px-3 py-2 mt-2">
+                  <View className="mt-2 flex-row items-center rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-2">
                     <Ionicons name="alert-circle" size={14} color="#ef4444" />
-                    <Text className="text-red-500 text-xs font-semibold ml-2 flex-1">
+
+                    <Text className="ml-2 flex-1 text-xs font-semibold text-red-500">
                       {errors.email}
                     </Text>
                   </View>
                 )}
               </View>
 
-              {/* Subject Field */}
+              {/* ================================================= */}
+              {/* SUBJECT */}
+              {/* ================================================= */}
+
               <View className="mb-5">
                 <Input
                   label="Subject"
                   value={subject}
                   onChangeText={(text) => {
                     setSubject(text);
-                    if (error) setError(null);
-                    setErrors((prev) => ({ ...prev, subject: "" }));
+
+                    if (error) {
+                      setError(null);
+                    }
+
+                    setErrors((prev) => ({
+                      ...prev,
+                      subject: "",
+                    }));
                   }}
                   placeholder="Brief summary..."
                 />
+
                 {errors.subject !== "" && (
-                  <View className="flex-row items-center bg-zinc-100 border border-zinc-200 rounded-xl px-3 py-2 mt-2">
+                  <View className="mt-2 flex-row items-center rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-2">
                     <Ionicons name="alert-circle" size={14} color="#ef4444" />
-                    <Text className="text-red-500 text-xs font-semibold ml-2 flex-1">
+
+                    <Text className="ml-2 flex-1 text-xs font-semibold text-red-500">
                       {errors.subject}
                     </Text>
                   </View>
                 )}
               </View>
 
-              {/* Message Field */}
+              {/* ================================================= */}
+              {/* MESSAGE */}
+              {/* ================================================= */}
+
               <View className="mb-6">
                 <Input
                   label="Message"
                   value={message}
                   onChangeText={(text) => {
                     setMessage(text);
-                    if (error) setError(null);
-                    setErrors((prev) => ({ ...prev, message: "" }));
+
+                    if (error) {
+                      setError(null);
+                    }
+
+                    setErrors((prev) => ({
+                      ...prev,
+                      message: "",
+                    }));
                   }}
                   placeholder="Provide detailed description..."
                 />
+
                 {errors.message !== "" && (
-                  <View className="flex-row items-center bg-zinc-100 border border-zinc-200 rounded-xl px-3 py-2 mt-2">
+                  <View className="mt-2 flex-row items-center rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-2">
                     <Ionicons name="alert-circle" size={14} color="#ef4444" />
-                    <Text className="text-red-500 text-xs font-semibold ml-2 flex-1">
+
+                    <Text className="ml-2 flex-1 text-xs font-semibold text-red-500">
                       {errors.message}
                     </Text>
                   </View>
                 )}
               </View>
 
-              {/* Submit Button */}
+              {/* ================================================= */}
+              {/* SUBMIT BUTTON */}
+              {/* ================================================= */}
+
               <Pressable
                 onPress={handleSubmit}
                 disabled={loading}
-                className={`py-4 rounded-2xl flex-row items-center justify-center ${
+                className={`flex-row items-center justify-center rounded-2xl py-4 ${
                   loading
                     ? "bg-zinc-700 opacity-90"
                     : "bg-black active:bg-zinc-800"
                 }`}
                 style={{
                   shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 },
+                  shadowOffset: {
+                    width: 0,
+                    height: 2,
+                  },
                   shadowOpacity: 0.1,
                   shadowRadius: 3,
                   elevation: 2,
@@ -511,14 +810,16 @@ export default function FeedbackScreen() {
                 {loading ? (
                   <>
                     <ActivityIndicator size="small" color="#fff" />
-                    <Text className="text-white font-black text-base ml-2.5">
+
+                    <Text className="ml-2.5 text-base font-black text-white">
                       Submitting...
                     </Text>
                   </>
                 ) : (
                   <>
                     <Ionicons name="send" size={16} color="#fff" />
-                    <Text className="text-white font-black text-base ml-2">
+
+                    <Text className="ml-2 text-base font-black text-white">
                       Submit Feedback
                     </Text>
                   </>
@@ -529,25 +830,41 @@ export default function FeedbackScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* FULLSCREEN LOADING OVERLAY */}
+      {/* ========================================================= */}
+      {/* SUBMISSION LOADING OVERLAY */}
+      {/* ========================================================= */}
+
       {loading && (
         <View
           className="absolute inset-0 items-center justify-center"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+          style={{
+            backgroundColor: "rgba(0, 0, 0, 0.55)",
+          }}
         >
           <View
-            className="bg-white px-6 py-5 rounded-3xl items-center border border-zinc-200"
+            className="w-[250px] items-center rounded-[28px] border border-zinc-200 bg-white px-6 py-7"
             style={{
               shadowColor: "#000",
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.2,
-              shadowRadius: 15,
-              elevation: 10,
+              shadowOffset: {
+                width: 0,
+                height: 12,
+              },
+              shadowOpacity: 0.22,
+              shadowRadius: 18,
+              elevation: 12,
             }}
           >
-            <ActivityIndicator size="large" color="#000000" />
-            <Text className="text-zinc-900 font-bold text-sm mt-3">
-              Sending your feedback...
+            {/* Loader */}
+            <View className="h-14 w-14 items-center justify-center rounded-full bg-zinc-100">
+              <ActivityIndicator size="small" color="#09090b" />
+            </View>
+
+            <Text className="mt-5 text-base font-black text-zinc-900">
+              Sending feedback
+            </Text>
+
+            <Text className="mt-1.5 text-center text-xs font-medium leading-5 text-zinc-500">
+              Please wait while we submit your message...
             </Text>
           </View>
         </View>
