@@ -14,10 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "39"
+      "buildNumber": "34"
     },
     "android": {
-      "versionCode": 39,
+      "versionCode": 34,
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.satinder_singh_sall.mobileapp"
