@@ -23,6 +23,8 @@ import SubscriptionFeatureModal from "../components/SubscriptionFeatureModal";
 import SubscriptionCTA from "../components/SubscriptionCTA";
 import FeedbackCTA from "../components/FeedbackCTA";
 import AnnouncementsPreview from "../components/AnnouncementsPreview";
+import FinancialTipsPreview from "../components/FinancialTipsPreview";
+import Features from "../components/Features.tsx";
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -667,6 +669,8 @@ export default function DashboardScreen() {
           </View>
 
           <AnnouncementsPreview />
+          <Features />
+          <FinancialTipsPreview />
 
           {/* ====================================================
               SPENDING INSIGHTS

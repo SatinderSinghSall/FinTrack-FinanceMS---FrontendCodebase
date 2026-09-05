@@ -194,6 +194,14 @@ export default function CustomDrawer(props: any) {
           />
 
           <DrawerItem
+            label="Financial Tips"
+            icon="bulb-outline"
+            route="financial-tips/FinancialTipsScreen"
+            active={pathname.includes("financial-tips")}
+            {...props}
+          />
+
+          <DrawerItem
             label="Transactions"
             icon="swap-horizontal-outline"
             route="(tabs)/transactions"
