@@ -10,7 +10,12 @@ import Toast from "react-native-toast-message";
 
 import { useEffect, useState } from "react";
 import UpdateModal from "../src/components/UpdateModal";
+import MaintenanceModal from "../src/components/MaintenanceModal";
 import { checkAppUpdate } from "../src/utils/checkAppUpdate";
+import {
+  checkMaintenance,
+  type MaintenanceInfo,
+} from "../src/utils/maintenance";
 
 import NetInfo from "@react-native-community/netinfo";
 import NetworkErrorModal from "../src/components/NetworkErrorModal";
@@ -25,25 +30,42 @@ type UpdateInfo = {
 
 export default function RootLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+
+  const [maintenance, setMaintenance] = useState<MaintenanceInfo | null>(null);
+
+  const [showMaintenance, setShowMaintenance] = useState(false);
+
   const [fontsLoaded] = useFonts({
     ...Ionicons.font,
   });
+
   const [showNetworkModal, setShowNetworkModal] = useState(false);
   const [slowConnection, setSlowConnection] = useState(false);
 
+  /**
+   * Check Maintenance Mode on app startup.
+   *
+   * Maintenance is checked first because it has priority
+   * over the normal update flow.
+   */
   useEffect(() => {
-    const run = async () => {
-      const res = await checkAppUpdate();
+    const runStartupChecks = async () => {
+      const maintenanceResult = await checkMaintenance();
 
-      if (res) {
-        setUpdateInfo(res);
+      if (maintenanceResult) {
+        setMaintenance(maintenanceResult);
+        setShowMaintenance(true);
       }
     };
 
-    run();
+    runStartupChecks();
   }, []);
 
+  /**
+   * Network monitoring.
+   */
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       const offline = !state.isConnected || state.isInternetReachable === false;
@@ -66,9 +88,33 @@ export default function RootLayout() {
     return unsubscribe;
   }, []);
 
+  /**
+   * Check app update after maintenance has been checked.
+   *
+   * We intentionally do not run this while maintenance access
+   * is restricted.
+   */
+  useEffect(() => {
+    const run = async () => {
+      if (maintenance && !maintenance.allowUserAccess) {
+        return;
+      }
+
+      const res = await checkAppUpdate();
+
+      if (res) {
+        setUpdateInfo(res);
+      }
+    };
+
+    run();
+  }, [maintenance]);
+
   if (!fontsLoaded) {
     return null;
   }
+
+  const maintenanceBlocksAccess = !!maintenance && !maintenance.allowUserAccess;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -93,8 +139,18 @@ export default function RootLayout() {
           onRetry={() => {}}
         />
 
+        <MaintenanceModal
+          visible={showMaintenance}
+          maintenance={maintenance}
+          onClose={() => {
+            if (!maintenanceBlocksAccess) {
+              setShowMaintenance(false);
+            }
+          }}
+        />
+
         <UpdateModal
-          visible={!!updateInfo}
+          visible={!!updateInfo && !maintenanceBlocksAccess && !showMaintenance}
           storeUrl={updateInfo?.playStoreUrl ?? ""}
           force={updateInfo?.forceUpdate ?? false}
           updateMessage={updateInfo?.updateMessage}
