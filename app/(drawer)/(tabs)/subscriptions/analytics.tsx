@@ -7,7 +7,10 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  useWindowDimensions,
 } from "react-native";
+
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { router, useFocusEffect } from "expo-router";
 
@@ -16,10 +19,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { getSubscriptions } from "@/src/services/subscriptionApi";
 
 export default function AnalyticsScreen() {
+  const { width } = useWindowDimensions();
+
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
-  const scrollRef = useRef<ScrollView>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const scrollRef = useRef<ScrollView>(null);
+
+  const isSmallScreen = width < 380;
+
+  const horizontalPadding = isSmallScreen ? 16 : 20;
+
+  /* =========================================================
+     DATA
+  ========================================================= */
 
   const fetchSubscriptions = async () => {
     try {
@@ -27,9 +41,10 @@ export default function AnalyticsScreen() {
 
       const data = await getSubscriptions();
 
-      setSubscriptions(data);
+      setSubscriptions(Array.isArray(data) ? data : []);
     } catch (error) {
       console.log(error);
+      setSubscriptions([]);
     } finally {
       setLoading(false);
     }
@@ -41,9 +56,11 @@ export default function AnalyticsScreen() {
 
       await fetchSubscriptions();
 
-      scrollRef.current?.scrollTo({
-        y: 0,
-        animated: true,
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollTo({
+          y: 0,
+          animated: true,
+        });
       });
     } catch (error) {
       console.log(error);
@@ -57,9 +74,11 @@ export default function AnalyticsScreen() {
       const refresh = async () => {
         await fetchSubscriptions();
 
-        scrollRef.current?.scrollTo({
-          y: 0,
-          animated: false,
+        requestAnimationFrame(() => {
+          scrollRef.current?.scrollTo({
+            y: 0,
+            animated: false,
+          });
         });
       };
 
@@ -67,24 +86,26 @@ export default function AnalyticsScreen() {
     }, []),
   );
 
-  /* =========================
+  /* =========================================================
      ANALYTICS
-  ========================= */
+  ========================================================= */
 
   const totalMonthly = useMemo(() => {
     return subscriptions.reduce((acc, item) => {
-      switch (item.billingCycle) {
+      const amount = Number(item?.amount) || 0;
+
+      switch (item?.billingCycle) {
         case "weekly":
-          return acc + item.amount * 4;
+          return acc + amount * 4;
 
         case "monthly":
-          return acc + item.amount;
+          return acc + amount;
 
         case "quarterly":
-          return acc + item.amount / 3;
+          return acc + amount / 3;
 
         case "yearly":
-          return acc + item.amount / 12;
+          return acc + amount / 12;
 
         default:
           return acc;
@@ -94,61 +115,142 @@ export default function AnalyticsScreen() {
 
   const yearlyProjection = totalMonthly * 12;
 
-  const activeSubscriptions = subscriptions.filter(
-    (item) => item.status === "active",
-  );
+  const activeSubscriptions = useMemo(() => {
+    return subscriptions.filter((item) => item?.status === "active");
+  }, [subscriptions]);
 
-  const cancelledSubscriptions = subscriptions.filter(
-    (item) => item.status === "cancelled",
-  );
+  const cancelledSubscriptions = useMemo(() => {
+    return subscriptions.filter((item) => item?.status === "cancelled");
+  }, [subscriptions]);
 
-  const highestSubscription =
-    subscriptions.length > 0
-      ? [...subscriptions].sort((a, b) => b.amount - a.amount)[0]
-      : null;
+  const highestSubscription = useMemo(() => {
+    if (subscriptions.length === 0) {
+      return null;
+    }
+
+    return [...subscriptions].sort(
+      (a, b) => (Number(b?.amount) || 0) - (Number(a?.amount) || 0),
+    )[0];
+  }, [subscriptions]);
 
   const categoryTotals = useMemo(() => {
-    const totals: any = {};
+    const totals: Record<string, number> = {};
 
     subscriptions.forEach((item) => {
-      if (!totals[item.category]) {
-        totals[item.category] = 0;
+      const category = item?.category || "Other";
+      const amount = Number(item?.amount) || 0;
+
+      if (!totals[category]) {
+        totals[category] = 0;
       }
 
-      totals[item.category] += item.amount;
+      totals[category] += amount;
     });
 
-    return Object.entries(totals);
+    return Object.entries(totals).sort(([, a], [, b]) => b - a);
   }, [subscriptions]);
+
+  const highestCategoryAmount = useMemo(() => {
+    return Math.max(...categoryTotals.map(([, total]) => total), 1);
+  }, [categoryTotals]);
 
   const isEmpty = subscriptions.length === 0;
 
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat("en-IN", {
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "Entertainment":
+        return "play-circle-outline";
+
+      case "Productivity":
+        return "briefcase-outline";
+
+      case "Finance":
+        return "card-outline";
+
+      case "Health":
+        return "fitness-outline";
+
+      case "Cloud":
+        return "cloud-outline";
+
+      case "Education":
+        return "school-outline";
+
+      default:
+        return "grid-outline";
+    }
+  };
+
+  const getCategoryColors = (index: number) => {
+    const colors = [
+      {
+        bg: "bg-indigo-100",
+        icon: "#4F46E5",
+        bar: "bg-indigo-600",
+      },
+      {
+        bg: "bg-violet-100",
+        icon: "#7C3AED",
+        bar: "bg-violet-600",
+      },
+      {
+        bg: "bg-blue-100",
+        icon: "#2563EB",
+        bar: "bg-blue-600",
+      },
+      {
+        bg: "bg-emerald-100",
+        icon: "#059669",
+        bar: "bg-emerald-600",
+      },
+      {
+        bg: "bg-amber-100",
+        icon: "#D97706",
+        bar: "bg-amber-500",
+      },
+    ];
+
+    return colors[index % colors.length];
+  };
+
+  /* =========================================================
+     LOADING
+  ========================================================= */
+
   if (loading) {
     return (
-      <View className="flex-1 bg-zinc-100 items-center justify-center px-6">
-        {/* ICON */}
-        <View className="bg-indigo-100 w-24 h-24 rounded-full items-center justify-center mb-8">
-          <Ionicons name="analytics" size={42} color="#4F46E5" />
+      <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-zinc-50">
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="w-20 h-20 rounded-[26px] bg-indigo-100 items-center justify-center">
+            <Ionicons name="analytics-outline" size={36} color="#4F46E5" />
+          </View>
+
+          <ActivityIndicator size="small" color="#4F46E5" className="mt-7" />
+
+          <Text className="text-zinc-950 text-2xl font-black mt-6 text-center">
+            Loading Analytics
+          </Text>
+
+          <Text className="text-zinc-500 text-center leading-6 mt-3 max-w-[320px]">
+            Preparing your subscription insights and spending overview...
+          </Text>
         </View>
-
-        {/* LOADER */}
-        <ActivityIndicator size="large" color="#4F46E5" />
-
-        {/* TEXT */}
-        <Text className="text-zinc-900 text-2xl font-black mt-8">
-          Loading Analytics
-        </Text>
-
-        <Text className="text-zinc-500 text-center mt-3 leading-7">
-          Preparing subscription insights, yearly projections and spending
-          analytics...
-        </Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
+  /* =========================================================
+     SCREEN
+  ========================================================= */
+
   return (
-    <View className="flex-1 bg-zinc-100">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-zinc-50">
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
@@ -161,228 +263,462 @@ export default function AnalyticsScreen() {
           />
         }
         contentContainerStyle={{
-          paddingBottom: 120,
+          paddingBottom: 15,
         }}
       >
-        {/* HEADER */}
+        {/* =====================================================
+            HEADER
+        ===================================================== */}
 
-        <View className="px-5 pt-16 pb-8">
-          <View className="flex-row items-center justify-between">
+        <View
+          className="pt-3 pb-5"
+          style={{
+            paddingHorizontal: horizontalPadding,
+          }}
+        >
+          <View className="flex-row items-center">
             <TouchableOpacity
               onPress={() => router.push("/(drawer)/(tabs)/subscriptions")}
-              className="bg-white border border-zinc-200 w-12 h-12 rounded-2xl items-center justify-center"
+              activeOpacity={0.75}
+              className="w-11 h-11 rounded-2xl bg-white border border-zinc-200 items-center justify-center"
             >
-              <Ionicons name="arrow-back" size={24} color="#18181b" />
+              <Ionicons name="arrow-back" size={21} color="#18181B" />
             </TouchableOpacity>
 
-            <Text className="text-zinc-900 text-3xl font-black">Analytics</Text>
+            <View className="flex-1 ml-4">
+              <Text className="text-zinc-500 text-xs font-bold uppercase tracking-wider">
+                Subscription
+              </Text>
 
-            <View
-              style={{
-                width: 48,
-              }}
-            />
-          </View>
-        </View>
+              <Text className="text-zinc-950 text-2xl font-black mt-0.5">
+                Analytics
+              </Text>
+            </View>
 
-        {/* HERO */}
-
-        <View className="px-5">
-          <View className="bg-indigo-600 rounded-[36px] p-7 overflow-hidden">
-            {/* DECOR */}
-
-            <View className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full" />
-
-            {/* CONTENT */}
-
-            <Text className="text-indigo-100 text-sm font-medium">
-              Monthly Subscription Spending
-            </Text>
-
-            <Text className="text-white text-5xl font-black mt-3">
-              ₹{Math.round(totalMonthly)}
-            </Text>
-
-            <View className="flex-row items-center mt-7">
-              <View className="bg-white/20 px-5 py-3 rounded-2xl mr-3">
-                <Text className="text-white font-bold">
-                  {activeSubscriptions.length} Active
-                </Text>
-              </View>
-
-              <View className="bg-white/20 px-5 py-3 rounded-2xl">
-                <Text className="text-white font-bold">
-                  ₹{Math.round(yearlyProjection)}
-                  /year
-                </Text>
-              </View>
+            <View className="w-11 h-11 rounded-2xl bg-indigo-50 items-center justify-center">
+              <Ionicons name="stats-chart-outline" size={20} color="#4F46E5" />
             </View>
           </View>
         </View>
 
-        {/* EMPTY STATE */}
+        {/* =====================================================
+            EMPTY STATE
+        ===================================================== */}
 
         {isEmpty ? (
-          <View className="px-5 mt-8">
-            <View className="bg-white border border-zinc-200 rounded-[36px] p-10 items-center">
-              {/* ICON */}
-
-              <View className="bg-indigo-100 w-24 h-24 rounded-full items-center justify-center">
-                <Ionicons name="analytics" size={48} color="#4F46E5" />
+          <View
+            style={{
+              paddingHorizontal: horizontalPadding,
+            }}
+          >
+            <View className="bg-white border border-zinc-200 rounded-[30px] px-6 py-12 items-center">
+              <View className="w-20 h-20 rounded-[26px] bg-indigo-50 items-center justify-center">
+                <Ionicons name="analytics-outline" size={36} color="#4F46E5" />
               </View>
 
-              {/* TEXT */}
-
-              <Text className="text-zinc-900 text-3xl font-black mt-8 text-center">
+              <Text className="text-zinc-950 text-2xl font-black mt-6 text-center">
                 No Analytics Yet
               </Text>
 
-              <Text className="text-zinc-500 text-center leading-7 mt-4 text-base">
-                Add subscriptions to unlock spending insights, category
-                analytics and yearly projections.
+              <Text className="text-zinc-500 text-center leading-6 mt-3">
+                Add your subscriptions to unlock spending insights, category
+                breakdowns and yearly projections.
               </Text>
-
-              {/* BUTTON */}
 
               <TouchableOpacity
                 onPress={() =>
                   router.push("/(drawer)/(tabs)/subscriptions/add-subscription")
                 }
-                className="bg-indigo-600 px-8 py-5 rounded-3xl mt-8"
+                activeOpacity={0.8}
+                className="bg-indigo-600 px-6 py-4 rounded-2xl mt-7"
               >
-                <Text className="text-white font-black text-lg">
-                  Add Subscription
-                </Text>
+                <View className="flex-row items-center">
+                  <Ionicons name="add" size={19} color="white" />
+
+                  <Text className="text-white font-black ml-2">
+                    Add Subscription
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
           </View>
         ) : (
           <>
-            {/* QUICK STATS */}
+            {/* =================================================
+                SPENDING OVERVIEW
+            ================================================= */}
 
-            <View className="px-5 mt-6 flex-row justify-between">
-              {/* ACTIVE */}
+            <View
+              style={{
+                paddingHorizontal: horizontalPadding,
+              }}
+            >
+              <View
+                className="rounded-[30px] bg-indigo-600 overflow-hidden"
+                style={{
+                  shadowColor: "#4F46E5",
+                  shadowOffset: {
+                    width: 0,
+                    height: 10,
+                  },
+                  shadowOpacity: 0.18,
+                  shadowRadius: 18,
+                  elevation: 7,
+                }}
+              >
+                {/* Decorative background */}
+                <View className="absolute -right-16 -top-20 w-52 h-52 rounded-full bg-white/10" />
 
-              <View className="bg-white border border-zinc-200 rounded-[28px] p-5 w-[48%]">
-                <View className="bg-emerald-100 w-12 h-12 rounded-2xl items-center justify-center">
-                  <Ionicons name="checkmark-circle" size={24} color="#059669" />
+                <View className="absolute -left-16 -bottom-24 w-48 h-48 rounded-full bg-white/5" />
+
+                <View className="p-6">
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-1">
+                      <Text className="text-indigo-100 text-xs font-bold uppercase tracking-wider">
+                        Monthly Spending
+                      </Text>
+
+                      <Text
+                        className="text-white font-black mt-2"
+                        style={{
+                          fontSize: isSmallScreen ? 38 : 44,
+                        }}
+                        adjustsFontSizeToFit
+                        numberOfLines={1}
+                      >
+                        ₹{formatAmount(totalMonthly)}
+                      </Text>
+                    </View>
+
+                    <View className="w-12 h-12 rounded-2xl bg-white/15 items-center justify-center">
+                      <Ionicons name="wallet-outline" size={24} color="white" />
+                    </View>
+                  </View>
+
+                  <View className="h-px bg-white/15 my-5" />
+
+                  <View className="flex-row">
+                    <View className="flex-1">
+                      <Text className="text-indigo-200 text-xs font-medium">
+                        Active
+                      </Text>
+
+                      <Text className="text-white text-xl font-black mt-1">
+                        {activeSubscriptions.length}
+                      </Text>
+                    </View>
+
+                    <View className="w-px bg-white/15 mx-4" />
+
+                    <View className="flex-1">
+                      <Text className="text-indigo-200 text-xs font-medium">
+                        Yearly Projection
+                      </Text>
+
+                      <Text
+                        className="text-white text-xl font-black mt-1"
+                        adjustsFontSizeToFit
+                        numberOfLines={1}
+                      >
+                        ₹{formatAmount(yearlyProjection)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* =================================================
+                KEY METRICS
+            ================================================= */}
+
+            <View
+              className="flex-row mt-5"
+              style={{
+                paddingHorizontal: horizontalPadding,
+                gap: 12,
+              }}
+            >
+              <View className="flex-1 bg-white border border-zinc-200 rounded-[24px] p-4">
+                <View className="w-10 h-10 rounded-xl bg-emerald-100 items-center justify-center">
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={21}
+                    color="#059669"
+                  />
                 </View>
 
-                <Text className="text-zinc-500 mt-4">Active</Text>
+                <Text className="text-zinc-500 text-xs font-semibold mt-4">
+                  Active
+                </Text>
 
-                <Text className="text-zinc-900 text-3xl font-black mt-1">
+                <Text className="text-zinc-950 text-2xl font-black mt-1">
                   {activeSubscriptions.length}
                 </Text>
+
+                <Text className="text-emerald-600 text-[10px] font-bold mt-1">
+                  Currently running
+                </Text>
               </View>
 
-              {/* CANCELLED */}
-
-              <View className="bg-white border border-zinc-200 rounded-[28px] p-5 w-[48%]">
-                <View className="bg-red-100 w-12 h-12 rounded-2xl items-center justify-center">
-                  <Ionicons name="close-circle" size={24} color="#DC2626" />
+              <View className="flex-1 bg-white border border-zinc-200 rounded-[24px] p-4">
+                <View className="w-10 h-10 rounded-xl bg-red-100 items-center justify-center">
+                  <Ionicons
+                    name="close-circle-outline"
+                    size={21}
+                    color="#DC2626"
+                  />
                 </View>
 
-                <Text className="text-zinc-500 mt-4">Cancelled</Text>
+                <Text className="text-zinc-500 text-xs font-semibold mt-4">
+                  Cancelled
+                </Text>
 
-                <Text className="text-zinc-900 text-3xl font-black mt-1">
+                <Text className="text-zinc-950 text-2xl font-black mt-1">
                   {cancelledSubscriptions.length}
+                </Text>
+
+                <Text className="text-red-600 text-[10px] font-bold mt-1">
+                  No longer active
                 </Text>
               </View>
             </View>
 
-            {/* HIGHEST SUB */}
+            {/* =================================================
+                HIGHEST SUBSCRIPTION
+            ================================================= */}
 
-            <View className="px-5 mt-8">
-              <Text className="text-zinc-900 text-2xl font-black mb-4">
-                Highest Subscription
-              </Text>
-
-              <View className="bg-white border border-zinc-200 rounded-[32px] p-6">
-                <View className="flex-row items-center justify-between">
+            {highestSubscription && (
+              <View
+                className="mt-7"
+                style={{
+                  paddingHorizontal: horizontalPadding,
+                }}
+              >
+                <View className="flex-row items-center justify-between mb-3">
                   <View>
-                    <Text className="text-zinc-500">Most Expensive</Text>
+                    <Text className="text-zinc-950 text-xl font-black">
+                      Highest Subscription
+                    </Text>
 
-                    <Text className="text-zinc-900 text-3xl font-black mt-2">
-                      {highestSubscription?.name}
+                    <Text className="text-zinc-500 text-xs font-medium mt-1">
+                      Your largest recurring payment
                     </Text>
                   </View>
 
-                  <Text className="text-indigo-600 text-4xl font-black">
-                    ₹{highestSubscription?.amount}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* CATEGORY */}
-
-            <View className="px-5 mt-8">
-              <Text className="text-zinc-900 text-2xl font-black mb-4">
-                Category Breakdown
-              </Text>
-
-              {categoryTotals.map(([category, total]: any) => (
-                <View
-                  key={category}
-                  className="bg-white border border-zinc-200 rounded-[28px] p-5 mb-4"
-                >
-                  <View className="flex-row items-center justify-between mb-4">
-                    <Text className="text-zinc-900 text-lg font-black">
-                      {category}
-                    </Text>
-
-                    <Text className="text-indigo-600 text-xl font-black">
-                      ₹{total}
-                    </Text>
-                  </View>
-
-                  {/* PROGRESS */}
-
-                  <View className="bg-zinc-200 h-3 rounded-full overflow-hidden">
-                    <View
-                      className="bg-indigo-600 h-full rounded-full"
-                      style={{
-                        width: `${(total / totalMonthly) * 100}%`,
-                      }}
+                  <View className="w-9 h-9 rounded-xl bg-amber-50 items-center justify-center">
+                    <Ionicons
+                      name="trending-up-outline"
+                      size={18}
+                      color="#D97706"
                     />
                   </View>
                 </View>
-              ))}
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    if (highestSubscription?._id) {
+                      router.push(
+                        `/(drawer)/(tabs)/subscriptions/${highestSubscription._id}`,
+                      );
+                    }
+                  }}
+                  className="bg-white border border-zinc-200 rounded-[26px] p-5"
+                >
+                  <View className="flex-row items-center">
+                    <View className="w-12 h-12 rounded-2xl bg-indigo-100 items-center justify-center">
+                      <Ionicons name="card-outline" size={23} color="#4F46E5" />
+                    </View>
+
+                    <View className="flex-1 ml-3">
+                      <Text className="text-zinc-950 text-base font-black">
+                        {highestSubscription.name || "Subscription"}
+                      </Text>
+
+                      <Text className="text-zinc-500 text-xs font-medium mt-1">
+                        {highestSubscription.category || "Recurring payment"}
+                      </Text>
+                    </View>
+
+                    <View className="items-end ml-2">
+                      <Text className="text-indigo-600 text-xl font-black">
+                        ₹{formatAmount(Number(highestSubscription.amount) || 0)}
+                      </Text>
+
+                      <Text className="text-zinc-400 text-[10px] font-semibold mt-0.5">
+                        {highestSubscription.billingCycle || "payment"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View className="flex-row items-center mt-4 pt-4 border-t border-zinc-100">
+                    <Ionicons
+                      name="information-circle-outline"
+                      size={15}
+                      color="#71717A"
+                    />
+
+                    <Text className="text-zinc-500 text-xs font-medium ml-2 flex-1">
+                      This is the highest single subscription amount in your
+                      current records.
+                    </Text>
+
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color="#A1A1AA"
+                    />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* =================================================
+                CATEGORY BREAKDOWN
+            ================================================= */}
+
+            <View
+              className="mt-8"
+              style={{
+                paddingHorizontal: horizontalPadding,
+              }}
+            >
+              <View className="mb-4">
+                <Text className="text-zinc-950 text-xl font-black">
+                  Category Breakdown
+                </Text>
+
+                <Text className="text-zinc-500 text-xs font-medium mt-1">
+                  Where your subscription spending is going
+                </Text>
+              </View>
+
+              <View className="bg-white border border-zinc-200 rounded-[28px] overflow-hidden">
+                {categoryTotals.map(([category, total], index) => {
+                  const percentage =
+                    totalMonthly > 0 ? (Number(total) / totalMonthly) * 100 : 0;
+
+                  const colors = getCategoryColors(index);
+
+                  return (
+                    <View key={category} className="px-5 py-4">
+                      <View className="flex-row items-center">
+                        <View
+                          className={`w-10 h-10 rounded-xl items-center justify-center ${colors.bg}`}
+                        >
+                          <Ionicons
+                            name={getCategoryIcon(category) as any}
+                            size={19}
+                            color={colors.icon}
+                          />
+                        </View>
+
+                        <View className="flex-1 ml-3">
+                          <Text className="text-zinc-900 text-sm font-black">
+                            {category}
+                          </Text>
+
+                          <Text className="text-zinc-400 text-[10px] font-medium mt-0.5">
+                            {percentage.toFixed(0)}% of monthly spending
+                          </Text>
+                        </View>
+
+                        <View className="items-end">
+                          <Text className="text-zinc-950 text-sm font-black">
+                            ₹{formatAmount(Number(total))}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View className="flex-row items-center mt-3 ml-[52px]">
+                        <View className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                          <View
+                            className={`h-full rounded-full ${colors.bar}`}
+                            style={{
+                              width: `${Math.min(
+                                Math.max(percentage, 2),
+                                100,
+                              )}%`,
+                            }}
+                          />
+                        </View>
+
+                        <Text className="text-zinc-400 text-[9px] font-black ml-2">
+                          {percentage.toFixed(0)}%
+                        </Text>
+                      </View>
+
+                      {index < categoryTotals.length - 1 && (
+                        <View className="h-px bg-zinc-100 mt-4" />
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
             </View>
 
-            {/* INSIGHTS */}
+            {/* =================================================
+                INSIGHT
+            ================================================= */}
 
-            <View className="px-5 mt-8">
-              <Text className="text-zinc-900 text-2xl font-black mb-4">
-                Insights
-              </Text>
+            <View
+              className="mt-8"
+              style={{
+                paddingHorizontal: horizontalPadding,
+              }}
+            >
+              <View className="mb-4">
+                <Text className="text-zinc-950 text-xl font-black">
+                  Spending Insight
+                </Text>
 
-              <View className="bg-white border border-zinc-200 rounded-[32px] p-6">
+                <Text className="text-zinc-500 text-xs font-medium mt-1">
+                  A quick look at your recurring commitment
+                </Text>
+              </View>
+
+              <View className="bg-zinc-950 rounded-[28px] p-5 overflow-hidden">
+                <View className="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-white/5" />
+
                 <View className="flex-row items-start">
-                  <View className="bg-indigo-100 w-14 h-14 rounded-2xl items-center justify-center mr-4">
-                    <Ionicons name="trending-up" size={28} color="#4F46E5" />
+                  <View className="w-11 h-11 rounded-2xl bg-white/10 items-center justify-center">
+                    <Ionicons name="bulb-outline" size={21} color="white" />
                   </View>
 
-                  <View className="flex-1">
-                    <Text className="text-zinc-900 text-lg font-black">
-                      Spending Insight
+                  <View className="flex-1 ml-3">
+                    <Text className="text-white text-base font-black">
+                      Yearly commitment
                     </Text>
 
-                    <Text className="text-zinc-600 leading-7 mt-2">
-                      You are projected to spend approximately ₹
-                      {Math.round(yearlyProjection)} yearly on subscriptions.
+                    <Text className="text-zinc-400 text-sm leading-6 mt-2">
+                      Based on your current subscriptions, you're projected to
+                      spend approximately{" "}
+                      <Text className="text-white font-black">
+                        ₹{formatAmount(yearlyProjection)}
+                      </Text>{" "}
+                      per year on recurring payments.
                     </Text>
                   </View>
+                </View>
+
+                <View className="h-px bg-white/10 my-4" />
+
+                <View className="flex-row items-center">
+                  <Ionicons name="repeat-outline" size={16} color="#A1A1AA" />
+
+                  <Text className="text-zinc-400 text-xs font-medium ml-2">
+                    {subscriptions.length} total subscription
+                    {subscriptions.length === 1 ? "" : "s"} tracked
+                  </Text>
                 </View>
               </View>
             </View>
           </>
         )}
 
-        {/* FOOTER */}
-
-        <View className="h-10" />
+        <View className="h-6" />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
